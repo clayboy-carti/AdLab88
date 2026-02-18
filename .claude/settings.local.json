@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(pnpm create:*)",
+      "Bash(npm install:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(curl:*)",
+      "Bash(npx tsx:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm run build:*)",
+      "Bash(tasklist:*)",
+      "Bash(netstat:*)",
+      "Bash(pnpm dev)",
+      "Bash(taskkill:*)",
+      "Bash(for pid in 40088 55980 60876 61020 9872)",
+      "Bash(do taskkill //F //PID $pid)",
+      "Bash(echo:*)",
+      "Bash(done)",
+      "WebFetch(domain:replicate.com)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
+}
