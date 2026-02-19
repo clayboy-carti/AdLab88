@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import {
   generateAdCopy,
-  generateImageWithReplicate,
+  generateImageWithGemini,
   buildReplicatePrompt,
   analyzeReferenceAndCreatePrompt,
 } from '@/lib/ai'
@@ -121,13 +121,13 @@ export async function POST(request: Request) {
     console.log('[Generate] ✅ Image prompt built')
     console.log(`[Generate]   Prompt length: ${imagePrompt.length} chars`)
 
-    // 8. Generate image with Replicate
-    console.log('[Generate] === PHASE 3: Generating image with Nano Banana Pro ===')
-    const generatedImage = await generateImageWithReplicate(
+    // 8. Generate image with Gemini
+    console.log('[Generate] === PHASE 3: Generating image with Gemini 2.0 Flash ===')
+    const generatedImage = await generateImageWithGemini(
       referenceImageUrl, // null if no reference (text-to-image mode)
       imagePrompt,
       user.id,
-      hasReference ? 0.35 : 0.0, // Lower = keep reference layout, just swap elements
+      hasReference ? 0.35 : 0.0,
       1 // 1 retry
     )
 
