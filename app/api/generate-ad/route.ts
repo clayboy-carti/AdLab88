@@ -28,7 +28,12 @@ export async function POST(request: Request) {
 
     // 2. Parse request body
     const body = await request.json()
-    const { reference_image_id } = body
+    const { reference_image_id, user_context } = body
+    const userContext: string | undefined = user_context?.trim() || undefined
+
+    if (userContext) {
+      console.log(`[Generate] Ad context provided: "${userContext}"`)
+    }
 
     // Reference image is now OPTIONAL (two modes: reference-based or original)
     const hasReference = !!reference_image_id
@@ -95,7 +100,7 @@ export async function POST(request: Request) {
 
     // 6. Generate ad copy with OpenAI (frameworks for copy only)
     console.log('[Generate] === PHASE 1: Generating copy with frameworks ===')
-    const generatedCopy = await generateAdCopy(brand as Brand, 1)
+    const generatedCopy = await generateAdCopy(brand as Brand, 1, userContext)
 
     console.log('[Generate] ✅ Copy generation complete')
     console.log(`[Generate]   Hook: ${generatedCopy.hook}`)
@@ -111,11 +116,12 @@ export async function POST(request: Request) {
       imagePrompt = await analyzeReferenceAndCreatePrompt(
         referenceImageUrl!,
         brand as Brand,
-        generatedCopy
+        generatedCopy,
+        userContext
       )
     } else {
       // ORIGINAL MODE: Use framework-driven detailed prompt
-      imagePrompt = buildReplicatePrompt(generatedCopy, brand as Brand, 'original')
+      imagePrompt = buildReplicatePrompt(generatedCopy, brand as Brand, 'original', userContext)
     }
 
     console.log('[Generate] ✅ Image prompt built')
