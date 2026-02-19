@@ -3,10 +3,14 @@ import type { Brand } from '@/types/database'
 import { getFrameworks } from '@/lib/frameworks'
 import { parseGeneratedAd, type GeneratedAd } from '@/lib/validations/generation'
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Lazy-initialize to avoid module-scope instantiation during Next.js build
+let _openai: OpenAI | null = null
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  }
+  return _openai
+}
 
 /**
  * Analyze reference image and generate a detailed creative prompt for it
@@ -40,7 +44,7 @@ Be extremely detailed about:
 Return ONLY the prompt - no preamble, no explanation.`
 
   try {
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: 'gpt-4o', // Use GPT-4o for vision analysis
       messages: [
         {
@@ -179,7 +183,7 @@ export async function generateAdCopy(
         `[OpenAI] Generating ad (attempt ${attempt + 1}/${retries + 1})...`
       )
 
-      const response = await openai.chat.completions.create({
+      const response = await getOpenAI().chat.completions.create({
         model: 'gpt-4o-mini', // Use GPT-4o-mini for higher rate limits (128k context)
         messages: [
           { role: 'system', content: systemPrompt },

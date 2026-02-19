@@ -1,10 +1,14 @@
 import Replicate from 'replicate'
 import { createClient } from '@/lib/supabase/server'
 
-// Initialize Replicate client
-const replicate = new Replicate({
-  auth: process.env.REPLICATE_API_TOKEN,
-})
+// Lazy-initialize to avoid module-scope instantiation during Next.js build
+let _replicate: Replicate | null = null
+function getReplicate(): Replicate {
+  if (!_replicate) {
+    _replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN })
+  }
+  return _replicate
+}
 
 /**
  * Download image from URL and return as Buffer
@@ -109,7 +113,7 @@ export async function generateImageWithReplicate(
       console.log('[Replicate] Full input payload:', JSON.stringify(input, null, 2))
 
       // Use Nano Banana Pro (Google Gemini)
-      const output = await replicate.run('google/nano-banana-pro', { input })
+      const output = await getReplicate().run('google/nano-banana-pro', { input })
 
       console.log('[Replicate] Raw output type:', typeof output)
       console.log('[Replicate] Raw output:', JSON.stringify(output).substring(0, 200))

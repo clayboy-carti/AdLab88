@@ -1,10 +1,14 @@
 import OpenAI from 'openai'
 import { createClient } from '@/lib/supabase/server'
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Lazy-initialize to avoid module-scope instantiation during Next.js build
+let _openai: OpenAI | null = null
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  }
+  return _openai
+}
 
 /**
  * Download image from URL and return as Buffer
@@ -79,7 +83,7 @@ export async function generateImageWithDalle(
       console.log(`[DALL-E] Prompt length: ${prompt.length} chars`)
 
       // Generate image with DALL-E 3
-      const response = await openai.images.generate({
+      const response = await getOpenAI().images.generate({
         model: 'dall-e-3',
         prompt: prompt,
         n: 1,
