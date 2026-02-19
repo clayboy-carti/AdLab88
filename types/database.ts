@@ -32,13 +32,15 @@ export type GeneratedAd = {
   brand_id: string
   reference_image_id?: string
   positioning_angle: string
+  angle_justification?: string
   hook: string
   caption: string
   cta: string
-  generated_image_url: string
-  ad_spend?: number
-  impressions?: number
-  clicks?: number
-  conversions?: number
+  storage_path: string | null
+  image_generation_prompt?: string
+  brand_voice_match?: string
+  framework_applied?: string
+  target_platform?: string
+  estimated_performance?: string
   created_at: string
 }
