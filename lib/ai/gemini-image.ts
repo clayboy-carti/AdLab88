@@ -10,7 +10,7 @@ function getGemini(): GoogleGenAI {
   return _gemini
 }
 
-const IMAGE_MODEL = 'gemini-2.0-flash-exp'
+const IMAGE_MODEL = 'gemini-3-pro-image-preview'
 
 /**
  * Upload image buffer to Supabase Storage
