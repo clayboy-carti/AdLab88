@@ -14,7 +14,8 @@ import type { GeneratedCopy } from './image-prompt-builder'
 export function buildReplicatePrompt(
   copy: GeneratedCopy,
   brand: Brand,
-  mode: 'reference' | 'original' = 'reference'
+  mode: 'reference' | 'original' = 'reference',
+  userContext?: string
 ): string {
   const brandColors =
     brand.brand_colors && brand.brand_colors.length > 0
@@ -36,6 +37,10 @@ export function buildReplicatePrompt(
   }
 
   // MODE 2: ORIGINAL (Framework-driven creative generation)
+  const offerLine = userContext
+    ? `• Offer / promotional context (feature prominently): "${userContext}"\n`
+    : ''
+
   const prompt = `
 Create a professional, high-quality advertisement for ${brand.company_name}, a ${industry} company.
 
@@ -51,6 +56,7 @@ AD COPY (Display prominently):
 • Main headline (large, bold): "${copy.hook}"
 • Body copy (clear, readable): "${copy.caption}"
 • Call-to-action (prominent button/text): "${copy.cta}"
+${offerLine}
 
 VISUAL REQUIREMENTS:
 • Professional, modern design suitable for ${copy.target_platform}

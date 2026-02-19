@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import {
   generateAdCopy,
-  generateImageWithReplicate,
+  generateImageWithGemini,
   buildReplicatePrompt,
   analyzeReferenceAndCreatePrompt,
 } from '@/lib/ai'
@@ -28,7 +28,12 @@ export async function POST(request: Request) {
 
     // 2. Parse request body
     const body = await request.json()
-    const { reference_image_id } = body
+    const { reference_image_id, user_context } = body
+    const userContext: string | undefined = user_context?.trim() || undefined
+
+    if (userContext) {
+      console.log(`[Generate] Ad context provided: "${userContext}"`)
+    }
 
     // Reference image is now OPTIONAL (two modes: reference-based or original)
     const hasReference = !!reference_image_id
@@ -95,7 +100,7 @@ export async function POST(request: Request) {
 
     // 6. Generate ad copy with OpenAI (frameworks for copy only)
     console.log('[Generate] === PHASE 1: Generating copy with frameworks ===')
-    const generatedCopy = await generateAdCopy(brand as Brand, 1)
+    const generatedCopy = await generateAdCopy(brand as Brand, 1, userContext)
 
     console.log('[Generate] ✅ Copy generation complete')
     console.log(`[Generate]   Hook: ${generatedCopy.hook}`)
@@ -111,23 +116,24 @@ export async function POST(request: Request) {
       imagePrompt = await analyzeReferenceAndCreatePrompt(
         referenceImageUrl!,
         brand as Brand,
-        generatedCopy
+        generatedCopy,
+        userContext
       )
     } else {
       // ORIGINAL MODE: Use framework-driven detailed prompt
-      imagePrompt = buildReplicatePrompt(generatedCopy, brand as Brand, 'original')
+      imagePrompt = buildReplicatePrompt(generatedCopy, brand as Brand, 'original', userContext)
     }
 
     console.log('[Generate] ✅ Image prompt built')
     console.log(`[Generate]   Prompt length: ${imagePrompt.length} chars`)
 
-    // 8. Generate image with Replicate
-    console.log('[Generate] === PHASE 3: Generating image with Nano Banana Pro ===')
-    const generatedImage = await generateImageWithReplicate(
+    // 8. Generate image with Gemini
+    console.log('[Generate] === PHASE 3: Generating image with Gemini 2.0 Flash ===')
+    const generatedImage = await generateImageWithGemini(
       referenceImageUrl, // null if no reference (text-to-image mode)
       imagePrompt,
       user.id,
-      hasReference ? 0.35 : 0.0, // Lower = keep reference layout, just swap elements
+      hasReference ? 0.35 : 0.0,
       1 // 1 retry
     )
 

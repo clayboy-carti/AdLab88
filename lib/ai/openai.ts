@@ -3,10 +3,14 @@ import type { Brand } from '@/types/database'
 import { getFrameworks } from '@/lib/frameworks'
 import { parseGeneratedAd, type GeneratedAd } from '@/lib/validations/generation'
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Lazy-initialize to avoid module-scope instantiation during Next.js build
+let _openai: OpenAI | null = null
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  }
+  return _openai
+}
 
 /**
  * Analyze reference image and generate a detailed creative prompt for it
@@ -15,11 +19,15 @@ const openai = new OpenAI({
 export async function analyzeReferenceAndCreatePrompt(
   referenceImageUrl: string,
   brand: Brand,
-  generatedCopy: GeneratedAd
+  generatedCopy: GeneratedAd,
+  userContext?: string
 ): Promise<string> {
   console.log('[OpenAI] Analyzing reference image to create detailed prompt...')
 
   const industry = brand.what_we_do.toLowerCase()
+  const contextBlock = userContext
+    ? `\nAD OFFER / CONTEXT (must be visually reflected): "${userContext}"\n`
+    : ''
 
   const analysisPrompt = `Use this reference image to write an ad prompt for a ${industry} company.
 
@@ -27,7 +35,7 @@ The new ad should be for "${brand.company_name}" and include this copy:
 - Headline: "${generatedCopy.hook}"
 - Body: "${generatedCopy.caption}"
 - CTA: "${generatedCopy.cta}"
-
+${contextBlock}
 Write a detailed, specific prompt that captures the visual style of the reference and adapts it for ${industry}. The copy should be direct and hit hard.
 
 Be extremely detailed about:
@@ -40,7 +48,7 @@ Be extremely detailed about:
 Return ONLY the prompt - no preamble, no explanation.`
 
   try {
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: 'gpt-4o', // Use GPT-4o for vision analysis
       messages: [
         {
@@ -140,10 +148,14 @@ Return ONLY the JSON object. No markdown, no explanation, just JSON.
 /**
  * Build user prompt for copy generation
  */
-function buildUserPrompt(): string {
+function buildUserPrompt(userContext?: string): string {
+  const contextSection = userContext
+    ? `\nCURRENT OFFER / AD CONTEXT (incorporate this into the copy naturally):\n"${userContext}"\n`
+    : ''
+
   return `
 Generate compelling ad copy for the brand profile provided in the system prompt.
-
+${contextSection}
 Your task:
 1. Select the best positioning angle from the frameworks
 2. Write a powerful hook (5-10 words, attention-grabbing)
@@ -151,6 +163,7 @@ Your task:
 4. Write a clear call-to-action (3-5 words, action-oriented)
 5. Explain your strategic choices
 
+${userContext ? 'The hook, caption, and CTA should naturally incorporate the offer/context above.' : ''}
 Focus ONLY on the copy. The visual design will be handled separately based on a reference image.
 
 Return ONLY the JSON object as specified in the system prompt.
@@ -164,11 +177,12 @@ Return ONLY the JSON object as specified in the system prompt.
  */
 export async function generateAdCopy(
   brand: Brand,
-  retries = 1
+  retries = 1,
+  userContext?: string
 ): Promise<GeneratedAd> {
   const frameworks = await getFrameworks()
   const systemPrompt = buildSystemPrompt(frameworks, brand)
-  const userPrompt = buildUserPrompt()
+  const userPrompt = buildUserPrompt(userContext)
 
   let lastError: Error | null = null
 
@@ -179,7 +193,7 @@ export async function generateAdCopy(
         `[OpenAI] Generating ad (attempt ${attempt + 1}/${retries + 1})...`
       )
 
-      const response = await openai.chat.completions.create({
+      const response = await getOpenAI().chat.completions.create({
         model: 'gpt-4o-mini', // Use GPT-4o-mini for higher rate limits (128k context)
         messages: [
           { role: 'system', content: systemPrompt },
