@@ -88,6 +88,19 @@ const PLATFORM_COLORS: Record<string, string> = {
   x:         'bg-graphite text-white',
 }
 
+const PLATFORM_CHIP_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
+  instagram: { bg: 'bg-rust/10 border-rust/30',      text: 'text-rust',    dot: 'bg-rust' },
+  tiktok:    { bg: 'bg-graphite/10 border-graphite/30', text: 'text-graphite', dot: 'bg-graphite' },
+  facebook:  { bg: 'bg-forest/10 border-forest/30',   text: 'text-forest',  dot: 'bg-forest' },
+  linkedin:  { bg: 'bg-forest/10 border-forest/30',   text: 'text-forest',  dot: 'bg-forest' },
+  twitter:   { bg: 'bg-graphite/10 border-graphite/30', text: 'text-graphite', dot: 'bg-graphite' },
+  x:         { bg: 'bg-graphite/10 border-graphite/30', text: 'text-graphite', dot: 'bg-graphite' },
+}
+
+function platformChipStyle(platform: string) {
+  return PLATFORM_CHIP_COLORS[platform.toLowerCase()] ?? { bg: 'bg-gray-100 border-gray-300', text: 'text-gray-700', dot: 'bg-gray-500' }
+}
+
 function platformColor(platform: string): string {
   return PLATFORM_COLORS[platform.toLowerCase()] ?? 'bg-gray-500 text-white'
 }
@@ -207,17 +220,22 @@ export default function Calendar({ posts = [] }: CalendarProps) {
                   </span>
 
                   {/* Post chips — clickable */}
-                  {cellPosts.map((post) => (
-                    <button
-                      key={post.id}
-                      onClick={() => setSelectedPost(post)}
-                      title={`${post.platform}: ${post.caption}`}
-                      className={`text-xs font-mono px-1.5 py-0.5 truncate flex items-center gap-1 w-full text-left hover:opacity-80 transition-opacity cursor-pointer ${platformColor(post.platform)}`}
-                    >
-                      <span className={`inline-block w-1.5 h-1.5 flex-shrink-0 ${STATUS_DOT[post.status]}`} />
-                      <span className="truncate text-[10px]">{post.hook || post.platform}</span>
-                    </button>
-                  ))}
+                  {cellPosts.map((post) => {
+                    const chip = platformChipStyle(post.platform)
+                    return (
+                      <button
+                        key={post.id}
+                        onClick={() => setSelectedPost(post)}
+                        title={`${post.platform}: ${post.caption}`}
+                        className={`flex items-center gap-1 w-full text-left px-1.5 py-0.5 rounded-sm border ${chip.bg} hover:opacity-80 transition-opacity cursor-pointer`}
+                      >
+                        <span className={`inline-block w-1.5 h-1.5 flex-shrink-0 rounded-full ${chip.dot}`} />
+                        <span className={`truncate text-[10px] font-mono font-medium uppercase tracking-wide ${chip.text}`}>
+                          {post.hook || post.platform}
+                        </span>
+                      </button>
+                    )
+                  })}
                 </div>
               )
             })}
@@ -235,34 +253,64 @@ export default function Calendar({ posts = [] }: CalendarProps) {
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {upcomingPosts.map((post) => (
-                <button
-                  key={post.id}
-                  onClick={() => setSelectedPost(post)}
-                  className="flex items-start gap-4 border border-outline p-3 w-full text-left hover:border-rust transition-colors group"
-                >
-                  <div className="flex flex-col items-center justify-center border border-outline bg-gray-50 px-3 py-2 min-w-[56px] flex-shrink-0">
-                    <span className="text-xs font-mono text-gray-500 uppercase">
-                      {MONTH_NAMES[parseInt(post.date.slice(5, 7)) - 1].slice(0, 3)}
-                    </span>
-                    <span className="text-xl font-mono font-bold text-graphite leading-tight">
-                      {parseInt(post.date.slice(8, 10))}
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-1 flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-mono uppercase px-2 py-0.5 ${platformColor(post.platform)}`}>{post.platform}</span>
-                      <span className={`inline-block w-2 h-2 ${STATUS_DOT[post.status]}`} />
-                      <span className="text-xs font-mono text-gray-500 uppercase">{post.status}</span>
-                    </div>
-                    <p className="text-sm text-gray-700 truncate">{post.caption}</p>
-                    {post.hook && (
-                      <p className="text-xs font-mono text-gray-400 truncate group-hover:text-rust transition-colors">{post.hook}</p>
+              {upcomingPosts.map((post) => {
+                const chip = platformChipStyle(post.platform)
+                return (
+                  <button
+                    key={post.id}
+                    onClick={() => setSelectedPost(post)}
+                    className="flex items-stretch gap-0 border border-outline w-full text-left hover:border-rust transition-colors group overflow-hidden"
+                  >
+                    {/* Ad image thumbnail */}
+                    {post.signedUrl ? (
+                      <div className="w-[72px] flex-shrink-0 bg-gray-100 relative overflow-hidden">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={post.signedUrl}
+                          alt=""
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-[72px] flex-shrink-0 bg-forest/5 flex items-center justify-center border-r border-outline">
+                        <span className="text-xs font-mono text-forest/30 uppercase">AD</span>
+                      </div>
                     )}
-                  </div>
-                  <span className="text-xs font-mono text-gray-300 group-hover:text-rust transition-colors self-center flex-shrink-0">→</span>
-                </button>
-              ))}
+
+                    {/* Date badge */}
+                    <div className="flex flex-col items-center justify-center bg-forest text-paper px-3 py-3 min-w-[60px] flex-shrink-0 border-r border-forest">
+                      <span className="text-[10px] font-mono uppercase tracking-widest opacity-70">
+                        {MONTH_NAMES[parseInt(post.date.slice(5, 7)) - 1].slice(0, 3)}
+                      </span>
+                      <span className="text-2xl font-mono font-bold text-rust leading-none">
+                        {parseInt(post.date.slice(8, 10))}
+                      </span>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex flex-col justify-center gap-1.5 flex-1 min-w-0 px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-sm border ${chip.bg} ${chip.text}`}>
+                          {post.platform}
+                        </span>
+                        <span className={`inline-block w-1.5 h-1.5 rounded-full ${STATUS_DOT[post.status]}`} />
+                        <span className="text-[10px] font-mono text-gray-400 uppercase">{post.status}</span>
+                      </div>
+                      {post.hook && (
+                        <p className="text-sm font-mono text-graphite font-medium truncate">{post.hook}</p>
+                      )}
+                      {post.caption && (
+                        <p className="text-xs text-gray-500 truncate">{post.caption}</p>
+                      )}
+                    </div>
+
+                    {/* Arrow */}
+                    <div className="flex items-center px-4 flex-shrink-0">
+                      <span className="text-gray-300 group-hover:text-rust transition-colors font-mono text-sm">→</span>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
