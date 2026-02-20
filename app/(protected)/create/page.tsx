@@ -21,6 +21,8 @@ interface GeneratedAd {
 export default function CreatePage() {
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null)
   const [contextText, setContextText] = useState('')
+  const [imageQuality, setImageQuality] = useState<'1K' | '2K'>('1K')
+  const [aspectRatio, setAspectRatio] = useState('1:1')
   const [generating, setGenerating] = useState(false)
   const [generationStage, setGenerationStage] = useState<string>('')
   const [generatedAd, setGeneratedAd] = useState<GeneratedAd | null>(null)
@@ -55,6 +57,8 @@ export default function CreatePage() {
         body: JSON.stringify({
           reference_image_id: selectedImageId || undefined,
           user_context: contextText.trim() || undefined,
+          image_quality: imageQuality,
+          aspect_ratio: aspectRatio,
         }),
       })
 
@@ -119,6 +123,50 @@ export default function CreatePage() {
             <p className="text-xs text-gray-400 font-mono mt-1">
               {contextText.length} / 300 characters
             </p>
+          </div>
+
+          {/* Image Settings */}
+          <div className="card">
+            <h2 className="text-xl uppercase font-mono mb-1">Image Settings</h2>
+            <p className="text-xs text-gray-500 font-mono mb-4">
+              Output quality and aspect ratio — applied regardless of reference image
+            </p>
+
+            {/* Quality toggle */}
+            <div className="mb-4">
+              <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-2">Quality</p>
+              <div className="flex border border-outline">
+                {(['1K', '2K'] as const).map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => setImageQuality(q)}
+                    className={`flex-1 py-2 text-sm font-mono uppercase transition-colors ${
+                      imageQuality === q
+                        ? 'bg-graphite text-white'
+                        : 'bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Aspect ratio */}
+            <div>
+              <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-2">Aspect Ratio</p>
+              <select
+                value={aspectRatio}
+                onChange={(e) => setAspectRatio(e.target.value)}
+                className="w-full border border-outline p-2 text-sm font-mono bg-white focus:outline-none focus:border-rust"
+              >
+                <option value="1:1">1:1 — Square</option>
+                <option value="9:16">9:16 — Portrait (Story / Reel)</option>
+                <option value="16:9">16:9 — Landscape (Banner / YouTube)</option>
+                <option value="3:4">3:4 — Portrait (Feed Post)</option>
+                <option value="4:3">4:3 — Standard</option>
+              </select>
+            </div>
           </div>
 
           {/* Generate Button */}

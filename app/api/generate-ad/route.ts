@@ -28,12 +28,15 @@ export async function POST(request: Request) {
 
     // 2. Parse request body
     const body = await request.json()
-    const { reference_image_id, user_context } = body
+    const { reference_image_id, user_context, image_quality, aspect_ratio } = body
     const userContext: string | undefined = user_context?.trim() || undefined
+    const imageQuality: '1K' | '2K' = image_quality === '2K' ? '2K' : '1K'
+    const imageAspectRatio: string = aspect_ratio || '1:1'
 
     if (userContext) {
       console.log(`[Generate] Ad context provided: "${userContext}"`)
     }
+    console.log(`[Generate] Image quality: ${imageQuality}, Aspect ratio: ${imageAspectRatio}`)
 
     // Reference image is now OPTIONAL (two modes: reference-based or original)
     const hasReference = !!reference_image_id
@@ -134,7 +137,9 @@ export async function POST(request: Request) {
       imagePrompt,
       user.id,
       hasReference ? 0.35 : 0.0,
-      1 // 1 retry
+      1, // 1 retry
+      imageQuality,
+      imageAspectRatio
     )
 
     console.log('[Generate] ✅ Image generation complete')
