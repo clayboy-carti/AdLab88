@@ -15,9 +15,10 @@ export default function Sidebar() {
   }
 
   const links = [
-    { href: '/brand', label: 'BRAND' },
-    { href: '/create', label: 'CREATE' },
-    { href: '/library', label: 'LIBRARY' },
+    { href: '/brand',    label: 'BRAND'    },
+    { href: '/create',   label: 'CREATE'   },
+    { href: '/library',  label: 'LIBRARY'  },
+    { href: '/schedule', label: 'SCHEDULE' },
   ]
 
   return (
