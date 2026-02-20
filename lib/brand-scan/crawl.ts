@@ -126,7 +126,7 @@ function extractCSSColors(html: string): string[] {
     }
   }
 
-  const byFrequency = [...colorFreq.entries()]
+  const byFrequency = Array.from(colorFreq.entries())
     .sort((a, b) => b[1] - a[1])
     .map(([c]) => c)
 
