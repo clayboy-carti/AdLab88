@@ -7,6 +7,7 @@ interface AdModalProps {
   ad: Ad
   onClose: () => void
   onCaptionUpdate: (adId: string, newCaption: string) => void
+  scheduledDate?: string | null
 }
 
 // ─── Calendar helpers ────────────────────────────────────────────────────────
@@ -74,7 +75,7 @@ function formatSelectedDate(dateStr: string): string {
 
 // ─── Main Modal ──────────────────────────────────────────────────────────────
 
-export default function AdModal({ ad, onClose, onCaptionUpdate }: AdModalProps) {
+export default function AdModal({ ad, onClose, onCaptionUpdate, scheduledDate }: AdModalProps) {
   const [caption, setCaption] = useState(ad.caption)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -86,8 +87,8 @@ export default function AdModal({ ad, onClose, onCaptionUpdate }: AdModalProps) 
   const now = new Date()
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerMonth, setPickerMonth] = useState(new Date(now.getFullYear(), now.getMonth(), 1))
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [scheduleConfirmed, setScheduleConfirmed] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<string | null>(scheduledDate ?? null)
+  const [scheduleConfirmed, setScheduleConfirmed] = useState(!!scheduledDate)
   const [scheduling, setScheduling] = useState(false)
   const [scheduleError, setScheduleError] = useState<string | null>(null)
 

@@ -274,6 +274,7 @@ export default function Calendar({ posts = [] }: CalendarProps) {
           ad={selectedAd}
           onClose={() => setSelectedPost(null)}
           onCaptionUpdate={handleCaptionUpdate}
+          scheduledDate={selectedPost.date}
         />
       )}
     </>
