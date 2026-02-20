@@ -85,7 +85,7 @@ export default function CreatePage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-8">
+    <div className="w-full p-4 lg:p-8">
       <h1 className="text-3xl uppercase font-mono header-accent mb-8">CREATE AD</h1>
 
       <div className="grid grid-cols-2 gap-8">
