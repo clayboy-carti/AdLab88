@@ -48,7 +48,6 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
   })
 
   const handleEdit = (section: Section) => {
-    // Always reset to current saved values before entering edit mode
     reset(toBrandFormData(brand))
     setSaveError(null)
     setEditingSection(section)
@@ -63,9 +62,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
     setSaving(true)
     setSaveError(null)
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
       const parsed = {
@@ -97,7 +94,6 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
 
       if (updateError) throw updateError
 
-      // Update local state with parsed values
       setBrand((prev) => ({
         ...prev,
         company_name: data.company_name,
@@ -125,17 +121,18 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
   const isEditing = editingSection !== null
 
   return (
-    <form onSubmit={onSave} className="flex flex-col gap-5">
+    <form onSubmit={onSave} className="flex flex-col gap-0 border border-outline">
 
-      {/* ── Core Identity ── */}
-      <SectionShell
-        title="Core Identity"
+      {/* ── CORE IDENTITY ──────────────────────────────────────── */}
+      <Section
+        id="core"
+        label="01 — Core Identity"
         editing={editingSection === 'core'}
+        disableEdit={isEditing}
         onEdit={() => handleEdit('core')}
         onCancel={handleCancel}
         saving={saving}
         error={editingSection === 'core' ? saveError : null}
-        disableEdit={isEditing}
       >
         {editingSection === 'core' ? (
           <div className="space-y-4">
@@ -153,24 +150,65 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
             </FormField>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <DisplayField label="Company Name" value={brand.company_name} large />
-            <DisplayField label="Target Audience" value={brand.target_audience} />
-            <DisplayField label="What We Do" value={brand.what_we_do} className="md:col-span-2" />
-            <DisplayField label="Unique Differentiator" value={brand.unique_differentiator} />
+          <div className="flex flex-col md:flex-row gap-8">
+            {/* Left: main fields */}
+            <div className="flex-1 flex flex-col gap-6">
+              <div>
+                <FieldLabel>Company Name</FieldLabel>
+                <p className="text-2xl font-mono font-bold text-graphite mt-1 leading-tight">
+                  {brand.company_name}
+                </p>
+              </div>
+              <div>
+                <FieldLabel>What We Do</FieldLabel>
+                <p className="text-sm text-graphite mt-1 leading-relaxed">{brand.what_we_do}</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <FieldLabel>Target Audience</FieldLabel>
+                  <p className="text-sm text-graphite mt-1">{brand.target_audience}</p>
+                </div>
+                {brand.unique_differentiator && (
+                  <div>
+                    <FieldLabel>Differentiator</FieldLabel>
+                    <p className="text-sm text-graphite mt-1">{brand.unique_differentiator}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right: brand snapshot */}
+            {brand.personality_traits?.length ? (
+              <div className="md:w-52 flex-shrink-0">
+                <div className="border border-outline p-4 bg-paper h-full">
+                  <p className="text-xs font-mono uppercase tracking-widest text-rust mb-3">
+                    Brand Snapshot
+                  </p>
+                  <div className="border-t border-outline mb-3" />
+                  <ul className="space-y-1">
+                    {brand.personality_traits.map((trait) => (
+                      <li key={trait} className="text-sm font-mono text-graphite capitalize">
+                        {trait}.
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ) : null}
           </div>
         )}
-      </SectionShell>
+      </Section>
 
-      {/* ── Voice & Messaging ── */}
-      <SectionShell
-        title="Voice & Messaging"
+      {/* ── VOICE & MESSAGING ──────────────────────────────────── */}
+      <Section
+        id="voice"
+        label="02 — Voice & Messaging"
         editing={editingSection === 'voice'}
+        disableEdit={isEditing}
         onEdit={() => handleEdit('voice')}
         onCancel={handleCancel}
         saving={saving}
         error={editingSection === 'voice' ? saveError : null}
-        disableEdit={isEditing}
       >
         {editingSection === 'voice' ? (
           <div className="space-y-4">
@@ -188,26 +226,64 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
             </FormField>
           </div>
         ) : (
-          <div className="flex flex-col gap-5">
-            <DisplayField label="Voice Summary" value={brand.voice_summary} />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <TagsField label="Personality Traits" values={brand.personality_traits} />
-              <TagsField label="Words to Use" values={brand.words_to_use} />
-              <TagsField label="Words to Avoid" values={brand.words_to_avoid} />
+          <div className="flex flex-col gap-6">
+            {brand.voice_summary && (
+              <div className="flex gap-4">
+                <div className="w-1 bg-rust flex-shrink-0" />
+                <p className="text-base font-mono text-graphite italic leading-relaxed">
+                  &ldquo;{brand.voice_summary}&rdquo;
+                </p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-outline">
+              <div className="p-4 md:border-r border-outline">
+                <FieldLabel>
+                  <span className="text-forest">&#10003;</span> Words to Use
+                </FieldLabel>
+                {brand.words_to_use?.length ? (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {brand.words_to_use.map((w) => (
+                      <span key={w} className="text-xs font-mono uppercase bg-forest text-white px-2 py-1">
+                        {w}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs font-mono text-gray-400 italic mt-2">Not set</p>
+                )}
+              </div>
+              <div className="p-4">
+                <FieldLabel>
+                  <span className="text-rust">&#215;</span> Words to Avoid
+                </FieldLabel>
+                {brand.words_to_avoid?.length ? (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {brand.words_to_avoid.map((w) => (
+                      <span key={w} className="text-xs font-mono uppercase bg-rust text-white px-2 py-1">
+                        {w}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs font-mono text-gray-400 italic mt-2">Not set</p>
+                )}
+              </div>
             </div>
           </div>
         )}
-      </SectionShell>
+      </Section>
 
-      {/* ── Visual Identity ── */}
-      <SectionShell
-        title="Visual Identity"
+      {/* ── VISUAL IDENTITY ────────────────────────────────────── */}
+      <Section
+        id="visual"
+        label="03 — Visual Identity"
         editing={editingSection === 'visual'}
+        disableEdit={isEditing}
         onEdit={() => handleEdit('visual')}
         onCancel={handleCancel}
         saving={saving}
         error={editingSection === 'visual' ? saveError : null}
-        disableEdit={isEditing}
       >
         {editingSection === 'visual' ? (
           <div className="space-y-4">
@@ -219,39 +295,67 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
             </FormField>
           </div>
         ) : (
-          <div className="flex flex-col gap-5">
-            {brand.brand_colors?.length ? (
-              <div>
-                <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-3">Brand Colors</p>
-                <div className="flex flex-wrap gap-4">
+          <div className="flex flex-col md:flex-row gap-8">
+            {/* Colors */}
+            <div className="flex-1">
+              <FieldLabel>Brand Colors</FieldLabel>
+              {brand.brand_colors?.length ? (
+                <div className="flex flex-wrap gap-4 mt-3">
                   {brand.brand_colors.map((color) => (
-                    <div key={color} className="flex items-center gap-2">
+                    <div key={color} className="flex flex-col gap-2">
                       <div
-                        className="w-7 h-7 border border-outline flex-shrink-0"
+                        className="w-16 h-16 border border-outline"
                         style={{ backgroundColor: color }}
                       />
-                      <span className="text-xs font-mono text-graphite uppercase">{color}</span>
+                      <div
+                        className="w-16 h-8 border border-outline opacity-60"
+                        style={{ backgroundColor: color }}
+                      />
+                      <p className="text-xs font-mono uppercase tracking-wide text-graphite">
+                        {color}
+                      </p>
                     </div>
                   ))}
                 </div>
-              </div>
-            ) : (
-              <DisplayField label="Brand Colors" value={undefined} />
-            )}
-            <DisplayField label="Typography Notes" value={brand.typography_notes} />
+              ) : (
+                <p className="text-xs font-mono text-gray-400 italic mt-2">Not set</p>
+              )}
+            </div>
+
+            {/* Typography specimen */}
+            <div className="flex-1 border border-outline p-4">
+              <FieldLabel>Typography</FieldLabel>
+              {brand.typography_notes ? (
+                <div className="mt-3 flex flex-col gap-3">
+                  <p className="text-xl font-mono font-bold text-graphite leading-tight">
+                    The quick brown fox.
+                  </p>
+                  <p className="text-sm text-gray-600 leading-relaxed font-sans">
+                    Consistent typography builds recognition. Every headline, body line, and label speaks before words do.
+                  </p>
+                  <div className="border-t border-outline pt-3">
+                    <p className="text-xs font-mono text-gray-500 uppercase tracking-widest">Style Notes</p>
+                    <p className="text-xs font-mono text-graphite mt-1 leading-relaxed">{brand.typography_notes}</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs font-mono text-gray-400 italic mt-2">Not set</p>
+              )}
+            </div>
           </div>
         )}
-      </SectionShell>
+      </Section>
 
-      {/* ── Sample Copy ── */}
-      <SectionShell
-        title="Sample Copy"
+      {/* ── SAMPLE COPY ────────────────────────────────────────── */}
+      <Section
+        id="copy"
+        label="04 — Sample Copy"
         editing={editingSection === 'copy'}
+        disableEdit={isEditing}
         onEdit={() => handleEdit('copy')}
         onCancel={handleCancel}
         saving={saving}
         error={editingSection === 'copy' ? saveError : null}
-        disableEdit={isEditing}
       >
         {editingSection === 'copy' ? (
           <FormField
@@ -268,18 +372,24 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
             />
           </FormField>
         ) : (
-          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{brand.sample_copy}</p>
+          <div className="flex gap-0">
+            <div className="w-1 bg-rust flex-shrink-0 mr-5" />
+            <p className="text-sm text-graphite leading-relaxed whitespace-pre-wrap font-sans">
+              {brand.sample_copy}
+            </p>
+          </div>
         )}
-      </SectionShell>
+      </Section>
 
     </form>
   )
 }
 
-// ─── Section shell ────────────────────────────────────────────────────────────
+// ─── Section ─────────────────────────────────────────────────────────────────
 
-interface SectionShellProps {
-  title: string
+interface SectionProps {
+  id: Section
+  label: string
   editing: boolean
   disableEdit: boolean
   onEdit: () => void
@@ -289,35 +399,40 @@ interface SectionShellProps {
   children: React.ReactNode
 }
 
-function SectionShell({
-  title, editing, disableEdit, onEdit, onCancel, saving, error, children,
-}: SectionShellProps) {
+function Section({ label, editing, disableEdit, onEdit, onCancel, saving, error, children }: SectionProps) {
   return (
-    <div className="border border-outline">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-outline bg-gray-50">
-        <p className="text-xs uppercase font-mono text-gray-500 tracking-widest">{title}</p>
+    <div className="border-b border-outline last:border-b-0 bg-white">
+      {/* Section header */}
+      <div className="flex items-start justify-between px-6 pt-6 pb-4">
+        <div>
+          <h2 className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-1">{label}</h2>
+          <div className="w-8 h-0.5 bg-rust" />
+        </div>
         {!editing && (
           <button
             type="button"
             onClick={onEdit}
             disabled={disableEdit}
-            className="flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-paper disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex-shrink-0 ml-4"
           >
-            <EditIcon /><span>Edit</span>
+            [ Edit ]
           </button>
         )}
       </div>
-      <div className="p-5">
+
+      {/* Section body */}
+      <div className="px-6 pb-6">
         {children}
+
         {editing && (
-          <div className="mt-5 flex flex-col gap-2">
+          <div className="mt-5 pt-4 border-t border-outline flex flex-col gap-2">
             {error && <p className="text-xs text-red-600 font-mono">{error}</p>}
             <div className="flex gap-2">
               <button type="submit" disabled={saving} className="btn-primary text-sm px-4 py-2">
-                {saving ? 'SAVING...' : 'SAVE'}
+                {saving ? 'Saving...' : 'Save Changes'}
               </button>
               <button type="button" onClick={onCancel} disabled={saving} className="btn-secondary text-sm px-4 py-2">
-                CANCEL
+                Cancel
               </button>
             </div>
           </div>
@@ -327,77 +442,27 @@ function SectionShell({
   )
 }
 
-// ─── Display helpers ──────────────────────────────────────────────────────────
-
-function DisplayField({
-  label, value, large, className,
-}: {
-  label: string
-  value?: string
-  large?: boolean
-  className?: string
-}) {
-  return (
-    <div className={className}>
-      <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-1">{label}</p>
-      {value ? (
-        <p className={large ? 'font-bold text-graphite leading-snug' : 'text-sm text-gray-700 leading-snug'}>
-          {value}
-        </p>
-      ) : (
-        <p className="text-xs font-mono text-gray-300 italic">Not set</p>
-      )}
-    </div>
-  )
-}
-
-function TagsField({ label, values }: { label: string; values?: string[] }) {
-  return (
-    <div>
-      <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-2">{label}</p>
-      {values?.length ? (
-        <div className="flex flex-wrap gap-1.5">
-          {values.map((v) => (
-            <span key={v} className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1">{v}</span>
-          ))}
-        </div>
-      ) : (
-        <p className="text-xs font-mono text-gray-300 italic">Not set</p>
-      )}
-    </div>
-  )
-}
-
-// ─── Form field wrapper ───────────────────────────────────────────────────────
+// ─── Form helpers ─────────────────────────────────────────────────────────────
 
 function FormField({
   label, hint, required, error, children,
 }: {
-  label: string
-  hint?: string
-  required?: boolean
-  error?: string
-  children: React.ReactNode
+  label: string; hint?: string; required?: boolean; error?: string; children: React.ReactNode
 }) {
   return (
     <div>
-      <label className="block text-sm uppercase font-mono mb-1">
+      <label className="block text-xs uppercase font-mono tracking-widest mb-1 text-gray-600">
         {label}{required && <span className="text-rust ml-1">*</span>}
       </label>
-      {hint && <p className="text-xs text-gray-500 mb-2">{hint}</p>}
+      {hint && <p className="text-xs text-gray-400 font-mono mb-2">{hint}</p>}
       {children}
-      {error && <p className="text-red-600 text-xs mt-1">{error}</p>}
+      {error && <p className="text-red-600 text-xs mt-1 font-mono">{error}</p>}
     </div>
   )
 }
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
-
-function EditIcon() {
+function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
-      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-    </svg>
+    <p className="text-xs font-mono uppercase tracking-widest text-gray-400">{children}</p>
   )
 }

@@ -23,9 +23,14 @@ export default async function BrandPage() {
   if (brand) {
     return (
       <div className="max-w-4xl mx-auto p-8">
-        <div className="mb-8">
-          <h1 className="text-3xl uppercase font-mono header-accent">Your Brand</h1>
-          <p className="text-sm font-mono text-gray-500 mt-1 uppercase">{brand.company_name}</p>
+        <div className="mb-8 flex items-end justify-between border-b-2 border-rust pb-4">
+          <div>
+            <p className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-1">Brand Profile</p>
+            <h1 className="text-3xl font-mono font-bold text-graphite uppercase">{brand.company_name}</h1>
+          </div>
+          <p className="text-xs font-mono text-gray-400 uppercase tracking-widest pb-1">
+            Last updated {new Date(brand.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          </p>
         </div>
         <BrandDashboard brand={brand as Brand} />
       </div>
