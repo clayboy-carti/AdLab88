@@ -215,7 +215,7 @@ export default function Calendar({ posts = [] }: CalendarProps) {
                       className={`text-xs font-mono px-1.5 py-0.5 truncate flex items-center gap-1 w-full text-left hover:opacity-80 transition-opacity cursor-pointer ${platformColor(post.platform)}`}
                     >
                       <span className={`inline-block w-1.5 h-1.5 flex-shrink-0 ${STATUS_DOT[post.status]}`} />
-                      <span className="truncate uppercase text-[10px]">{post.platform}</span>
+                      <span className="truncate text-[10px]">{post.hook || post.platform}</span>
                     </button>
                   ))}
                 </div>
