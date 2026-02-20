@@ -405,8 +405,8 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
 
         {/* Image */}
         {ad.signedUrl ? (
-          <div className="border-b border-outline flex-shrink-0">
-            <img src={ad.signedUrl} alt={ad.hook} className="w-full h-auto" />
+          <div className="border-b border-outline flex-shrink-0 flex items-center justify-center bg-gray-50">
+            <img src={ad.signedUrl} alt={ad.hook} className="max-h-[40vh] w-auto max-w-full object-contain" />
           </div>
         ) : (
           <div className="border-b border-outline bg-gray-100 h-48 flex items-center justify-center flex-shrink-0">
