@@ -164,6 +164,8 @@ export async function POST(request: Request) {
         target_platform: generatedCopy.target_platform,
         estimated_performance: generatedCopy.estimated_performance,
         storage_path: generatedImage.storagePath,
+        image_quality: imageQuality,
+        aspect_ratio: imageAspectRatio,
       })
       .select()
       .single()

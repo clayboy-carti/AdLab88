@@ -477,6 +477,12 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
             {ad.framework_applied && (
               <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 uppercase">{ad.framework_applied}</span>
             )}
+            {ad.image_quality && (
+              <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 uppercase">{ad.image_quality} quality</span>
+            )}
+            {ad.aspect_ratio && (
+              <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 uppercase">{ad.aspect_ratio}</span>
+            )}
           </div>
 
           {/* ── Schedule Post ── */}
