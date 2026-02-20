@@ -1,7 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 export async function DELETE(request: Request) {
+  // Authenticate the request with the anon client (respects RLS for reads)
   const supabase = createClient()
 
   const {
@@ -20,7 +22,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'adId is required' }, { status: 400 })
   }
 
-  // Fetch the ad to verify ownership and get storage_path
+  // Verify ownership before doing anything destructive
   const { data: ad, error: fetchError } = await supabase
     .from('generated_ads')
     .select('id, storage_path')
@@ -32,9 +34,16 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'Ad not found' }, { status: 404 })
   }
 
+  // Use service role client for writes — bypasses RLS which would otherwise
+  // silently block the delete if no DELETE policy exists on the table.
+  const admin = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
   // Delete from storage if there's an image
   if (ad.storage_path) {
-    const { error: storageError } = await supabase.storage
+    const { error: storageError } = await admin.storage
       .from('generated-ads')
       .remove([ad.storage_path])
 
@@ -45,7 +54,7 @@ export async function DELETE(request: Request) {
   }
 
   // Delete the database record
-  const { error: deleteError } = await supabase
+  const { error: deleteError } = await admin
     .from('generated_ads')
     .delete()
     .eq('id', adId)
