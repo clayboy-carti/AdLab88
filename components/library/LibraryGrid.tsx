@@ -23,6 +23,11 @@ export default function LibraryGrid({ initialAds }: { initialAds: Ad[] }) {
     setSelectedAd((prev) => (prev?.id === adId ? { ...prev, cta: newCta } : prev))
   }
 
+  const handleDelete = (adId: string) => {
+    setAds((prev) => prev.filter((ad) => ad.id !== adId))
+    setSelectedAd(null)
+  }
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -38,6 +43,7 @@ export default function LibraryGrid({ initialAds }: { initialAds: Ad[] }) {
           onCaptionUpdate={handleCaptionUpdate}
           onHookUpdate={handleHookUpdate}
           onCtaUpdate={handleCtaUpdate}
+          onDelete={handleDelete}
         />
       )}
     </>
