@@ -302,15 +302,8 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
               {brand.brand_colors?.length ? (
                 <div className="flex flex-wrap gap-6 mt-3">
                   {brand.brand_colors.map((color) => (
-                    <div key={color} className="flex flex-col gap-2">
-                      <div
-                        className="w-24 h-24 border border-outline"
-                        style={{ backgroundColor: color }}
-                      />
-                      <div
-                        className="w-24 h-12 border border-outline opacity-60"
-                        style={{ backgroundColor: color }}
-                      />
+                    <div key={color} className="flex flex-col items-center gap-2">
+                      <MeasuringCupIcon color={color} size={80} />
                       <p className="text-xs font-mono uppercase tracking-wide text-graphite">
                         {color}
                       </p>
@@ -464,5 +457,34 @@ function FormField({
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-xs font-mono uppercase tracking-widest text-gray-400">{children}</p>
+  )
+}
+
+function MeasuringCupIcon({ color, size = 80 }: { color: string; size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 80 90"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* Cup body */}
+      <path d="M14 78 L66 78 L71 20 L9 20 Z" fill={color} />
+      {/* Spout */}
+      <path d="M9 20 L3 11 L0 5 L7 7 L13 20 Z" fill={color} />
+      {/* Handle */}
+      <path
+        d="M71 30 C88 30 88 62 71 62"
+        stroke={color}
+        strokeWidth="6"
+        strokeLinecap="round"
+        fill="none"
+      />
+      {/* Measurement lines */}
+      <line x1="18" y1="38" x2="68" y2="38" stroke="white" strokeWidth="1.5" strokeOpacity="0.55" />
+      <line x1="20" y1="52" x2="68" y2="52" stroke="white" strokeWidth="1.5" strokeOpacity="0.55" />
+      <line x1="22" y1="66" x2="68" y2="66" stroke="white" strokeWidth="1.5" strokeOpacity="0.55" />
+    </svg>
   )
 }
