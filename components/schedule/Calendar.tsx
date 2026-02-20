@@ -420,8 +420,10 @@ export default function Calendar({ posts = [] }: CalendarProps) {
             </div>
 
             {/* Upcoming posts panel */}
-            <div className="card">
-              <h2 className="text-lg uppercase font-mono border-b border-outline pb-3 mb-4">Upcoming Posts</h2>
+            <div>
+              <h2 className="text-sm uppercase font-mono tracking-[0.25em] font-bold pb-4 mb-3 border-b border-outline">
+                Upcoming Posts
+              </h2>
 
               {upcomingPosts.length === 0 ? (
                 <div className="py-8 text-center">
@@ -429,57 +431,44 @@ export default function Calendar({ posts = [] }: CalendarProps) {
                   <a href="/create" className="btn-secondary text-sm px-4 py-2 inline-block">Generate an Ad →</a>
                 </div>
               ) : (
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
                   {upcomingPosts.map((post) => {
-                    const chip = platformChipStyle(post.platform)
+                    const day = parseInt(post.date.slice(8, 10))
+                    const monthAbbr = MONTH_NAMES[parseInt(post.date.slice(5, 7)) - 1].slice(0, 3)
                     return (
                       <button
                         key={post.id}
                         onClick={() => setSelectedPost(post)}
-                        className="flex items-stretch gap-0 border border-outline w-full text-left hover:border-rust transition-colors group overflow-hidden"
+                        className="flex items-stretch border border-outline w-full text-left hover:border-rust transition-colors group bg-paper"
                       >
-                        {/* Thumbnail */}
-                        {post.signedUrl ? (
-                          <div className="w-[72px] flex-shrink-0 bg-gray-100 relative overflow-hidden">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={post.signedUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                          </div>
-                        ) : (
-                          <div className="w-[72px] flex-shrink-0 bg-forest/5 flex items-center justify-center border-r border-outline">
-                            <span className="text-xs font-mono text-forest/30 uppercase">AD</span>
-                          </div>
-                        )}
-
-                        {/* Date badge */}
-                        <div className="flex flex-col items-center justify-center bg-forest text-paper px-3 py-3 min-w-[60px] flex-shrink-0 border-r border-forest">
-                          <span className="text-[10px] font-mono uppercase tracking-widest opacity-70">
-                            {MONTH_NAMES[parseInt(post.date.slice(5, 7)) - 1].slice(0, 3)}
-                          </span>
-                          <span className="text-2xl font-mono font-bold text-rust leading-none">
-                            {parseInt(post.date.slice(8, 10))}
-                          </span>
+                        {/* Date column */}
+                        <div className="flex flex-col items-center justify-center px-6 py-4 border-r border-outline flex-shrink-0 min-w-[80px]">
+                          <span className="text-4xl font-mono font-bold text-graphite leading-none">{day}</span>
+                          <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-graphite/50 mt-1">{monthAbbr}</span>
                         </div>
 
                         {/* Content */}
-                        <div className="flex flex-col justify-center gap-1.5 flex-1 min-w-0 px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <span className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-sm border ${chip.bg} ${chip.text}`}>
-                              {post.platform}
-                            </span>
-                            <span className={`inline-block w-1.5 h-1.5 rounded-full ${STATUS_DOT[post.status]}`} />
-                            <span className="text-[10px] font-mono text-gray-400 uppercase">{post.status}</span>
-                          </div>
+                        <div className="flex flex-col justify-center gap-0.5 flex-1 min-w-0 px-5 py-4">
+                          <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-graphite/50">
+                            {post.platform.toUpperCase()} POST
+                          </span>
                           {post.hook && (
-                            <p className="text-sm font-mono text-graphite font-medium truncate">{post.hook}</p>
+                            <p className="text-sm font-mono font-bold uppercase text-graphite truncate tracking-wide mt-0.5">
+                              {post.hook}
+                            </p>
                           )}
                           {post.caption && (
-                            <p className="text-xs text-gray-500 truncate">{post.caption}</p>
+                            <p className="text-xs font-mono text-graphite/50 truncate mt-0.5">
+                              {post.caption}
+                            </p>
                           )}
                         </div>
 
-                        {/* Arrow */}
-                        <div className="flex items-center px-4 flex-shrink-0">
-                          <span className="text-gray-300 group-hover:text-rust transition-colors font-mono text-sm">→</span>
+                        {/* Edit button */}
+                        <div className="flex items-center px-5 flex-shrink-0">
+                          <span className="border border-outline px-4 py-2 text-xs font-mono uppercase text-graphite group-hover:bg-graphite group-hover:text-paper transition-colors">
+                            Edit
+                          </span>
                         </div>
                       </button>
                     )
