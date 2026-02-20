@@ -300,15 +300,15 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
             <div className="flex-1">
               <FieldLabel>Brand Colors</FieldLabel>
               {brand.brand_colors?.length ? (
-                <div className="flex flex-wrap gap-4 mt-3">
+                <div className="flex flex-wrap gap-6 mt-3">
                   {brand.brand_colors.map((color) => (
                     <div key={color} className="flex flex-col gap-2">
                       <div
-                        className="w-16 h-16 border border-outline"
+                        className="w-24 h-24 border border-outline"
                         style={{ backgroundColor: color }}
                       />
                       <div
-                        className="w-16 h-8 border border-outline opacity-60"
+                        className="w-24 h-12 border border-outline opacity-60"
                         style={{ backgroundColor: color }}
                       />
                       <p className="text-xs font-mono uppercase tracking-wide text-graphite">
