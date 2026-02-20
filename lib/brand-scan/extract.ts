@@ -36,7 +36,7 @@ Rules:
 - personality_traits: max 5 single words or short phrases
 - words_to_use: max 8 words/phrases that match their tone
 - words_to_avoid: max 5 words/phrases that conflict with their voice
-- brand_colors: only include if a theme-color meta tag is found or colors are clearly branded. Use valid #RRGGBB hex format only.
+- brand_colors: Extract exactly 3 hex colors representing the brand's primary palette. ALWAYS use the colors listed under "CSS COLORS DETECTED FROM STYLESHEET" as your primary source — these are pulled directly from the site's CSS and are the most reliable signal. If fewer than 3 are provided, supplement with the THEME COLOR if present, then make reasonable inferences from the brand context. Use valid #RRGGBB hex format only. Always return exactly 3 colors when any CSS or theme color data is available.
 - If you cannot reliably extract a field, omit it entirely — do not guess.
 - Return ONLY the JSON object. No markdown fences, no explanation.`
 
@@ -48,6 +48,7 @@ WEBSITE URL: ${content.url}
 PAGE TITLE: ${content.title}
 META DESCRIPTION: ${content.description}
 ${content.themeColor ? `THEME COLOR: ${content.themeColor}` : ''}
+${content.cssColors?.length ? `CSS COLORS DETECTED FROM STYLESHEET: ${content.cssColors.join(', ')}` : ''}
 
 BODY TEXT (first 3000 chars):
 ${content.bodyText}
@@ -87,13 +88,16 @@ ${content.bodyText}
     }
   }
 
-  // If theme color present and no colors extracted yet, add it
-  if (
-    content.themeColor &&
-    /^#[0-9A-F]{6}$/i.test(content.themeColor) &&
-    !parsed.brand_colors
-  ) {
-    parsed.brand_colors = [content.themeColor]
+  // Fallback: seed from CSS colors and/or theme color if OpenAI returned nothing
+  if (!parsed.brand_colors) {
+    const seeds: string[] = []
+    if (content.cssColors?.length) seeds.push(...content.cssColors)
+    if (content.themeColor && /^#[0-9A-F]{6}$/i.test(content.themeColor)) {
+      if (!seeds.includes(content.themeColor.toUpperCase())) {
+        seeds.push(content.themeColor.toUpperCase())
+      }
+    }
+    if (seeds.length) parsed.brand_colors = seeds.slice(0, 3)
   }
 
   console.log(`[BrandScan] Extraction complete: ${parsed.company_name ?? '(unnamed)'}`)
