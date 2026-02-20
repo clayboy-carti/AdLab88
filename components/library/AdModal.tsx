@@ -95,6 +95,21 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, scheduledDate }:
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
 
+  // If no scheduledDate was passed as a prop (e.g. opened from library),
+  // fetch it from the API so the confirmed state is shown correctly.
+  useEffect(() => {
+    if (scheduledDate !== undefined) return
+    fetch(`/api/social/schedule?adId=${ad.id}`)
+      .then((r) => r.json())
+      .then(({ scheduledFor }) => {
+        if (scheduledFor) {
+          setSelectedDate(scheduledFor)
+          setScheduleConfirmed(true)
+        }
+      })
+      .catch(() => { /* silent — scheduling section just stays empty */ })
+  }, [ad.id, scheduledDate])
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {

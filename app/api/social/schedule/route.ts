@@ -1,6 +1,32 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const adId = searchParams.get('adId')
+
+  if (!adId) {
+    return NextResponse.json({ error: 'adId is required' }, { status: 400 })
+  }
+
+  const supabase = createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { data } = await supabase
+    .from('scheduled_posts')
+    .select('scheduled_for')
+    .eq('user_id', user.id)
+    .eq('ad_id', adId)
+    .eq('status', 'scheduled')
+    .maybeSingle()
+
+  return NextResponse.json({ scheduledFor: data?.scheduled_for ?? null })
+}
+
 export async function POST(request: Request) {
   const supabase = createClient()
 
