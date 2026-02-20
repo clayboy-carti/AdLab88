@@ -439,12 +439,12 @@ export default function Calendar({ posts = [] }: CalendarProps) {
                       <button
                         key={post.id}
                         onClick={() => setSelectedPost(post)}
-                        className="flex items-stretch border border-outline border-t-2 border-t-rust w-full text-left hover:border-rust transition-colors group bg-paper"
+                        className="flex items-stretch border border-outline border-t-4 border-t-rust w-full text-left hover:border-rust transition-colors group bg-paper"
                       >
                         {/* Date column */}
                         <div className="flex flex-col items-center justify-center px-6 py-4 border-r border-outline flex-shrink-0 min-w-[80px]">
                           <span className="text-4xl font-mono font-bold text-graphite leading-none">{day}</span>
-                          <span className="text-[10px] font-mono font-bold uppercase tracking-[0.15em] text-graphite mt-1">{monthAbbr}</span>
+                          <span className="text-xs font-mono font-bold uppercase tracking-[0.15em] text-graphite mt-1">{monthAbbr}</span>
                         </div>
 
                         {/* Content */}
