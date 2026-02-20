@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import BrandWizard from '@/components/brand/BrandWizard'
+import BrandSetupFlow from '@/components/brand/BrandSetupFlow'
 import BrandDashboard from '@/components/brand/BrandDashboard'
 import type { Brand } from '@/types/database'
 
@@ -37,12 +37,5 @@ export default async function BrandPage() {
     )
   }
 
-  return (
-    <div className="max-w-4xl mx-auto p-8">
-      <h1 className="text-3xl uppercase font-mono header-accent mb-8">Brand Setup</h1>
-      <div className="card">
-        <BrandWizard />
-      </div>
-    </div>
-  )
+  return <BrandSetupFlow />
 }
