@@ -284,12 +284,18 @@ export default function Calendar({ posts = [] }: CalendarProps) {
     .sort((a, b) => a.date.localeCompare(b.date))
 
   const handleCaptionUpdate = (adId: string, newCaption: string) => {
-    setLocalPosts((prev) =>
-      prev.map((p) => (p.adId === adId ? { ...p, caption: newCaption } : p))
-    )
-    setSelectedPost((prev) =>
-      prev?.adId === adId ? { ...prev, caption: newCaption } : prev
-    )
+    setLocalPosts((prev) => prev.map((p) => (p.adId === adId ? { ...p, caption: newCaption } : p)))
+    setSelectedPost((prev) => prev?.adId === adId ? { ...prev, caption: newCaption } : prev)
+  }
+
+  const handleHookUpdate = (adId: string, newHook: string) => {
+    setLocalPosts((prev) => prev.map((p) => (p.adId === adId ? { ...p, hook: newHook } : p)))
+    setSelectedPost((prev) => prev?.adId === adId ? { ...prev, hook: newHook } : prev)
+  }
+
+  const handleCtaUpdate = (adId: string, newCta: string) => {
+    setLocalPosts((prev) => prev.map((p) => (p.adId === adId ? { ...p, cta: newCta } : p)))
+    setSelectedPost((prev) => prev?.adId === adId ? { ...prev, cta: newCta } : prev)
   }
 
   const selectedAd = selectedPost ? postToAd(selectedPost) : null
@@ -555,6 +561,8 @@ export default function Calendar({ posts = [] }: CalendarProps) {
           ad={selectedAd}
           onClose={() => setSelectedPost(null)}
           onCaptionUpdate={handleCaptionUpdate}
+          onHookUpdate={handleHookUpdate}
+          onCtaUpdate={handleCtaUpdate}
           scheduledDate={selectedPost.date}
         />
       )}

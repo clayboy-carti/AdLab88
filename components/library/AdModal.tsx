@@ -7,8 +7,12 @@ interface AdModalProps {
   ad: Ad
   onClose: () => void
   onCaptionUpdate: (adId: string, newCaption: string) => void
+  onHookUpdate?: (adId: string, newHook: string) => void
+  onCtaUpdate?: (adId: string, newCta: string) => void
   scheduledDate?: string | null
 }
+
+type EditableField = 'hook' | 'cta' | 'caption'
 
 // ─── Calendar helpers ────────────────────────────────────────────────────────
 
@@ -73,14 +77,97 @@ function formatSelectedDate(dateStr: string): string {
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })
 }
 
+// ─── EditableSection ─────────────────────────────────────────────────────────
+
+interface EditableSectionProps {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  displayClassName?: string
+  rows?: number
+  isEditing: boolean
+  isSaving: boolean
+  isCopied: boolean
+  error: string | null
+  onCopy: () => void
+  onEdit: () => void
+  onSave: () => void
+  onCancel: () => void
+}
+
+function EditableSection({
+  label, value, onChange, displayClassName = 'text-sm text-gray-700 leading-relaxed',
+  rows = 4, isEditing, isSaving, isCopied, error, onCopy, onEdit, onSave, onCancel,
+}: EditableSectionProps) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    if (isEditing) ref.current?.focus()
+  }, [isEditing])
+
+  return (
+    <div className="border border-outline p-4">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs uppercase font-mono text-gray-400 tracking-widest">{label}</p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onCopy}
+            title={`Copy ${label.toLowerCase()}`}
+            className="flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 transition-colors"
+          >
+            {isCopied ? <><CheckIcon /><span>Copied</span></> : <><CopyIcon /><span>Copy</span></>}
+          </button>
+          {!isEditing && (
+            <button
+              onClick={onEdit}
+              title={`Edit ${label.toLowerCase()}`}
+              className="flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 transition-colors"
+            >
+              <EditIcon /><span>Edit</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {isEditing ? (
+        <div className="flex flex-col gap-3">
+          <textarea
+            ref={ref}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            rows={rows}
+            className="w-full border border-outline p-3 text-sm font-mono bg-white resize-none focus:outline-none focus:border-rust"
+          />
+          {error && <p className="text-xs text-red-600 font-mono">{error}</p>}
+          <div className="flex gap-2">
+            <button onClick={onSave} disabled={isSaving} className="btn-primary text-sm px-4 py-2">
+              {isSaving ? 'SAVING...' : 'SAVE'}
+            </button>
+            <button onClick={onCancel} disabled={isSaving} className="btn-secondary text-sm px-4 py-2">
+              CANCEL
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p className={`whitespace-pre-wrap ${displayClassName}`}>{value}</p>
+      )}
+    </div>
+  )
+}
+
 // ─── Main Modal ──────────────────────────────────────────────────────────────
 
-export default function AdModal({ ad, onClose, onCaptionUpdate, scheduledDate }: AdModalProps) {
+export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, onCtaUpdate, scheduledDate }: AdModalProps) {
+  // Editable field values
+  const [hook, setHook] = useState(ad.hook)
+  const [cta, setCta] = useState(ad.cta)
   const [caption, setCaption] = useState(ad.caption)
-  const [editing, setEditing] = useState(false)
+
+  // Shared edit / save / copy state — only one field active at a time
+  const [editingField, setEditingField] = useState<EditableField | null>(null)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
+  const [copiedField, setCopiedField] = useState<EditableField | null>(null)
+
   const [downloading, setDownloading] = useState(false)
 
   // Schedule state
@@ -92,11 +179,8 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, scheduledDate }:
   const [scheduling, setScheduling] = useState(false)
   const [scheduleError, setScheduleError] = useState<string | null>(null)
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
 
-  // If no scheduledDate was passed as a prop (e.g. opened from library),
-  // fetch it from the API so the confirmed state is shown correctly.
   useEffect(() => {
     if (scheduledDate !== undefined) return
     fetch(`/api/social/schedule?adId=${ad.id}`)
@@ -107,51 +191,72 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, scheduledDate }:
           setScheduleConfirmed(true)
         }
       })
-      .catch(() => { /* silent — scheduling section just stays empty */ })
+      .catch(() => {})
   }, [ad.id, scheduledDate])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (pickerOpen) { setPickerOpen(false); return }
+        if (editingField) { handleCancel(); return }
         onClose()
       }
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [onClose, pickerOpen])
-
-  useEffect(() => {
-    if (editing) textareaRef.current?.focus()
-  }, [editing])
+  }, [onClose, pickerOpen, editingField])
 
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === overlayRef.current) onClose()
   }
 
-  const handleCopyCaption = async () => {
+  // ── Copy
+  const handleCopy = async (field: EditableField, value: string) => {
     try {
-      await navigator.clipboard.writeText(caption)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      await navigator.clipboard.writeText(value)
+      setCopiedField(field)
+      setTimeout(() => setCopiedField(null), 2000)
     } catch { /* silent */ }
   }
 
-  const handleSaveCaption = async () => {
+  // ── Edit / Cancel
+  const handleEdit = (field: EditableField) => {
+    setSaveError(null)
+    setEditingField(field)
+  }
+
+  const handleCancel = () => {
+    // Revert the in-progress field to the original ad value
+    if (editingField === 'hook') setHook(ad.hook)
+    if (editingField === 'cta') setCta(ad.cta)
+    if (editingField === 'caption') setCaption(ad.caption)
+    setSaveError(null)
+    setEditingField(null)
+  }
+
+  // ── Save
+  const handleSave = async () => {
+    if (!editingField) return
+    const valueMap: Record<EditableField, string> = { hook, cta, caption }
+    const value = valueMap[editingField]
+
     setSaving(true)
     setSaveError(null)
     try {
       const res = await fetch('/api/update-ad-caption', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adId: ad.id, caption }),
+        body: JSON.stringify({ adId: ad.id, [editingField]: value }),
       })
       if (!res.ok) {
         const data = await res.json()
         throw new Error(data.error || 'Save failed')
       }
-      onCaptionUpdate(ad.id, caption)
-      setEditing(false)
+      // Notify parent
+      if (editingField === 'caption') onCaptionUpdate(ad.id, value)
+      else if (editingField === 'hook') onHookUpdate?.(ad.id, value)
+      else if (editingField === 'cta') onCtaUpdate?.(ad.id, value)
+      setEditingField(null)
     } catch (err: any) {
       setSaveError(err.message)
     } finally {
@@ -159,12 +264,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, scheduledDate }:
     }
   }
 
-  const handleCancelEdit = () => {
-    setCaption(ad.caption)
-    setSaveError(null)
-    setEditing(false)
-  }
-
+  // ── Download
   const handleDownload = async () => {
     setDownloading(true)
     try {
@@ -184,6 +284,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, scheduledDate }:
     }
   }
 
+  // ── Schedule
   const handleSchedule = async () => {
     if (!selectedDate) return
     setScheduling(true)
@@ -196,7 +297,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, scheduledDate }:
           adId: ad.id,
           scheduledFor: selectedDate,
           platform: ad.target_platform || 'post',
-          caption: caption,
+          caption,
         }),
       })
       if (!res.ok) {
@@ -261,67 +362,58 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, scheduledDate }:
         )}
 
         {/* Body */}
-        <div className="p-6 flex flex-col gap-6">
+        <div className="p-6 flex flex-col gap-4">
 
-          {/* Hook + CTA */}
-          <div className="flex flex-col gap-4">
-            <div>
-              <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-1">Hook</p>
-              <p className="text-xl font-bold text-graphite leading-snug">{ad.hook}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-1">CTA</p>
-              <p className="text-sm font-bold text-rust">{ad.cta}</p>
-            </div>
-          </div>
+          {/* Hook */}
+          <EditableSection
+            label="Hook"
+            value={hook}
+            onChange={setHook}
+            displayClassName="text-xl font-bold text-graphite leading-snug"
+            rows={2}
+            isEditing={editingField === 'hook'}
+            isSaving={saving && editingField === 'hook'}
+            isCopied={copiedField === 'hook'}
+            error={editingField === 'hook' ? saveError : null}
+            onCopy={() => handleCopy('hook', hook)}
+            onEdit={() => handleEdit('hook')}
+            onSave={handleSave}
+            onCancel={handleCancel}
+          />
 
-          {/* Caption section */}
-          <div className="border border-outline p-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs uppercase font-mono text-gray-400 tracking-widest">Caption</p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleCopyCaption}
-                  title="Copy caption"
-                  className="flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 transition-colors"
-                >
-                  {copied ? <><CheckIcon /><span>Copied</span></> : <><CopyIcon /><span>Copy</span></>}
-                </button>
-                {!editing && (
-                  <button
-                    onClick={() => setEditing(true)}
-                    title="Edit caption"
-                    className="flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 transition-colors"
-                  >
-                    <EditIcon /><span>Edit</span>
-                  </button>
-                )}
-              </div>
-            </div>
+          {/* CTA */}
+          <EditableSection
+            label="CTA"
+            value={cta}
+            onChange={setCta}
+            displayClassName="text-sm font-bold text-rust"
+            rows={2}
+            isEditing={editingField === 'cta'}
+            isSaving={saving && editingField === 'cta'}
+            isCopied={copiedField === 'cta'}
+            error={editingField === 'cta' ? saveError : null}
+            onCopy={() => handleCopy('cta', cta)}
+            onEdit={() => handleEdit('cta')}
+            onSave={handleSave}
+            onCancel={handleCancel}
+          />
 
-            {editing ? (
-              <div className="flex flex-col gap-3">
-                <textarea
-                  ref={textareaRef}
-                  value={caption}
-                  onChange={(e) => setCaption(e.target.value)}
-                  rows={6}
-                  className="w-full border border-outline p-3 text-sm font-mono bg-white resize-none focus:outline-none focus:border-rust"
-                />
-                {saveError && <p className="text-xs text-red-600 font-mono">{saveError}</p>}
-                <div className="flex gap-2">
-                  <button onClick={handleSaveCaption} disabled={saving} className="btn-primary text-sm px-4 py-2">
-                    {saving ? 'SAVING...' : 'SAVE'}
-                  </button>
-                  <button onClick={handleCancelEdit} disabled={saving} className="btn-secondary text-sm px-4 py-2">
-                    CANCEL
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{caption}</p>
-            )}
-          </div>
+          {/* Caption */}
+          <EditableSection
+            label="Caption"
+            value={caption}
+            onChange={setCaption}
+            displayClassName="text-sm text-gray-700 leading-relaxed"
+            rows={6}
+            isEditing={editingField === 'caption'}
+            isSaving={saving && editingField === 'caption'}
+            isCopied={copiedField === 'caption'}
+            error={editingField === 'caption' ? saveError : null}
+            onCopy={() => handleCopy('caption', caption)}
+            onEdit={() => handleEdit('caption')}
+            onSave={handleSave}
+            onCancel={handleCancel}
+          />
 
           {/* Meta tags */}
           <div className="flex flex-wrap gap-2">
@@ -350,7 +442,6 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, scheduledDate }:
 
             <div className="p-4 flex flex-col gap-4">
               {scheduleConfirmed ? (
-                // Confirmed state
                 <div className="flex items-center gap-3 py-2">
                   <span className="inline-block w-2 h-2 bg-forest flex-shrink-0" />
                   <p className="text-sm font-mono text-graphite">
@@ -366,7 +457,6 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, scheduledDate }:
                 </div>
               ) : (
                 <>
-                  {/* Date trigger button */}
                   <button
                     onClick={() => setPickerOpen((o) => !o)}
                     className="flex items-center justify-between w-full border border-outline px-4 py-3 text-sm font-mono hover:bg-gray-50 transition-colors"
@@ -377,38 +467,28 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, scheduledDate }:
                     <CalendarIcon open={pickerOpen} />
                   </button>
 
-                  {/* Inline calendar picker */}
                   {pickerOpen && (
                     <div className="border border-outline">
-                      {/* Picker month nav */}
                       <div className="flex items-center justify-between px-3 py-2 border-b border-outline bg-gray-50">
                         <button
                           onClick={() => setPickerMonth(new Date(pickerYear, pickerMonthIdx - 1, 1))}
                           className="border border-outline px-2 py-1 font-mono text-xs hover:bg-gray-100 transition-colors"
-                        >
-                          ←
-                        </button>
+                        >←</button>
                         <span className="text-xs uppercase font-mono tracking-wider">
                           {MONTH_NAMES[pickerMonthIdx]} {pickerYear}
                         </span>
                         <button
                           onClick={() => setPickerMonth(new Date(pickerYear, pickerMonthIdx + 1, 1))}
                           className="border border-outline px-2 py-1 font-mono text-xs hover:bg-gray-100 transition-colors"
-                        >
-                          →
-                        </button>
+                        >→</button>
                       </div>
 
-                      {/* Day-of-week labels */}
                       <div className="grid grid-cols-7 border-b border-outline">
                         {DAY_LABELS.map((d, i) => (
-                          <div key={i} className="text-[10px] uppercase font-mono text-gray-400 text-center py-1.5">
-                            {d}
-                          </div>
+                          <div key={i} className="text-[10px] uppercase font-mono text-gray-400 text-center py-1.5">{d}</div>
                         ))}
                       </div>
 
-                      {/* Day cells */}
                       <div className="grid grid-cols-7">
                         {pickerCells.map((cell, i) => {
                           const isSelected = cell.dateStr === selectedDate
@@ -451,7 +531,6 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, scheduledDate }:
                   {scheduleError && (
                     <p className="text-xs text-red-600 font-mono">{scheduleError}</p>
                   )}
-                  {/* Schedule button */}
                   <button
                     onClick={handleSchedule}
                     disabled={!selectedDate || scheduling}

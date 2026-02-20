@@ -9,11 +9,18 @@ export default function LibraryGrid({ initialAds }: { initialAds: Ad[] }) {
   const [selectedAd, setSelectedAd] = useState<Ad | null>(null)
 
   const handleCaptionUpdate = (adId: string, newCaption: string) => {
-    setAds((prev) =>
-      prev.map((ad) => (ad.id === adId ? { ...ad, caption: newCaption } : ad))
-    )
-    // Keep the modal open with fresh caption
+    setAds((prev) => prev.map((ad) => (ad.id === adId ? { ...ad, caption: newCaption } : ad)))
     setSelectedAd((prev) => (prev?.id === adId ? { ...prev, caption: newCaption } : prev))
+  }
+
+  const handleHookUpdate = (adId: string, newHook: string) => {
+    setAds((prev) => prev.map((ad) => (ad.id === adId ? { ...ad, hook: newHook } : ad)))
+    setSelectedAd((prev) => (prev?.id === adId ? { ...prev, hook: newHook } : prev))
+  }
+
+  const handleCtaUpdate = (adId: string, newCta: string) => {
+    setAds((prev) => prev.map((ad) => (ad.id === adId ? { ...ad, cta: newCta } : ad)))
+    setSelectedAd((prev) => (prev?.id === adId ? { ...prev, cta: newCta } : prev))
   }
 
   return (
@@ -29,6 +36,8 @@ export default function LibraryGrid({ initialAds }: { initialAds: Ad[] }) {
           ad={selectedAd}
           onClose={() => setSelectedAd(null)}
           onCaptionUpdate={handleCaptionUpdate}
+          onHookUpdate={handleHookUpdate}
+          onCtaUpdate={handleCtaUpdate}
         />
       )}
     </>
