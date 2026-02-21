@@ -24,15 +24,20 @@ export default function ReferenceImageUpload({
   const supabase = createClient()
 
   useEffect(() => {
-    loadImages()
+    loadImages().then((imgs) => {
+      // Auto-select the most recent image on initial load
+      if (imgs.length > 0) {
+        onImageSelect(imgs[0].id)
+      }
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const loadImages = async () => {
+  const loadImages = async (): Promise<ImageWithUrl[]> => {
     const {
       data: { user },
     } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) return []
 
     const { data, error } = await supabase
       .from('reference_images')
@@ -55,7 +60,9 @@ export default function ReferenceImageUpload({
         })
       )
       setImages(imagesWithUrls)
+      return imagesWithUrls
     }
+    return []
   }
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,8 +89,11 @@ export default function ReferenceImageUpload({
         throw new Error(result.error || 'Upload failed')
       }
 
-      // Reload images
-      await loadImages()
+      // Reload images and auto-select the newly uploaded one (first in list)
+      const imgs = await loadImages()
+      if (imgs.length > 0) {
+        onImageSelect(imgs[0].id)
+      }
 
       // Clear file input
       e.target.value = ''
@@ -110,12 +120,11 @@ export default function ReferenceImageUpload({
       // Delete from database
       await supabase.from('reference_images').delete().eq('id', imageId)
 
-      // Reload images
-      await loadImages()
-
-      // Clear selection if deleted image was selected
+      // Reload images and update selection
+      const remaining = await loadImages()
       if (selectedImageId === imageId) {
-        onImageSelect(null)
+        // Auto-select next available image, or clear if none left
+        onImageSelect(remaining.length > 0 ? remaining[0].id : null)
       }
     } catch (err) {
       console.error('Delete error:', err)
@@ -153,7 +162,7 @@ export default function ReferenceImageUpload({
 
       {images.length > 0 && (
         <div>
-          <h3 className="text-sm uppercase font-mono mb-3">SELECT REFERENCE IMAGE</h3>
+          <h3 className="text-sm uppercase font-mono mb-3">REFERENCE IMAGES — click to switch</h3>
           <div className="grid grid-cols-5 gap-4">
             {images.map((img) => (
               <div

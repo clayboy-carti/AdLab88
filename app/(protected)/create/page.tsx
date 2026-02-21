@@ -99,7 +99,7 @@ export default function CreatePage() {
           <div className="card">
             <h2 className="text-xl uppercase font-mono mb-1">Reference Images</h2>
             <p className="text-xs text-gray-500 font-mono mb-4">
-              Optional — used as a visual style guide for the generated image
+              Optional — uploaded images are automatically used as a visual style guide
             </p>
             <ReferenceImageUpload
               onImageSelect={setSelectedImageId}
@@ -281,7 +281,7 @@ export default function CreatePage() {
           {!generating && !generatedAd && !error && (
             <div className="border border-outline p-8 text-center bg-gray-50">
               <p className="text-gray-500 text-sm font-mono">
-                Add context, optionally select a reference image, then click Generate
+                Add context, optionally upload a reference image, then click Generate
               </p>
             </div>
           )}
