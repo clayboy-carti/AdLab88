@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { Ad } from './AdCard'
+import type { LateAccount, LatePlatform } from '@/lib/late'
 
 interface AdModalProps {
   ad: Ad
@@ -155,16 +156,22 @@ function EditableSection({
   )
 }
 
+// ─── Platform icon map ────────────────────────────────────────────────────────
+
+const PLATFORM_ICONS: Record<string, () => JSX.Element> = {
+  twitter:   XTwitterIcon,
+  x:         XTwitterIcon,
+  facebook:  FacebookIcon,
+  instagram: InstagramIcon,
+  linkedin:  LinkedInIcon,
+}
+
+function PlatformIcon({ platform }: { platform: string }) {
+  const Icon = PLATFORM_ICONS[platform.toLowerCase()]
+  return Icon ? <Icon /> : <span className="text-xs font-mono uppercase">{platform[0]}</span>
+}
+
 // ─── Main Modal ──────────────────────────────────────────────────────────────
-
-type PlatformKey = 'twitter' | 'facebook' | 'instagram' | 'linkedin'
-
-const PLATFORMS: { key: PlatformKey; label: string; Icon: () => JSX.Element }[] = [
-  { key: 'twitter',   label: 'X (Twitter)', Icon: XTwitterIcon },
-  { key: 'facebook',  label: 'Facebook',    Icon: FacebookIcon },
-  { key: 'instagram', label: 'Instagram',   Icon: InstagramIcon },
-  { key: 'linkedin',  label: 'LinkedIn',    Icon: LinkedInIcon },
-]
 
 export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, onCtaUpdate, onDelete, scheduledDate }: AdModalProps) {
   // Editable field values
@@ -172,12 +179,16 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
   const [cta, setCta] = useState(ad.cta)
   const [caption, setCaption] = useState(ad.caption)
 
-  // Platform toggles (UI only)
-  const [activePlatforms, setActivePlatforms] = useState<Record<PlatformKey, boolean>>({
-    twitter: false, facebook: false, instagram: false, linkedin: false,
-  })
-  const togglePlatform = (key: PlatformKey) =>
-    setActivePlatforms(prev => ({ ...prev, [key]: !prev[key] }))
+  // Late connected accounts + selected account IDs
+  const [lateAccounts, setLateAccounts] = useState<LateAccount[]>([])
+  const [lateConfigured, setLateConfigured] = useState(true)
+  const [accountsLoading, setAccountsLoading] = useState(true)
+  const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([])
+
+  const toggleAccount = (accountId: string) =>
+    setSelectedAccountIds((prev) =>
+      prev.includes(accountId) ? prev.filter((id) => id !== accountId) : [...prev, accountId]
+    )
 
   // Shared edit / save / copy state — only one field active at a time
   const [editingField, setEditingField] = useState<EditableField | null>(null)
@@ -203,14 +214,30 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
 
   const overlayRef = useRef<HTMLDivElement>(null)
 
+  // Load Late connected accounts
+  useEffect(() => {
+    fetch('/api/social/accounts')
+      .then((r) => r.json())
+      .then(({ accounts, configured }) => {
+        setLateAccounts(accounts ?? [])
+        setLateConfigured(configured !== false)
+      })
+      .catch(() => {})
+      .finally(() => setAccountsLoading(false))
+  }, [])
+
+  // Pre-populate scheduled date + selected platforms if this ad is already scheduled
   useEffect(() => {
     if (scheduledDate !== undefined) return
     fetch(`/api/social/schedule?adId=${ad.id}`)
       .then((r) => r.json())
-      .then(({ scheduledFor }) => {
+      .then(({ scheduledFor, platforms }) => {
         if (scheduledFor) {
           setSelectedDate(scheduledFor)
           setScheduleConfirmed(true)
+        }
+        if (Array.isArray(platforms) && platforms.length > 0) {
+          setSelectedAccountIds(platforms)
         }
       })
       .catch(() => {})
@@ -330,6 +357,14 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
     setScheduling(true)
     setScheduleError(null)
     try {
+      // Build platforms array from selected account IDs + their platform names
+      const platforms: LatePlatform[] = selectedAccountIds
+        .map((id) => {
+          const acct = lateAccounts.find((a) => a._id === id)
+          return acct ? { platform: acct.platform, accountId: acct._id } : null
+        })
+        .filter(Boolean) as LatePlatform[]
+
       const res = await fetch('/api/social/schedule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -338,6 +373,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
           scheduledFor: selectedDate,
           platform: ad.target_platform || 'post',
           caption,
+          platforms,
         }),
       })
       if (!res.ok) {
@@ -430,38 +466,78 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
             )}
           </div>
 
-          {/* Right: platform toggles */}
+          {/* Right: platform toggles — powered by Late connected accounts */}
           <div className="w-72 flex flex-col flex-shrink-0">
             <div className="px-5 py-3 border-b border-outline bg-gray-50">
               <p className="text-xs uppercase font-mono text-gray-500 tracking-widest">Publish To</p>
             </div>
-            <div className="flex flex-col divide-y divide-outline">
-              {PLATFORMS.map(({ key, label, Icon }) => {
-                const enabled = activePlatforms[key]
-                return (
-                  <div key={key} className="flex items-center justify-between px-5 py-4">
-                    <div className="flex items-center gap-3">
-                      <span className={`transition-colors ${enabled ? 'text-graphite' : 'text-gray-300'}`}>
-                        <Icon />
-                      </span>
-                      <span className={`text-xs font-mono uppercase tracking-wide transition-colors ${enabled ? 'text-graphite' : 'text-gray-400'}`}>
-                        {label}
-                      </span>
+
+            {accountsLoading ? (
+              <div className="flex-1 flex items-center justify-center p-6">
+                <span className="text-xs font-mono text-gray-400 uppercase animate-pulse">Loading accounts…</span>
+              </div>
+            ) : !lateConfigured ? (
+              <div className="flex-1 p-5 flex flex-col gap-3">
+                <p className="text-xs font-mono text-gray-500 leading-relaxed">
+                  Add your <span className="text-graphite font-bold">LATE_API_KEY</span> to .env.local to enable social posting.
+                </p>
+                <a
+                  href="https://getlate.dev"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-mono uppercase border border-outline px-3 py-2 text-center hover:bg-gray-100 transition-colors"
+                >
+                  Get Late API Key →
+                </a>
+              </div>
+            ) : lateAccounts.length === 0 ? (
+              <div className="flex-1 p-5 flex flex-col gap-3">
+                <p className="text-xs font-mono text-gray-500 leading-relaxed">
+                  No social accounts connected. Connect accounts in your Late dashboard first.
+                </p>
+                <a
+                  href="https://app.getlate.dev"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-mono uppercase border border-outline px-3 py-2 text-center hover:bg-gray-100 transition-colors"
+                >
+                  Open Late Dashboard →
+                </a>
+              </div>
+            ) : (
+              <div className="flex flex-col divide-y divide-outline overflow-y-auto">
+                {lateAccounts.map((acct) => {
+                  const enabled = selectedAccountIds.includes(acct._id)
+                  return (
+                    <div key={acct._id} className="flex items-center justify-between px-5 py-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className={`flex-shrink-0 transition-colors ${enabled ? 'text-graphite' : 'text-gray-300'}`}>
+                          <PlatformIcon platform={acct.platform} />
+                        </span>
+                        <div className="min-w-0">
+                          <p className={`text-xs font-mono uppercase tracking-wide truncate transition-colors ${enabled ? 'text-graphite' : 'text-gray-400'}`}>
+                            {acct.displayName || acct.username}
+                          </p>
+                          {acct.username && acct.displayName && (
+                            <p className="text-[10px] font-mono text-gray-400 truncate">@{acct.username}</p>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => toggleAccount(acct._id)}
+                        role="switch"
+                        aria-checked={enabled}
+                        className={`ml-3 relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none ${enabled ? 'bg-rust' : 'bg-gray-200'}`}
+                      >
+                        <span
+                          className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ${enabled ? 'translate-x-4' : 'translate-x-0.5'}`}
+                        />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => togglePlatform(key)}
-                      role="switch"
-                      aria-checked={enabled}
-                      className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none ${enabled ? 'bg-rust' : 'bg-gray-200'}`}
-                    >
-                      <span
-                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ${enabled ? 'translate-x-4' : 'translate-x-0.5'}`}
-                      />
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
 
