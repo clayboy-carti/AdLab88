@@ -298,6 +298,25 @@ export default function Calendar({ posts = [] }: CalendarProps) {
     setSelectedPost((prev) => prev?.adId === adId ? { ...prev, cta: newCta } : prev)
   }
 
+  const [unschedulingId, setUnschedulingId] = useState<string | null>(null)
+
+  const handleUnschedule = async (postId: string) => {
+    setUnschedulingId(postId)
+    try {
+      const res = await fetch(`/api/social/schedule?postId=${postId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const data = await res.json()
+        console.error('[Unschedule] Error:', data.error)
+        return
+      }
+      setLocalPosts((prev) => prev.filter((p) => p.id !== postId))
+    } catch (err) {
+      console.error('[Unschedule] Failed:', err)
+    } finally {
+      setUnschedulingId(null)
+    }
+  }
+
   const selectedAd = selectedPost ? postToAd(selectedPost) : null
 
   // ── Shared nav bar
@@ -435,42 +454,58 @@ export default function Calendar({ posts = [] }: CalendarProps) {
                   {upcomingPosts.map((post) => {
                     const day = parseInt(post.date.slice(8, 10))
                     const monthAbbr = MONTH_NAMES[parseInt(post.date.slice(5, 7)) - 1].slice(0, 3)
+                    const isUnscheduling = unschedulingId === post.id
                     return (
-                      <button
+                      <div
                         key={post.id}
-                        onClick={() => setSelectedPost(post)}
-                        className="flex items-stretch border border-outline border-t-4 border-t-rust w-full text-left hover:border-rust transition-colors group bg-paper"
+                        className="flex items-stretch border border-outline border-t-4 border-t-rust w-full bg-paper"
                       >
-                        {/* Date column */}
-                        <div className="flex flex-col items-center justify-center px-6 py-4 border-r border-outline flex-shrink-0 min-w-[80px]">
-                          <span className="text-4xl font-mono font-bold text-graphite leading-none">{day}</span>
-                          <span className="text-xs font-mono font-bold uppercase tracking-[0.15em] text-graphite mt-1">{monthAbbr}</span>
-                        </div>
+                        {/* Clickable main area: date + content */}
+                        <button
+                          onClick={() => setSelectedPost(post)}
+                          className="flex items-stretch flex-1 min-w-0 text-left hover:bg-paper/60 transition-colors group"
+                        >
+                          {/* Date column */}
+                          <div className="flex flex-col items-center justify-center px-6 py-4 border-r border-outline flex-shrink-0 min-w-[80px]">
+                            <span className="text-4xl font-mono font-bold text-graphite leading-none">{day}</span>
+                            <span className="text-xs font-mono font-bold uppercase tracking-[0.15em] text-graphite mt-1">{monthAbbr}</span>
+                          </div>
 
-                        {/* Content */}
-                        <div className="flex flex-col justify-center gap-0.5 flex-1 min-w-0 px-5 py-4">
-                          <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-graphite/50">
-                            {post.platform.toUpperCase()} POST
-                          </span>
-                          {post.hook && (
-                            <p className="text-sm font-mono font-bold uppercase text-graphite truncate tracking-wide mt-0.5">
-                              {post.hook}
-                            </p>
-                          )}
-                          {post.caption && (
-                            <p className="text-xs font-mono text-graphite/50 truncate mt-0.5">
-                              {post.caption}
-                            </p>
-                          )}
-                        </div>
+                          {/* Content */}
+                          <div className="flex flex-col justify-center gap-0.5 min-w-0 px-5 py-4">
+                            <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-graphite/50">
+                              {post.platform.toUpperCase()} POST
+                            </span>
+                            {post.hook && (
+                              <p className="text-sm font-mono font-bold uppercase text-graphite truncate tracking-wide mt-0.5">
+                                {post.hook}
+                              </p>
+                            )}
+                            {post.caption && (
+                              <p className="text-xs font-mono text-graphite/50 truncate mt-0.5">
+                                {post.caption}
+                              </p>
+                            )}
+                          </div>
+                        </button>
 
-                        {/* Edit button */}
-                        <div className="flex items-center px-5 flex-shrink-0">
-                          <span className="border border-outline px-4 py-2 text-xs font-mono uppercase text-graphite group-hover:bg-graphite group-hover:text-paper transition-colors">
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-2 px-4 flex-shrink-0 border-l border-outline">
+                          <button
+                            onClick={() => setSelectedPost(post)}
+                            className="border border-outline px-4 py-2 text-xs font-mono uppercase text-graphite hover:bg-graphite hover:text-paper transition-colors"
+                          >
                             Edit
-                          </span>
+                          </button>
+                          <button
+                            onClick={() => handleUnschedule(post.id)}
+                            disabled={isUnscheduling}
+                            className="border border-outline px-4 py-2 text-xs font-mono uppercase text-graphite hover:bg-red-50 hover:border-red-300 hover:text-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {isUnscheduling ? '...' : 'Unschedule'}
+                          </button>
                         </div>
-                      </button>
+                      </div>
                     )
                   })}
                 </div>
