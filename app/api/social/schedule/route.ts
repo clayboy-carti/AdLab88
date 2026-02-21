@@ -210,12 +210,19 @@ export async function DELETE(request: Request) {
   }
 
   // Fetch the row to get the late_post_id before cancelling
-  const { data: existingPost } = await supabase
+  const { data: existingPost, error: fetchError } = await supabase
     .from('scheduled_posts')
     .select('id, late_post_id')
     .eq('id', postId)
     .eq('user_id', user.id)
     .maybeSingle()
+
+  if (fetchError) {
+    console.error('[Unschedule] Could not fetch post row (late_post_id column may be missing — run migration):', fetchError)
+  }
+
+  const latePostId = (existingPost as any)?.late_post_id
+  console.log('[Unschedule] postId:', postId, '| late_post_id:', latePostId ?? '(null — check SQL migration)')
 
   // Cancel in our DB
   const { error } = await supabase
@@ -229,12 +236,23 @@ export async function DELETE(request: Request) {
   }
 
   // Cancel in Late API if we have a late_post_id
-  const latePostId = (existingPost as any)?.late_post_id
-  if (process.env.LATE_API_KEY && latePostId) {
-    await deleteLatePost(latePostId).catch((e) =>
-      console.warn('[Schedule] Could not delete Late post:', e.message)
-    )
+  let lateDeleteStatus: 'skipped' | 'success' | 'error' | 'no_id' = 'skipped'
+  if (!process.env.LATE_API_KEY) {
+    console.log('[Unschedule] LATE_API_KEY not set — skipping Late deletion')
+    lateDeleteStatus = 'skipped'
+  } else if (!latePostId) {
+    console.warn('[Unschedule] No late_post_id found for post', postId, '— cannot delete from Late. Ensure you ran: ALTER TABLE scheduled_posts ADD COLUMN late_post_id text;')
+    lateDeleteStatus = 'no_id'
+  } else {
+    try {
+      await deleteLatePost(latePostId)
+      lateDeleteStatus = 'success'
+      console.log('[Unschedule] Deleted Late post', latePostId)
+    } catch (e: any) {
+      console.error('[Unschedule] Could not delete Late post', latePostId, ':', e.message)
+      lateDeleteStatus = 'error'
+    }
   }
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true, lateDeleteStatus })
 }
