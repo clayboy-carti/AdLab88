@@ -20,7 +20,9 @@
       "Bash(do taskkill //F //PID $pid)",
       "Bash(echo:*)",
       "Bash(done)",
-      "WebFetch(domain:replicate.com)"
+      "WebFetch(domain:replicate.com)",
+      "WebFetch(domain:docs.getlate.dev)",
+      "WebFetch(domain:getlate.dev)"
     ]
   },
   "enableAllProjectMcpServers": true,

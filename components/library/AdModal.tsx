@@ -211,6 +211,8 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
   const [scheduleConfirmed, setScheduleConfirmed] = useState(!!scheduledDate)
   const [scheduling, setScheduling] = useState(false)
   const [scheduleError, setScheduleError] = useState<string | null>(null)
+  const [lateStatus, setLateStatus] = useState<'skipped' | 'success' | 'error' | null>(null)
+  const [lateError, setLateError] = useState<string | null>(null)
 
   const overlayRef = useRef<HTMLDivElement>(null)
 
@@ -380,7 +382,10 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
         const data = await res.json()
         throw new Error(data.error || 'Failed to schedule post')
       }
+      const data = await res.json()
       setScheduleConfirmed(true)
+      setLateStatus(data.lateStatus ?? null)
+      setLateError(data.lateError ?? null)
     } catch (err: any) {
       setScheduleError(err.message)
     } finally {
@@ -635,12 +640,30 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
                     <span className="font-bold">{formatSelectedDate(selectedDate!)}</span>
                   </p>
                   <button
-                    onClick={() => { setScheduleConfirmed(false); setSelectedDate(null) }}
+                    onClick={() => { setScheduleConfirmed(false); setSelectedDate(null); setLateStatus(null); setLateError(null) }}
                     className="ml-auto text-xs font-mono uppercase text-gray-400 hover:text-gray-700 transition-colors"
                   >
                     Change
                   </button>
                 </div>
+
+                {/* Late API status feedback */}
+                {lateStatus === 'success' && (
+                  <p className="text-xs font-mono text-forest bg-forest/5 border border-forest/20 px-3 py-2">
+                    ✓ Synced to Late — post will auto-publish at the scheduled time
+                  </p>
+                )}
+                {lateStatus === 'skipped' && !lateError && (
+                  <p className="text-xs font-mono text-gray-400 bg-gray-50 border border-outline px-3 py-2">
+                    Saved locally only — add LATE_API_KEY and select platforms to auto-publish
+                  </p>
+                )}
+                {(lateStatus === 'error' || lateError) && (
+                  <div className="text-xs font-mono text-red-600 bg-red-50 border border-red-200 px-3 py-2">
+                    <p className="font-bold">Late API error — saved locally only</p>
+                    {lateError && <p className="mt-1 opacity-80">{lateError}</p>}
+                  </div>
+                )}
               ) : (
                 <>
                   <button

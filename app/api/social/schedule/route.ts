@@ -128,49 +128,64 @@ export async function POST(request: Request) {
   }
 
   // ── Late API integration ──────────────────────────────────────────────────
-  if (process.env.LATE_API_KEY && platforms && platforms.length > 0 && post) {
+  let lateStatus: 'skipped' | 'success' | 'error' = 'skipped'
+  let lateError: string | null = null
+
+  if (!process.env.LATE_API_KEY) {
+    lateStatus = 'skipped'
+    console.log('[Schedule] LATE_API_KEY not set — skipping Late API call')
+  } else if (!platforms || platforms.length === 0) {
+    lateStatus = 'skipped'
+    console.log('[Schedule] No platforms selected — skipping Late API call')
+  } else {
     try {
       // If rescheduling, delete the old Late post first
-      const oldLateId = existing?.late_post_id
+      const oldLateId = (existing as any)?.late_post_id
       if (oldLateId) {
         await deleteLatePost(oldLateId).catch((e) =>
           console.warn('[Schedule] Could not delete old Late post:', e.message)
         )
       }
 
-      // Generate a long-lived signed URL (30 days) so Late can fetch the image
-      let mediaUrls: string[] = []
+      // Generate a long-lived signed URL (30 days) — Late auto-proxies Supabase URLs
+      let imageUrl: string | undefined
       if (ad.storage_path) {
         const { data: signed } = await supabase.storage
           .from('generated-ads')
           .createSignedUrl(ad.storage_path, 30 * 24 * 60 * 60)
-        if (signed?.signedUrl) mediaUrls = [signed.signedUrl]
+        if (signed?.signedUrl) imageUrl = signed.signedUrl
       }
 
-      // Convert date "YYYY-MM-DD" → "YYYY-MM-DDT12:00:00.000Z" (noon UTC)
-      const scheduledAtISO = `${scheduledFor}T12:00:00.000Z`
+      // "YYYY-MM-DD" → "YYYY-MM-DDTHH:MM:SSZ" (noon UTC)
+      const scheduledAtISO = `${scheduledFor}T12:00:00Z`
 
       const latePost = await createLatePost({
         content: caption || '',
         scheduledFor: scheduledAtISO,
+        timezone: 'UTC',
         platforms,
-        ...(mediaUrls.length > 0 ? { mediaUrls } : {}),
+        imageUrl,
       })
 
-      // Store the Late post ID for future deletion
-      await supabase
-        .from('scheduled_posts')
-        .update({ late_post_id: latePost._id })
-        .eq('id', post.id)
+      // Store the Late post ID (handle both _id and id)
+      const latePostId = latePost._id ?? latePost.id
+      if (latePostId) {
+        await supabase
+          .from('scheduled_posts')
+          .update({ late_post_id: latePostId })
+          .eq('id', post.id)
+        post = { ...post, late_post_id: latePostId }
+      }
 
-      post = { ...post, late_post_id: latePost._id }
-    } catch (lateErr: any) {
-      console.error('[Schedule] Late API error:', lateErr.message)
-      // Don't fail the request — DB record is saved; user can still manage locally
+      lateStatus = 'success'
+    } catch (err: any) {
+      console.error('[Schedule] Late API error:', err.message)
+      lateStatus = 'error'
+      lateError = err.message
     }
   }
 
-  return NextResponse.json({ post }, { status: 201 })
+  return NextResponse.json({ post, lateStatus, lateError }, { status: 201 })
 }
 
 // ── DELETE: cancel a scheduled post + remove from Late ───────────────────────

@@ -23,6 +23,7 @@ export interface LatePlatform {
 
 export interface LatePost {
   _id: string
+  id?: string   // handle both shapes in case API returns either
   status: string
 }
 
@@ -31,24 +32,48 @@ export async function fetchLateAccounts(): Promise<LateAccount[]> {
     headers: authHeaders(),
     cache: 'no-store',
   })
-  if (!res.ok) throw new Error(`Late API ${res.status}: ${await res.text()}`)
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`Late API ${res.status}: ${body}`)
+  }
   const data = await res.json()
-  return data.accounts ?? []
+  // API may return { accounts: [...] } or a raw array
+  return Array.isArray(data) ? data : (data.accounts ?? data.data ?? [])
 }
 
 export async function createLatePost(params: {
   content: string
-  scheduledFor: string   // ISO 8601 datetime e.g. "2026-02-25T12:00:00.000Z"
+  scheduledFor: string    // ISO 8601 e.g. "2026-02-25T12:00:00Z"
+  timezone?: string
   platforms: LatePlatform[]
-  mediaUrls?: string[]
+  imageUrl?: string       // Supabase signed URL — Late auto-proxies Supabase URLs
 }): Promise<LatePost> {
+  const body: Record<string, unknown> = {
+    content: params.content,
+    scheduledFor: params.scheduledFor,
+    timezone: params.timezone ?? 'UTC',
+    platforms: params.platforms,
+  }
+
+  // mediaItems is required for Instagram; field name is mediaItems (not mediaUrls)
+  if (params.imageUrl) {
+    body.mediaItems = [{ type: 'image', url: params.imageUrl }]
+  }
+
+  const bodyStr = JSON.stringify(body)
+  console.log('[Late] POST /posts request:', bodyStr)
+
   const res = await fetch(`${LATE_API_BASE}/posts`, {
     method: 'POST',
     headers: authHeaders(),
-    body: JSON.stringify(params),
+    body: bodyStr,
   })
-  if (!res.ok) throw new Error(`Late API ${res.status}: ${await res.text()}`)
-  return res.json()
+
+  const text = await res.text()
+  console.log('[Late] POST /posts response', res.status, ':', text)
+
+  if (!res.ok) throw new Error(`Late API ${res.status}: ${text}`)
+  return JSON.parse(text)
 }
 
 export async function deleteLatePost(latePostId: string): Promise<void> {
@@ -56,8 +81,10 @@ export async function deleteLatePost(latePostId: string): Promise<void> {
     method: 'DELETE',
     headers: authHeaders(),
   })
+  const text = await res.text()
+  console.log('[Late] DELETE /posts/' + latePostId, res.status, ':', text)
   // 404 is fine — post may have already been deleted or published
   if (!res.ok && res.status !== 404) {
-    throw new Error(`Late API ${res.status}: ${await res.text()}`)
+    throw new Error(`Late API ${res.status}: ${text}`)
   }
 }
