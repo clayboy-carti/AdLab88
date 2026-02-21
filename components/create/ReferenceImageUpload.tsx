@@ -4,19 +4,11 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { ReferenceImage } from '@/types/database'
 
-interface ReferenceImageUploadProps {
-  onImageSelect: (imageId: string | null) => void
-  selectedImageId: string | null
-}
-
 interface ImageWithUrl extends ReferenceImage {
   signedUrl: string
 }
 
-export default function ReferenceImageUpload({
-  onImageSelect,
-  selectedImageId,
-}: ReferenceImageUploadProps) {
+export default function ReferenceImageUpload() {
   const [uploading, setUploading] = useState(false)
   const [images, setImages] = useState<ImageWithUrl[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -41,12 +33,11 @@ export default function ReferenceImageUpload({
       .order('created_at', { ascending: false })
 
     if (!error && data) {
-      // Generate signed URLs for each image
       const imagesWithUrls = await Promise.all(
         data.map(async (img) => {
           const { data: urlData } = await supabase.storage
             .from('reference-images')
-            .createSignedUrl(img.storage_path, 3600) // 1 hour expiry
+            .createSignedUrl(img.storage_path, 3600)
 
           return {
             ...img,
@@ -66,11 +57,9 @@ export default function ReferenceImageUpload({
     setUploading(true)
 
     try {
-      // Create form data
       const formData = new FormData()
       formData.append('file', file)
 
-      // Upload via API
       const response = await fetch('/api/upload-image', {
         method: 'POST',
         body: formData,
@@ -82,10 +71,7 @@ export default function ReferenceImageUpload({
         throw new Error(result.error || 'Upload failed')
       }
 
-      // Reload images
       await loadImages()
-
-      // Clear file input
       e.target.value = ''
     } catch (err: any) {
       console.error('Upload error:', err)
@@ -104,25 +90,14 @@ export default function ReferenceImageUpload({
       } = await supabase.auth.getUser()
       if (!user) return
 
-      // Delete from storage
       await supabase.storage.from('reference-images').remove([storagePath])
-
-      // Delete from database
       await supabase.from('reference_images').delete().eq('id', imageId)
-
-      // Reload images
       await loadImages()
-
-      // Clear selection if deleted image was selected
-      if (selectedImageId === imageId) {
-        onImageSelect(null)
-      }
     } catch (err) {
       console.error('Delete error:', err)
       setError('Failed to delete image')
     }
   }
-
 
   return (
     <div className="space-y-4">
@@ -153,15 +128,16 @@ export default function ReferenceImageUpload({
 
       {images.length > 0 && (
         <div>
-          <h3 className="text-sm uppercase font-mono mb-3">SELECT REFERENCE IMAGE</h3>
+          <h3 className="text-sm uppercase font-mono mb-1">YOUR REFERENCE IMAGES</h3>
+          <p className="text-xs text-gray-500 font-mono mb-3">
+            All uploaded images are used — most recent takes priority
+          </p>
           <div className="grid grid-cols-5 gap-4">
-            {images.map((img) => (
+            {images.map((img, index) => (
               <div
                 key={img.id}
                 className={`relative aspect-square border-2 transition-all group ${
-                  selectedImageId === img.id
-                    ? 'border-rust shadow-lg'
-                    : 'border-outline hover:border-gray-400'
+                  index === 0 ? 'border-rust' : 'border-outline'
                 }`}
               >
                 <img
@@ -170,25 +146,12 @@ export default function ReferenceImageUpload({
                   className="w-full h-full object-cover cursor-pointer"
                   onClick={() => setPreviewImage(img)}
                 />
-                {selectedImageId === img.id && (
+                {index === 0 && (
                   <div className="absolute top-1 right-1 bg-rust text-white px-2 py-1 text-xs font-mono">
-                    SELECTED
+                    ACTIVE
                   </div>
                 )}
-                <div className="absolute bottom-1 left-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() =>
-                      onImageSelect(selectedImageId === img.id ? null : img.id)
-                    }
-                    className={`flex-1 p-1 text-white text-xs font-mono transition-colors ${
-                      selectedImageId === img.id
-                        ? 'bg-gray-600 hover:bg-gray-700'
-                        : 'bg-rust hover:bg-[#9a4429]'
-                    }`}
-                    title={selectedImageId === img.id ? 'Deselect' : 'Select'}
-                  >
-                    {selectedImageId === img.id ? 'DESELECT' : 'SELECT'}
-                  </button>
+                <div className="absolute bottom-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => handleDelete(img.id, img.storage_path)}
                     className="p-1 bg-black text-white hover:bg-red-600 transition-colors"
@@ -226,10 +189,9 @@ export default function ReferenceImageUpload({
             className="relative max-w-4xl max-h-full bg-white border-2 border-outline"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button */}
             <button
               onClick={() => setPreviewImage(null)}
-              className="absolute top-2 right-2 bg-black text-white p-2 hover:bg-red-600 transition-colors z-10"
+              className="absolute top-2 right-2 bg-rust text-white p-2 hover:bg-[#9a4429] transition-colors z-10"
               title="Close preview"
             >
               <svg
@@ -248,38 +210,23 @@ export default function ReferenceImageUpload({
               </svg>
             </button>
 
-            {/* Image */}
             <img
               src={previewImage.signedUrl}
               alt={previewImage.file_name}
               className="max-w-full max-h-[80vh] object-contain"
             />
 
-            {/* Image info and actions */}
             <div className="p-4 border-t border-outline bg-paper">
               <p className="text-sm font-mono mb-3">{previewImage.file_name}</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    onImageSelect(previewImage.id)
-                    setPreviewImage(null)
-                  }}
-                  className="btn-primary flex-1"
-                >
-                  {selectedImageId === previewImage.id
-                    ? 'SELECTED ✓'
-                    : 'SELECT THIS IMAGE'}
-                </button>
-                <button
-                  onClick={() => {
-                    handleDelete(previewImage.id, previewImage.storage_path)
-                    setPreviewImage(null)
-                  }}
-                  className="btn-secondary"
-                >
-                  DELETE
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  handleDelete(previewImage.id, previewImage.storage_path)
+                  setPreviewImage(null)
+                }}
+                className="btn-secondary w-full"
+              >
+                DELETE
+              </button>
             </div>
           </div>
         </div>

@@ -8,6 +8,8 @@ export interface Ad {
   positioning_angle: string
   target_platform?: string
   framework_applied?: string
+  image_quality?: string
+  aspect_ratio?: string
   created_at: string
   storage_path: string | null
   signedUrl: string | null

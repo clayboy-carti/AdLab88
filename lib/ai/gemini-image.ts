@@ -63,7 +63,9 @@ export async function generateImageWithGemini(
   prompt: string,
   userId: string,
   strength = 0.5,
-  retries = 1
+  retries = 1,
+  imageSize: '1K' | '2K' = '1K',
+  aspectRatio = '1:1'
 ): Promise<GeminiGenerationResult> {
   let lastError: Error | null = null
 
@@ -77,6 +79,7 @@ export async function generateImageWithGemini(
       console.log(
         `[Gemini] Mode: ${hasReference ? 'image-to-image (with reference)' : 'text-to-image (original)'}`
       )
+      console.log(`[Gemini] Quality: ${imageSize}, Aspect ratio: ${aspectRatio}`)
       console.log(`[Gemini] Prompt length: ${prompt.length} chars`)
 
       let contents: string | object[]
@@ -117,6 +120,10 @@ export async function generateImageWithGemini(
         contents,
         config: {
           responseModalities: ['IMAGE', 'TEXT'],
+          imageConfig: {
+            imageSize,
+            aspectRatio,
+          },
         },
       })
 

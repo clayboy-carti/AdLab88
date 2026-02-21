@@ -28,18 +28,15 @@ export async function POST(request: Request) {
 
     // 2. Parse request body
     const body = await request.json()
-    const { reference_image_id, user_context } = body
+    const { user_context, image_quality, aspect_ratio } = body
     const userContext: string | undefined = user_context?.trim() || undefined
+    const imageQuality: '1K' | '2K' = image_quality === '2K' ? '2K' : '1K'
+    const imageAspectRatio: string = aspect_ratio || '1:1'
 
     if (userContext) {
       console.log(`[Generate] Ad context provided: "${userContext}"`)
     }
-
-    // Reference image is now OPTIONAL (two modes: reference-based or original)
-    const hasReference = !!reference_image_id
-    console.log(
-      `[Generate] Mode: ${hasReference ? 'Reference-based template swap' : 'Original framework-driven creation'}`
-    )
+    console.log(`[Generate] Image quality: ${imageQuality}, Aspect ratio: ${imageAspectRatio}`)
 
     // 3. Fetch brand (ensure it exists)
     const { data: brand, error: brandError } = await supabase
@@ -58,31 +55,28 @@ export async function POST(request: Request) {
 
     console.log(`[Generate] Brand loaded: ${brand.company_name}`)
 
-    // 4-5. Conditionally fetch and prepare reference image (only if provided)
+    // 4-5. Auto-fetch the user's most recently uploaded reference image (if any)
     let referenceImageUrl: string | null = null
+    let usedReferenceImageId: string | null = null
+
+    const { data: referenceImages } = await supabase
+      .from('reference_images')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    const referenceImage = referenceImages?.[0] ?? null
+    const hasReference = !!referenceImage
+
+    console.log(
+      `[Generate] Mode: ${hasReference ? `Reference-based (${referenceImage!.file_name})` : 'Original framework-driven creation'}`
+    )
 
     if (hasReference) {
-      const { data: referenceImage, error: imageError } = await supabase
-        .from('reference_images')
-        .select('*')
-        .eq('id', reference_image_id)
-        .eq('user_id', user.id)
-        .single()
-
-      if (imageError || !referenceImage) {
-        console.error('[Generate] Reference image not found:', imageError)
-        return NextResponse.json(
-          { error: 'Reference image not found or access denied' },
-          { status: 404 }
-        )
-      }
-
-      console.log(`[Generate] Reference image loaded: ${referenceImage.file_name}`)
-
-      // Generate signed URL for reference image
       const { data: signedUrlData, error: urlError } = await supabase.storage
         .from('reference-images')
-        .createSignedUrl(referenceImage.storage_path, 3600)
+        .createSignedUrl(referenceImage!.storage_path, 3600)
 
       if (urlError || !signedUrlData?.signedUrl) {
         console.error('[Generate] Failed to create signed URL:', urlError)
@@ -93,9 +87,10 @@ export async function POST(request: Request) {
       }
 
       referenceImageUrl = signedUrlData.signedUrl
+      usedReferenceImageId = referenceImage!.id
       console.log('[Generate] Reference image signed URL created')
     } else {
-      console.log('[Generate] No reference image - will generate original ad')
+      console.log('[Generate] No reference images uploaded - will generate original ad')
     }
 
     // 6. Generate ad copy with OpenAI (frameworks for copy only)
@@ -134,7 +129,9 @@ export async function POST(request: Request) {
       imagePrompt,
       user.id,
       hasReference ? 0.35 : 0.0,
-      1 // 1 retry
+      1, // 1 retry
+      imageQuality,
+      imageAspectRatio
     )
 
     console.log('[Generate] ✅ Image generation complete')
@@ -147,7 +144,7 @@ export async function POST(request: Request) {
       .insert({
         user_id: user.id,
         brand_id: brand.id,
-        reference_image_id: reference_image_id || null,
+        reference_image_id: usedReferenceImageId,
         positioning_angle: generatedCopy.positioning_angle,
         angle_justification: generatedCopy.angle_justification,
         hook: generatedCopy.hook,
@@ -159,6 +156,8 @@ export async function POST(request: Request) {
         target_platform: generatedCopy.target_platform,
         estimated_performance: generatedCopy.estimated_performance,
         storage_path: generatedImage.storagePath,
+        image_quality: imageQuality,
+        aspect_ratio: imageAspectRatio,
       })
       .select()
       .single()

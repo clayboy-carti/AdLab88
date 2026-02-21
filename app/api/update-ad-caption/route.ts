@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+const ALLOWED_FIELDS = ['caption', 'hook', 'cta'] as const
+type AllowedField = typeof ALLOWED_FIELDS[number]
+
 export async function PATCH(request: Request) {
   const supabase = createClient()
 
@@ -14,27 +17,38 @@ export async function PATCH(request: Request) {
   }
 
   const body = await request.json()
-  const { adId, caption } = body
+  const { adId } = body
 
-  if (!adId || typeof caption !== 'string') {
-    return NextResponse.json({ error: 'adId and caption are required' }, { status: 400 })
+  if (!adId) {
+    return NextResponse.json({ error: 'adId is required' }, { status: 400 })
   }
 
-  const trimmed = caption.trim()
-  if (trimmed.length === 0) {
-    return NextResponse.json({ error: 'Caption cannot be empty' }, { status: 400 })
+  // Build an update object from whichever allowed fields are present
+  const updates: Partial<Record<AllowedField, string>> = {}
+  for (const field of ALLOWED_FIELDS) {
+    if (typeof body[field] === 'string') {
+      const trimmed = body[field].trim()
+      if (trimmed.length === 0) {
+        return NextResponse.json({ error: `${field} cannot be empty` }, { status: 400 })
+      }
+      updates[field] = trimmed
+    }
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'At least one field (caption, hook, cta) is required' }, { status: 400 })
   }
 
   // Update only if the row belongs to this user (ownership enforced)
   const { error: updateError } = await supabase
     .from('generated_ads')
-    .update({ caption: trimmed })
+    .update(updates)
     .eq('id', adId)
     .eq('user_id', user.id)
 
   if (updateError) {
-    console.error('[UpdateCaption] DB error:', updateError)
-    return NextResponse.json({ error: 'Failed to save caption' }, { status: 500 })
+    console.error('[UpdateAd] DB error:', updateError)
+    return NextResponse.json({ error: 'Failed to save' }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })

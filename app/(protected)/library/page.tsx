@@ -40,7 +40,7 @@ export default async function LibraryPage() {
   )
 
   return (
-    <div className="max-w-7xl mx-auto p-8">
+    <div className="w-full p-4 lg:p-8">
       <div className="flex items-baseline justify-between mb-8">
         <h1 className="text-3xl uppercase font-mono header-accent">AD LIBRARY</h1>
         {adsWithUrls.length > 0 && (

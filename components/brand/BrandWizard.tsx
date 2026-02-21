@@ -11,18 +11,51 @@ import {
   parseCommaSeparated,
   parseColors,
 } from '@/lib/validations/brand'
-import type { Brand } from '@/types/database'
+import type { Brand, BrandDNA } from '@/types/database'
 
 interface BrandWizardProps {
   existingBrand?: Brand
+  /** Pre-filled data from a brand URL scan */
+  initialData?: BrandDNA
 }
 
-export default function BrandWizard({ existingBrand }: BrandWizardProps) {
+export default function BrandWizard({ existingBrand, initialData }: BrandWizardProps) {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
+
+  // Build default values: existingBrand takes priority, then initialData from scan
+  const defaultValues: Partial<BrandFormData> = existingBrand
+    ? {
+        company_name: existingBrand.company_name,
+        what_we_do: existingBrand.what_we_do,
+        target_audience: existingBrand.target_audience,
+        unique_differentiator: existingBrand.unique_differentiator || '',
+        voice_summary: existingBrand.voice_summary || '',
+        personality_traits: existingBrand.personality_traits?.join(', ') || '',
+        words_to_use: existingBrand.words_to_use?.join(', ') || '',
+        words_to_avoid: existingBrand.words_to_avoid?.join(', ') || '',
+        sample_copy: existingBrand.sample_copy,
+        brand_colors: existingBrand.brand_colors?.join(', ') || '',
+        typography_notes: existingBrand.typography_notes || '',
+      }
+    : initialData
+    ? {
+        company_name: initialData.company_name || '',
+        what_we_do: initialData.what_we_do || '',
+        target_audience: initialData.target_audience || '',
+        unique_differentiator: initialData.unique_differentiator || '',
+        voice_summary: initialData.voice_summary || '',
+        personality_traits: initialData.personality_traits?.join(', ') || '',
+        words_to_use: initialData.words_to_use?.join(', ') || '',
+        words_to_avoid: initialData.words_to_avoid?.join(', ') || '',
+        sample_copy: initialData.sample_copy || '',
+        brand_colors: initialData.brand_colors?.join(', ') || '',
+        typography_notes: initialData.typography_notes || '',
+      }
+    : {}
 
   const {
     register,
@@ -30,21 +63,7 @@ export default function BrandWizard({ existingBrand }: BrandWizardProps) {
     formState: { errors },
   } = useForm<BrandFormData>({
     resolver: zodResolver(brandSchema),
-    defaultValues: existingBrand
-      ? {
-          company_name: existingBrand.company_name,
-          what_we_do: existingBrand.what_we_do,
-          target_audience: existingBrand.target_audience,
-          unique_differentiator: existingBrand.unique_differentiator || '',
-          voice_summary: existingBrand.voice_summary || '',
-          personality_traits: existingBrand.personality_traits?.join(', ') || '',
-          words_to_use: existingBrand.words_to_use?.join(', ') || '',
-          words_to_avoid: existingBrand.words_to_avoid?.join(', ') || '',
-          sample_copy: existingBrand.sample_copy,
-          brand_colors: existingBrand.brand_colors?.join(', ') || '',
-          typography_notes: existingBrand.typography_notes || '',
-        }
-      : {},
+    defaultValues,
   })
 
   const onSubmit = async (data: BrandFormData) => {
@@ -71,6 +90,7 @@ export default function BrandWizard({ existingBrand }: BrandWizardProps) {
         sample_copy: data.sample_copy,
         brand_colors: parseColors(data.brand_colors),
         typography_notes: data.typography_notes || null,
+        website_url: initialData?.source_url ?? null,
         updated_at: new Date().toISOString(),
       }
 
