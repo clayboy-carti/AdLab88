@@ -19,7 +19,6 @@ interface GeneratedAd {
 }
 
 export default function CreatePage() {
-  const [selectedImageId, setSelectedImageId] = useState<string | null>(null)
   const [contextText, setContextText] = useState('')
   const [imageQuality, setImageQuality] = useState<'1K' | '2K'>('1K')
   const [aspectRatio, setAspectRatio] = useState('1:1')
@@ -55,7 +54,6 @@ export default function CreatePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          reference_image_id: selectedImageId || undefined,
           user_context: contextText.trim() || undefined,
           image_quality: imageQuality,
           aspect_ratio: aspectRatio,
@@ -101,10 +99,7 @@ export default function CreatePage() {
             <p className="text-xs text-gray-500 font-mono mb-4">
               Optional — uploaded images are automatically used as a visual style guide
             </p>
-            <ReferenceImageUpload
-              onImageSelect={setSelectedImageId}
-              selectedImageId={selectedImageId}
-            />
+            <ReferenceImageUpload />
           </div>
 
           {/* Ad Context */}
@@ -202,7 +197,6 @@ export default function CreatePage() {
               </p>
               <div className="space-y-2 text-xs text-gray-600">
                 <p>✓ Loading brand profile and frameworks</p>
-                {selectedImageId && <p>✓ Preparing reference image</p>}
                 <p className="animate-pulse">→ Generating ad copy with AI...</p>
                 <p className="text-gray-400">→ Creating image with Gemini...</p>
                 <p className="text-gray-400">→ Saving to library...</p>
