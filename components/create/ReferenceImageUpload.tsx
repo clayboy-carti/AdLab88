@@ -191,7 +191,7 @@ export default function ReferenceImageUpload() {
           >
             <button
               onClick={() => setPreviewImage(null)}
-              className="absolute top-2 right-2 bg-black text-white p-2 hover:bg-red-600 transition-colors z-10"
+              className="absolute top-2 right-2 bg-rust text-white p-2 hover:bg-[#9a4429] transition-colors z-10"
               title="Close preview"
             >
               <svg
