@@ -395,7 +395,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
             )}
             <button
               onClick={onClose}
-              className="flex items-center justify-center w-10 h-10 border-2 border-rust text-rust hover:bg-rust hover:text-white transition-colors"
+              className="flex items-center justify-center px-3 py-1.5 border-2 border-rust text-rust hover:bg-rust hover:text-white transition-colors"
               title="Close"
             >
               <CloseIcon />
@@ -626,7 +626,7 @@ function DownloadIcon() {
 
 function CloseIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" strokeLinejoin="miter">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" strokeLinejoin="miter">
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
