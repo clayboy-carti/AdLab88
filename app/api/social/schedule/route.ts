@@ -24,13 +24,14 @@ export async function GET(request: Request) {
 
   const { data } = await supabase
     .from('scheduled_posts')
-    .select('scheduled_for, platforms')
+    .select('id, scheduled_for, platforms')
     .eq('user_id', user.id)
     .eq('ad_id', adId)
     .eq('status', 'scheduled')
     .maybeSingle()
 
   return NextResponse.json({
+    postId: (data as any)?.id ?? null,
     scheduledFor: data?.scheduled_for ?? null,
     platforms: (data as any)?.platforms ?? [],
   })

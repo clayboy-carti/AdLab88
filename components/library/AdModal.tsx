@@ -211,6 +211,9 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
   const [scheduleConfirmed, setScheduleConfirmed] = useState(!!scheduledDate)
   const [scheduling, setScheduling] = useState(false)
   const [scheduleError, setScheduleError] = useState<string | null>(null)
+  const [scheduledPostId, setScheduledPostId] = useState<string | null>(null)
+  const [unscheduling, setUnscheduling] = useState(false)
+  const [unscheduleError, setUnscheduleError] = useState<string | null>(null)
   const [lateStatus, setLateStatus] = useState<'skipped' | 'success' | 'error' | null>(null)
   const [lateError, setLateError] = useState<string | null>(null)
 
@@ -233,10 +236,11 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
     if (scheduledDate !== undefined) return
     fetch(`/api/social/schedule?adId=${ad.id}`)
       .then((r) => r.json())
-      .then(({ scheduledFor, platforms }) => {
+      .then(({ postId, scheduledFor, platforms }) => {
         if (scheduledFor) {
           setSelectedDate(scheduledFor)
           setScheduleConfirmed(true)
+          setScheduledPostId(postId ?? null)
         }
         if (Array.isArray(platforms) && platforms.length > 0) {
           setSelectedAccountIds(platforms)
@@ -384,12 +388,43 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
       }
       const data = await res.json()
       setScheduleConfirmed(true)
+      setScheduledPostId(data.post?.id ?? null)
       setLateStatus(data.lateStatus ?? null)
       setLateError(data.lateError ?? null)
     } catch (err: any) {
       setScheduleError(err.message)
     } finally {
       setScheduling(false)
+    }
+  }
+
+  // ── Unschedule
+  const handleUnschedule = async () => {
+    setUnscheduleError(null)
+    if (!scheduledPostId) {
+      // No DB row ID — just clear local state
+      setScheduleConfirmed(false)
+      setSelectedDate(null)
+      setLateStatus(null)
+      setLateError(null)
+      return
+    }
+    setUnscheduling(true)
+    try {
+      const res = await fetch(`/api/social/schedule?postId=${scheduledPostId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to unschedule post')
+      }
+      setScheduleConfirmed(false)
+      setSelectedDate(null)
+      setScheduledPostId(null)
+      setLateStatus(null)
+      setLateError(null)
+    } catch (err: any) {
+      setUnscheduleError(err.message)
+    } finally {
+      setUnscheduling(false)
     }
   }
 
@@ -641,12 +676,16 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
                       <span className="font-bold">{formatSelectedDate(selectedDate!)}</span>
                     </p>
                     <button
-                      onClick={() => { setScheduleConfirmed(false); setSelectedDate(null); setLateStatus(null); setLateError(null) }}
-                      className="ml-auto text-xs font-mono uppercase text-gray-400 hover:text-gray-700 transition-colors"
+                      onClick={handleUnschedule}
+                      disabled={unscheduling}
+                      className="ml-auto text-xs font-mono uppercase text-gray-400 hover:text-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
-                      Change
+                      {unscheduling ? 'Removing...' : 'Unschedule'}
                     </button>
                   </div>
+                  {unscheduleError && (
+                    <p className="text-xs font-mono text-red-600">{unscheduleError}</p>
+                  )}
 
                   {/* Late API status feedback */}
                   {lateStatus === 'success' && (
