@@ -92,75 +92,65 @@ export default function CreatePage() {
 
       <div className="grid grid-cols-2 gap-8">
         {/* Left Column: Inputs */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Reference Images */}
           <div className="card">
-            <h2 className="text-xl uppercase font-mono mb-1">Reference Images</h2>
-            <p className="text-xs text-gray-500 font-mono mb-4">
-              Optional — uploaded images are automatically used as a visual style guide
-            </p>
+            <h2 className="text-sm uppercase font-mono text-gray-500 tracking-widest mb-3">Reference Images</h2>
             <ReferenceImageUpload />
           </div>
 
           {/* Ad Context */}
           <div className="card">
-            <h2 className="text-xl uppercase font-mono mb-1">Ad Context</h2>
-            <p className="text-xs text-gray-500 font-mono mb-4">
-              Tell the AI what this ad is promoting — offers, events, services
-            </p>
+            <h2 className="text-sm uppercase font-mono text-gray-500 tracking-widest mb-2">Ad Context</h2>
             <textarea
               value={contextText}
               onChange={(e) => setContextText(e.target.value)}
-              placeholder={"e.g. 10% off first order · Free Estimates · Summer Sale · New location open"}
-              rows={4}
+              placeholder="e.g. 10% off first order · Free Estimates · Summer Sale · New location open"
+              rows={3}
               className="w-full border border-outline p-3 text-sm font-mono bg-white resize-none focus:outline-none focus:border-rust placeholder:text-gray-400"
             />
-            <p className="text-xs text-gray-400 font-mono mt-1">
-              {contextText.length} / 300 characters
-            </p>
+            <p className="text-xs text-gray-400 font-mono mt-1">{contextText.length} / 300</p>
           </div>
 
-          {/* Image Settings */}
+          {/* Image Settings — Quality + Ratio on one row */}
           <div className="card">
-            <h2 className="text-xl uppercase font-mono mb-1">Image Settings</h2>
-            <p className="text-xs text-gray-500 font-mono mb-4">
-              Output quality and aspect ratio — applied regardless of reference image
-            </p>
-
-            {/* Quality toggle */}
-            <div className="mb-4">
-              <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-2">Quality</p>
-              <div className="flex border border-outline">
-                {(['1K', '2K'] as const).map((q) => (
-                  <button
-                    key={q}
-                    onClick={() => setImageQuality(q)}
-                    className={`flex-1 py-2 text-sm font-mono uppercase transition-colors ${
-                      imageQuality === q
-                        ? 'bg-graphite text-white'
-                        : 'bg-white text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    {q}
-                  </button>
-                ))}
+            <h2 className="text-sm uppercase font-mono text-gray-500 tracking-widest mb-3">Image Settings</h2>
+            <div className="flex gap-3 items-end">
+              {/* Quality toggle */}
+              <div className="shrink-0">
+                <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-1.5">Quality</p>
+                <div className="flex border border-outline">
+                  {(['1K', '2K'] as const).map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => setImageQuality(q)}
+                      className={`px-4 py-1.5 text-sm font-mono uppercase transition-colors ${
+                        imageQuality === q
+                          ? 'bg-graphite text-white'
+                          : 'bg-white text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Aspect ratio */}
-            <div>
-              <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-2">Aspect Ratio</p>
-              <select
-                value={aspectRatio}
-                onChange={(e) => setAspectRatio(e.target.value)}
-                className="w-full border border-outline p-2 text-sm font-mono bg-white focus:outline-none focus:border-rust"
-              >
-                <option value="1:1">1:1 — Square</option>
-                <option value="9:16">9:16 — Portrait (Story / Reel)</option>
-                <option value="16:9">16:9 — Landscape (Banner / YouTube)</option>
-                <option value="3:4">3:4 — Portrait (Feed Post)</option>
-                <option value="4:3">4:3 — Standard</option>
-              </select>
+              {/* Aspect ratio */}
+              <div className="flex-1">
+                <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-1.5">Aspect Ratio</p>
+                <select
+                  value={aspectRatio}
+                  onChange={(e) => setAspectRatio(e.target.value)}
+                  className="w-full border border-outline p-1.5 text-sm font-mono bg-white focus:outline-none focus:border-rust"
+                >
+                  <option value="1:1">1:1 — Square</option>
+                  <option value="9:16">9:16 — Story / Reel</option>
+                  <option value="16:9">16:9 — Landscape</option>
+                  <option value="3:4">3:4 — Feed Portrait</option>
+                  <option value="4:3">4:3 — Standard</option>
+                </select>
+              </div>
             </div>
           </div>
 
