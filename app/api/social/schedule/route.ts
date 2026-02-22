@@ -157,8 +157,10 @@ export async function POST(request: Request) {
         if (signed?.signedUrl) imageUrl = signed.signedUrl
       }
 
-      // "YYYY-MM-DD" → "YYYY-MM-DDTHH:MM:SSZ" (noon UTC)
-      const scheduledAtISO = `${scheduledFor}T12:00:00Z`
+      // scheduledFor may be "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM" — normalise to full ISO-8601
+      const scheduledAtISO = scheduledFor.includes('T')
+        ? `${scheduledFor}:00Z`
+        : `${scheduledFor}T12:00:00Z`
 
       const latePost = await createLatePost({
         content: caption || '',
