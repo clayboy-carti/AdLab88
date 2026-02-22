@@ -311,7 +311,7 @@ export default function CreatePage() {
             {/* Status bar */}
             <div className="border-t border-outline px-4 py-2 bg-[#e4dcc8]">
               <span className="font-mono text-xs text-gray-500 tracking-wider">
-                PLATFORM: META&nbsp;&nbsp;|&nbsp;&nbsp;FORMAT: {aspectRatio}&nbsp;&nbsp;|&nbsp;&nbsp;QUALITY: {imageQuality}
+                FORMAT: {aspectRatio}&nbsp;&nbsp;|&nbsp;&nbsp;QUALITY: {imageQuality}
               </span>
             </div>
           </div>
