@@ -170,6 +170,7 @@ export async function POST(request: Request) {
 
       // Store the Late post ID (handle both _id and id)
       const latePostId = latePost._id ?? latePost.id
+      console.log('[Schedule] latePost keys:', Object.keys(latePost), '| resolved latePostId:', latePostId)
       if (latePostId) {
         await supabase
           .from('scheduled_posts')
