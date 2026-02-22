@@ -689,23 +689,23 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
                   </div>
 
                   {/* Time selector */}
-                  <div className="flex items-center gap-2 mt-2 border border-outline px-2 py-1.5">
-                    <span className="text-[10px] font-mono text-gray-400 uppercase flex-shrink-0">Time</span>
-                    <div className="flex items-center gap-1 ml-auto">
+                  <div className="flex items-center gap-2 mt-2 border border-outline px-2 py-0.5">
+                    <span className="text-xs font-mono text-gray-400 uppercase flex-shrink-0">Time</span>
+                    <div className="flex items-center gap-0.5 ml-auto">
                       <select
                         value={selectedTime.split(':')[0]}
                         onChange={(e) => setSelectedTime(`${e.target.value}:${selectedTime.split(':')[1]}`)}
-                        className="text-[10px] font-mono text-graphite bg-transparent border-none outline-none cursor-pointer appearance-none"
+                        className="text-xs font-mono text-graphite bg-transparent border-none outline-none cursor-pointer appearance-none"
                       >
                         {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map((h) => (
                           <option key={h} value={h}>{h}</option>
                         ))}
                       </select>
-                      <span className="text-[10px] font-mono text-gray-400">:</span>
+                      <span className="text-xs font-mono text-gray-400">:</span>
                       <select
                         value={selectedTime.split(':')[1]}
                         onChange={(e) => setSelectedTime(`${selectedTime.split(':')[0]}:${e.target.value}`)}
-                        className="text-[10px] font-mono text-graphite bg-transparent border-none outline-none cursor-pointer appearance-none"
+                        className="text-xs font-mono text-graphite bg-transparent border-none outline-none cursor-pointer appearance-none"
                       >
                         {['00', '15', '30', '45'].map((m) => (
                           <option key={m} value={m}>{m}</option>
