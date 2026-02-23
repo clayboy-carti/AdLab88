@@ -28,7 +28,7 @@ export default function ReferenceImageUpload() {
 
     const { data, error } = await supabase
       .from('reference_images')
-      .select('id, storage_path, file_name')
+      .select('id, user_id, storage_path, file_name, file_size, mime_type, created_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
