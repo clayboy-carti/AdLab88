@@ -46,7 +46,7 @@ export default async function LibraryPage() {
   return (
     <div className="w-full p-4 lg:p-8">
       <div className="flex items-baseline justify-between mb-8">
-        <h1 className="text-3xl uppercase font-mono header-accent">AD LIBRARY</h1>
+        <h1 className="text-3xl font-mono header-accent">Lab Records</h1>
         {adsWithUrls.length > 0 && (
           <span className="text-sm font-mono text-gray-500 uppercase">
             {adsWithUrls.length} ad{adsWithUrls.length !== 1 ? 's' : ''}
