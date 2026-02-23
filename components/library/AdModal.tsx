@@ -362,6 +362,10 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
   // ── Schedule
   const handleSchedule = async () => {
     if (!selectedDate) return
+    if (lateConfigured && lateAccounts.length > 0 && selectedAccountIds.length === 0) {
+      setScheduleError('Please select at least one social media account')
+      return
+    }
     setScheduling(true)
     setScheduleError(null)
     try {
@@ -735,10 +739,10 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
                     )}
                     <button
                       onClick={handleSchedule}
-                      disabled={!selectedDate || scheduling}
+                      disabled={!selectedDate || scheduling || (lateConfigured && lateAccounts.length > 0 && selectedAccountIds.length === 0)}
                       className="btn-primary w-full text-xs py-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      {scheduling ? 'SCHEDULING...' : selectedDate ? 'SCHEDULE' : 'SELECT A DATE'}
+                      {scheduling ? 'SCHEDULING...' : !selectedDate ? 'SELECT A DATE' : (lateConfigured && lateAccounts.length > 0 && selectedAccountIds.length === 0) ? 'SELECT AN ACCOUNT' : 'SCHEDULE'}
                     </button>
                   </div>
                 </>
