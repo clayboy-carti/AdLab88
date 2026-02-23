@@ -215,6 +215,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
   const [unscheduling, setUnscheduling] = useState(false)
   const [unscheduleError, setUnscheduleError] = useState<string | null>(null)
   const [lateStatus, setLateStatus] = useState<'skipped' | 'success' | 'error' | null>(null)
+  const [lateSkipReason, setLateSkipReason] = useState<'no_api_key' | 'no_platforms' | null>(null)
   const [lateError, setLateError] = useState<string | null>(null)
 
   const overlayRef = useRef<HTMLDivElement>(null)
@@ -391,6 +392,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
       setScheduleConfirmed(true)
       setScheduledPostId(data.post?.id ?? null)
       setLateStatus(data.lateStatus ?? null)
+      setLateSkipReason(data.lateSkipReason ?? null)
       setLateError(data.lateError ?? null)
     } catch (err: any) {
       setScheduleError(err.message)
@@ -407,6 +409,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
       setScheduleConfirmed(false)
       setSelectedDate(null)
       setLateStatus(null)
+      setLateSkipReason(null)
       setLateError(null)
       return
     }
@@ -421,6 +424,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
       setSelectedDate(null)
       setScheduledPostId(null)
       setLateStatus(null)
+      setLateSkipReason(null)
       setLateError(null)
     } catch (err: any) {
       setUnscheduleError(err.message)
@@ -521,7 +525,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
             ) : !lateConfigured ? (
               <div className="flex-1 p-5 flex flex-col gap-3">
                 <p className="text-xs font-mono text-gray-500 leading-relaxed">
-                  Add your <span className="text-graphite font-bold">LATE_API_KEY</span> to .env.local to enable social posting.
+                  Add your <span className="text-graphite font-bold">LATE_API_KEY</span> to Vercel environment variables (enable for Preview + Production) or .env.local for local development.
                 </p>
                 <a
                   href="https://getlate.dev"
@@ -623,7 +627,17 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
                       ✓ Synced to Late
                     </p>
                   )}
-                  {lateStatus === 'skipped' && !lateError && (
+                  {lateStatus === 'skipped' && !lateError && lateSkipReason === 'no_api_key' && (
+                    <p className="text-[10px] font-mono text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1.5 leading-snug">
+                      Saved locally — LATE_API_KEY not found in environment. Check Vercel env vars (enable for Preview + Production).
+                    </p>
+                  )}
+                  {lateStatus === 'skipped' && !lateError && lateSkipReason === 'no_platforms' && (
+                    <p className="text-[10px] font-mono text-gray-400 bg-gray-50 border border-outline px-2 py-1.5 leading-snug">
+                      Saved locally — select accounts on the left to publish to Late
+                    </p>
+                  )}
+                  {lateStatus === 'skipped' && !lateError && !lateSkipReason && (
                     <p className="text-[10px] font-mono text-gray-400 bg-gray-50 border border-outline px-2 py-1.5 leading-snug">
                       Saved locally — add Late API key to auto-publish
                     </p>
