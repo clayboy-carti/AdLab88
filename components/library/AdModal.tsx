@@ -16,6 +16,22 @@ interface AdModalProps {
 
 type EditableField = 'hook' | 'cta' | 'caption'
 
+// ─── Accounts cache (module-level, persists across modal opens) ──────────────
+const ACCOUNTS_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+let accountsCache: { accounts: LateAccount[]; configured: boolean; ts: number } | null = null
+
+function fetchAccountsCached(): Promise<{ accounts: LateAccount[]; configured: boolean }> {
+  if (accountsCache && Date.now() - accountsCache.ts < ACCOUNTS_CACHE_TTL) {
+    return Promise.resolve({ accounts: accountsCache.accounts, configured: accountsCache.configured })
+  }
+  return fetch('/api/social/accounts')
+    .then((r) => r.json())
+    .then((data) => {
+      accountsCache = { accounts: data.accounts ?? [], configured: data.configured !== false, ts: Date.now() }
+      return { accounts: accountsCache.accounts, configured: accountsCache.configured }
+    })
+}
+
 // ─── Calendar helpers ────────────────────────────────────────────────────────
 
 const MONTH_NAMES = [
@@ -222,7 +238,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
 
   // Load accounts + scheduled post data in parallel, then apply all state in one batch
   useEffect(() => {
-    const fetchAccounts = fetch('/api/social/accounts').then((r) => r.json())
+    const fetchAccounts = fetchAccountsCached()
     const fetchSchedule = scheduledDate !== undefined
       ? Promise.resolve(null)
       : fetch(`/api/social/schedule?adId=${ad.id}`).then((r) => r.json())

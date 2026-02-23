@@ -61,7 +61,7 @@ export async function POST(request: Request) {
 
     const { data: referenceImages } = await supabase
       .from('reference_images')
-      .select('*')
+      .select('id, file_name, storage_path')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(1)

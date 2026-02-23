@@ -18,7 +18,7 @@ export default async function LibraryPage() {
   // Fetch all ads for the user, newest first
   const { data: ads, error } = await supabase
     .from('generated_ads')
-    .select('*')
+    .select('id, user_id, positioning_angle, hook, caption, cta, storage_path, framework_applied, target_platform, created_at, image_quality, aspect_ratio')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
