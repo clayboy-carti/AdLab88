@@ -1,3 +1,12 @@
+export type UserProfile = {
+  id: string
+  email: string
+  full_name: string
+  created_at: string
+}
+
+export type SubscriptionTier = 'free' | 'pro' | 'business'
+
 export type Brand = {
   id: string
   user_id: string
