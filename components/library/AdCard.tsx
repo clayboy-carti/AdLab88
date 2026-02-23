@@ -13,6 +13,7 @@ export interface Ad {
   created_at: string
   storage_path: string | null
   signedUrl: string | null
+  batch_id?: string | null
 }
 
 export default function AdCard({ ad, onClick }: { ad: Ad; onClick: () => void }) {

@@ -179,6 +179,7 @@ export async function POST(request: Request) {
 
     // 10. Save successful variants to DB in parallel
     console.log('[Batch] === PHASE 4: Saving to database ===')
+    const batchId = crypto.randomUUID()
     const dbInserts = await Promise.allSettled(
       variantResults.map((v, i) => {
         if (!v.storagePath) return Promise.resolve(null)
@@ -201,6 +202,7 @@ export async function POST(request: Request) {
             storage_path: v.storagePath,
             image_quality: imageQuality,
             aspect_ratio: imageAspectRatio,
+            batch_id: batchId,
           })
           .select()
           .single()
