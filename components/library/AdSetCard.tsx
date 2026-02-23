@@ -58,7 +58,14 @@ export default function AdSetCard({ ads, onClick }: AdSetCardProps) {
             {ads.length} variants
           </span>
         </div>
-        <p className="text-sm text-gray-500 font-mono">
+
+        {/* Title derived from the first variant's hook */}
+        <div>
+          <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-1">Hook</p>
+          <p className="font-bold text-graphite leading-snug line-clamp-2">{ads[0].hook}</p>
+        </div>
+
+        <p className="text-xs text-gray-400 font-mono line-clamp-1 mt-auto">
           {ads.map((a) => a.positioning_angle).join(' · ')}
         </p>
       </div>
