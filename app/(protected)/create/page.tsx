@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import ReferenceImageUpload from '@/components/create/ReferenceImageUpload'
+import BatchResultsGrid, { type BatchAdResult } from '@/components/create/BatchResultsGrid'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,15 +19,26 @@ interface GeneratedAd {
   created_at: string
 }
 
+type GenerationMode = 'single' | 'batch'
+
 export default function CreatePage() {
   const [contextText, setContextText] = useState('')
   const [imageQuality, setImageQuality] = useState<'1K' | '2K'>('1K')
   const [aspectRatio, setAspectRatio] = useState('1:1')
   const [creativity, setCreativity] = useState(2)
+  const [mode, setMode] = useState<GenerationMode>('single')
   const [generating, setGenerating] = useState(false)
   const [generationStage, setGenerationStage] = useState<string>('')
   const [generatedAd, setGeneratedAd] = useState<GeneratedAd | null>(null)
+  const [generatedBatch, setGeneratedBatch] = useState<BatchAdResult[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const handleModeChange = (next: GenerationMode) => {
+    setMode(next)
+    setGeneratedAd(null)
+    setGeneratedBatch(null)
+    setError(null)
+  }
 
   const handleGenerate = async () => {
     setGenerating(true)
@@ -88,6 +100,51 @@ export default function CreatePage() {
     }
   }
 
+  const handleBatchGenerate = async () => {
+    setGenerating(true)
+    setError(null)
+    setGeneratedBatch(null)
+    setGenerationStage('Loading brand + frameworks...')
+
+    const t1 = setTimeout(() => setGenerationStage('Writing 5 angle variants in one GPT call...'), 2000)
+    const t2 = setTimeout(() => setGenerationStage('Detecting meme structure in reference...'), 8000)
+    const t3 = setTimeout(() => setGenerationStage('Building 5 image prompts...'), 12000)
+    const t4 = setTimeout(() => setGenerationStage('Generating 5 images in parallel with Gemini...'), 15000)
+    const t5 = setTimeout(() => setGenerationStage('Saving all ads to library...'), 70000)
+    const t6 = setTimeout(() => setGenerationStage('Almost done...'), 95000)
+
+    const clearAll = () => [t1, t2, t3, t4, t5, t6].forEach(clearTimeout)
+
+    try {
+      const response = await fetch('/api/generate-batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_context: contextText.trim() || undefined,
+          image_quality: imageQuality,
+          aspect_ratio: aspectRatio,
+          creativity,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Batch generation failed')
+      }
+
+      clearAll()
+      setGeneratedBatch(data.ads)
+      setGenerationStage(`Batch complete — ${data.succeeded}/5 generated!`)
+    } catch (err: any) {
+      clearAll()
+      setError(err.message || 'Batch generation failed')
+      setGenerationStage('')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   return (
     <div className="w-full p-4 lg:p-8">
       <div className="flex items-baseline justify-between mb-8">
@@ -100,6 +157,37 @@ export default function CreatePage() {
           <p className="font-mono text-xs uppercase tracking-widest text-gray-500 mb-2">
             [ CREATIVE INPUT MODULE ]
           </p>
+
+          {/* Generation Mode toggle */}
+          <div className="border border-outline mb-3">
+            <div className="bg-[#e4dcc8] border-b border-outline px-4 py-2">
+              <span className="font-mono text-xs uppercase tracking-widest">Generation Mode</span>
+            </div>
+            <div className="flex bg-white">
+              {(['single', 'batch'] as const).map((m, idx) => (
+                <button
+                  key={m}
+                  onClick={() => handleModeChange(m)}
+                  className={`flex-1 font-mono text-xs uppercase py-2.5 transition-colors ${
+                    idx === 0 ? 'border-r border-outline' : ''
+                  } ${
+                    mode === m
+                      ? 'bg-rust text-white'
+                      : 'bg-white text-gray-500 hover:bg-gray-50'
+                  }`}
+                >
+                  {m === 'single' ? '[ SINGLE ]' : '[ BATCH × 5 ]'}
+                </button>
+              ))}
+            </div>
+            {mode === 'batch' && (
+              <div className="px-4 py-2 bg-white border-t border-outline">
+                <p className="font-mono text-xs text-gray-400 leading-relaxed">
+                  5 ads — one per positioning angle — saved to your library in one run.
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Outer container */}
           <div className="border border-outline">
@@ -238,11 +326,13 @@ export default function CreatePage() {
 
           {/* Generate button — outside container */}
           <button
-            onClick={handleGenerate}
+            onClick={mode === 'batch' ? handleBatchGenerate : handleGenerate}
             disabled={generating}
             className="btn-primary w-full mt-3"
           >
-            {generating ? 'GENERATING...' : 'GENERATE AD'}
+            {generating
+              ? mode === 'batch' ? 'RUNNING BATCH...' : 'GENERATING...'
+              : mode === 'batch' ? 'RUN BATCH' : 'GENERATE AD'}
           </button>
 
           {error && (
@@ -286,17 +376,35 @@ export default function CreatePage() {
                   <div className="bg-white border border-outline p-6 text-center w-full max-w-xs">
                     <div className="animate-spin h-6 w-6 border-2 border-rust border-t-transparent mx-auto mb-4" />
                     <p className="font-mono text-xs text-gray-600 mb-4">{generationStage}</p>
-                    <div className="space-y-1.5 text-left">
-                      <p className="font-mono text-xs text-gray-500">✓ Loading brand profile</p>
-                      <p className="font-mono text-xs text-rust animate-pulse">→ Generating ad copy...</p>
-                      <p className="font-mono text-xs text-gray-300">→ Creating image...</p>
-                      <p className="font-mono text-xs text-gray-300">→ Saving to library...</p>
-                    </div>
+                    {mode === 'batch' ? (
+                      <div className="space-y-1.5 text-left">
+                        <p className="font-mono text-xs text-gray-500">✓ Loading brand profile</p>
+                        <p className="font-mono text-xs text-rust animate-pulse">→ Generating 5 copy variants...</p>
+                        <p className="font-mono text-xs text-gray-300">→ Creating images in parallel...</p>
+                        <p className="font-mono text-xs text-gray-300">→ Saving all to library...</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5 text-left">
+                        <p className="font-mono text-xs text-gray-500">✓ Loading brand profile</p>
+                        <p className="font-mono text-xs text-rust animate-pulse">→ Generating ad copy...</p>
+                        <p className="font-mono text-xs text-gray-300">→ Creating image...</p>
+                        <p className="font-mono text-xs text-gray-300">→ Saving to library...</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* Generated ad */}
+              {/* Batch results */}
+              {!generating && generatedBatch && (
+                <BatchResultsGrid
+                  ads={generatedBatch}
+                  succeeded={generatedBatch.filter((a) => !a.imageGenerationFailed).length}
+                  onReset={() => { setGeneratedBatch(null); setError(null) }}
+                />
+              )}
+
+              {/* Single ad result */}
               {!generating && generatedAd && (
                 <div className="p-4 space-y-3">
                   {generatedAd.generatedImageUrl && (
@@ -340,7 +448,7 @@ export default function CreatePage() {
               )}
 
               {/* Empty state — dot grid */}
-              {!generating && !generatedAd && !error && (
+              {!generating && !generatedAd && !generatedBatch && !error && (
                 <div
                   className="absolute inset-0 flex flex-col items-center justify-center"
                   style={{
@@ -350,7 +458,11 @@ export default function CreatePage() {
                 >
                   <p className="font-mono text-xs text-gray-500 text-center leading-relaxed">
                     Awaiting input.<br />
-                    <span className="text-gray-400">Add context and click GENERATE AD.</span>
+                    <span className="text-gray-400">
+                      {mode === 'batch'
+                        ? 'Click RUN BATCH to generate 5 variations.'
+                        : 'Add context and click GENERATE AD.'}
+                    </span>
                   </p>
                 </div>
               )}

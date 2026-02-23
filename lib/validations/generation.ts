@@ -36,3 +36,12 @@ export type GeneratedAd = z.infer<typeof generatedAdSchema>
 export function parseGeneratedAd(json: unknown): GeneratedAd {
   return generatedAdSchema.parse(json)
 }
+
+/**
+ * Schema for batch copy generation — wrapper around 5 variations
+ */
+export const batchAdCopyResponseSchema = z.object({
+  variations: z.array(generatedAdSchema).length(5),
+})
+
+export type BatchAdCopyResponse = z.infer<typeof batchAdCopyResponseSchema>

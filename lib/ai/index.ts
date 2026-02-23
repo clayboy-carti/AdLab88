@@ -1,5 +1,5 @@
 // Copy generation (frameworks-driven)
-export { generateAdCopy, analyzeReferenceAndCreatePrompt } from './openai'
+export { generateAdCopy, generateBatchAdCopy, analyzeReferenceAndCreatePrompt } from './openai'
 
 // Meme template detection (GPT-4o Vision)
 export { detectMemeTemplate, type MemeContext, type MemePanel } from './meme-detector'
