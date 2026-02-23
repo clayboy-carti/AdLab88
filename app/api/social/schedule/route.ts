@@ -24,13 +24,14 @@ export async function GET(request: Request) {
 
   const { data } = await supabase
     .from('scheduled_posts')
-    .select('scheduled_for, platforms')
+    .select('id, scheduled_for, platforms')
     .eq('user_id', user.id)
     .eq('ad_id', adId)
     .eq('status', 'scheduled')
     .maybeSingle()
 
   return NextResponse.json({
+    postId: (data as any)?.id ?? null,
     scheduledFor: data?.scheduled_for ?? null,
     platforms: (data as any)?.platforms ?? [],
   })
@@ -156,8 +157,10 @@ export async function POST(request: Request) {
         if (signed?.signedUrl) imageUrl = signed.signedUrl
       }
 
-      // "YYYY-MM-DD" → "YYYY-MM-DDTHH:MM:SSZ" (noon UTC)
-      const scheduledAtISO = `${scheduledFor}T12:00:00Z`
+      // scheduledFor may be "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM" — normalise to full ISO-8601
+      const scheduledAtISO = scheduledFor.includes('T')
+        ? `${scheduledFor}:00Z`
+        : `${scheduledFor}T12:00:00Z`
 
       const latePost = await createLatePost({
         content: caption || '',
@@ -169,6 +172,7 @@ export async function POST(request: Request) {
 
       // Store the Late post ID (handle both _id and id)
       const latePostId = latePost._id ?? latePost.id
+      console.log('[Schedule] latePost keys:', Object.keys(latePost), '| resolved latePostId:', latePostId)
       if (latePostId) {
         await supabase
           .from('scheduled_posts')

@@ -205,12 +205,15 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
 
   // Schedule state
   const now = new Date()
-  const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerMonth, setPickerMonth] = useState(new Date(now.getFullYear(), now.getMonth(), 1))
-  const [selectedDate, setSelectedDate] = useState<string | null>(scheduledDate ?? null)
+  const [selectedDate, setSelectedDate] = useState<string | null>(scheduledDate ? scheduledDate.split('T')[0] : null)
+  const [selectedTime, setSelectedTime] = useState(scheduledDate?.split('T')[1]?.slice(0, 5) ?? '09:00')
   const [scheduleConfirmed, setScheduleConfirmed] = useState(!!scheduledDate)
   const [scheduling, setScheduling] = useState(false)
   const [scheduleError, setScheduleError] = useState<string | null>(null)
+  const [scheduledPostId, setScheduledPostId] = useState<string | null>(null)
+  const [unscheduling, setUnscheduling] = useState(false)
+  const [unscheduleError, setUnscheduleError] = useState<string | null>(null)
   const [lateStatus, setLateStatus] = useState<'skipped' | 'success' | 'error' | null>(null)
   const [lateError, setLateError] = useState<string | null>(null)
 
@@ -233,10 +236,13 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
     if (scheduledDate !== undefined) return
     fetch(`/api/social/schedule?adId=${ad.id}`)
       .then((r) => r.json())
-      .then(({ scheduledFor, platforms }) => {
+      .then(({ postId, scheduledFor, platforms }) => {
         if (scheduledFor) {
-          setSelectedDate(scheduledFor)
+          const [datePart, timePart] = scheduledFor.split('T')
+          setSelectedDate(datePart)
+          if (timePart) setSelectedTime(timePart.slice(0, 5))
           setScheduleConfirmed(true)
+          setScheduledPostId(postId ?? null)
         }
         if (Array.isArray(platforms) && platforms.length > 0) {
           setSelectedAccountIds(platforms)
@@ -248,14 +254,13 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (pickerOpen) { setPickerOpen(false); return }
         if (editingField) { handleCancel(); return }
         onClose()
       }
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [onClose, pickerOpen, editingField])
+  }, [onClose, editingField])
 
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === overlayRef.current) onClose()
@@ -372,7 +377,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           adId: ad.id,
-          scheduledFor: selectedDate,
+          scheduledFor: `${selectedDate}T${selectedTime}`,
           platform: ad.target_platform || 'post',
           caption,
           platforms,
@@ -384,12 +389,43 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
       }
       const data = await res.json()
       setScheduleConfirmed(true)
+      setScheduledPostId(data.post?.id ?? null)
       setLateStatus(data.lateStatus ?? null)
       setLateError(data.lateError ?? null)
     } catch (err: any) {
       setScheduleError(err.message)
     } finally {
       setScheduling(false)
+    }
+  }
+
+  // ── Unschedule
+  const handleUnschedule = async () => {
+    setUnscheduleError(null)
+    if (!scheduledPostId) {
+      // No DB row ID — just clear local state
+      setScheduleConfirmed(false)
+      setSelectedDate(null)
+      setLateStatus(null)
+      setLateError(null)
+      return
+    }
+    setUnscheduling(true)
+    try {
+      const res = await fetch(`/api/social/schedule?postId=${scheduledPostId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to unschedule post')
+      }
+      setScheduleConfirmed(false)
+      setSelectedDate(null)
+      setScheduledPostId(null)
+      setLateStatus(null)
+      setLateError(null)
+    } catch (err: any) {
+      setUnscheduleError(err.message)
+    } finally {
+      setUnscheduling(false)
     }
   }
 
@@ -460,8 +496,9 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
           </div>
         </div>
 
-        {/* Image + Platform toggles */}
+        {/* Image + Publish To + Calendar — 3 columns */}
         <div className="flex border-b border-outline flex-shrink-0 min-h-[280px]">
+
           {/* Left: image preview */}
           <div className="flex-1 border-r border-outline flex items-center justify-center bg-gray-50">
             {ad.signedUrl ? (
@@ -471,8 +508,8 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
             )}
           </div>
 
-          {/* Right: platform toggles — powered by Late connected accounts */}
-          <div className="w-72 flex flex-col flex-shrink-0">
+          {/* Middle: Publish To — platform toggles */}
+          <div className="w-56 flex flex-col flex-shrink-0 border-r border-outline">
             <div className="px-5 py-3 border-b border-outline bg-gray-50">
               <p className="text-xs uppercase font-mono text-gray-500 tracking-widest">Publish To</p>
             </div>
@@ -514,8 +551,8 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
                 {lateAccounts.map((acct) => {
                   const enabled = selectedAccountIds.includes(acct._id)
                   return (
-                    <div key={acct._id} className="flex items-center justify-between px-5 py-4">
-                      <div className="flex items-center gap-3 min-w-0">
+                    <div key={acct._id} className="flex items-center justify-between px-4 py-3">
+                      <div className="flex items-center gap-2 min-w-0">
                         <span className={`flex-shrink-0 transition-colors ${enabled ? 'text-graphite' : 'text-gray-300'}`}>
                           <PlatformIcon platform={acct.platform} />
                         </span>
@@ -532,7 +569,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
                         onClick={() => toggleAccount(acct._id)}
                         role="switch"
                         aria-checked={enabled}
-                        className={`ml-3 relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none ${enabled ? 'bg-rust' : 'bg-gray-200'}`}
+                        className={`ml-2 relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none ${enabled ? 'bg-rust' : 'bg-gray-200'}`}
                       >
                         <span
                           className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ${enabled ? 'translate-x-4' : 'translate-x-0.5'}`}
@@ -544,6 +581,157 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
               </div>
             )}
           </div>
+
+          {/* Right: mini calendar */}
+          <div className="w-60 flex flex-col flex-shrink-0">
+            <div className="px-4 py-3 border-b border-outline bg-gray-50 flex items-center justify-between">
+              <p className="text-xs uppercase font-mono text-gray-500 tracking-widest">Schedule</p>
+              {selectedDate && !scheduleConfirmed && (
+                <button
+                  onClick={() => setSelectedDate(null)}
+                  className="text-xs font-mono text-gray-400 hover:text-gray-700 transition-colors uppercase"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            <div className="flex-1 flex flex-col p-3 overflow-hidden">
+              {scheduleConfirmed ? (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-start gap-2">
+                    <span className="inline-block w-2 h-2 bg-forest flex-shrink-0 mt-1" />
+                    <div>
+                      <p className="text-xs font-mono text-graphite font-bold leading-snug">
+                        {formatSelectedDate(selectedDate!)}
+                      </p>
+                      <p className="text-[10px] font-mono text-gray-500 mt-0.5">{selectedTime}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleUnschedule}
+                    disabled={unscheduling}
+                    className="text-xs font-mono uppercase text-gray-400 hover:text-red-600 disabled:opacity-40 transition-colors text-left"
+                  >
+                    {unscheduling ? 'Removing...' : 'Unschedule'}
+                  </button>
+                  {unscheduleError && (
+                    <p className="text-[10px] font-mono text-red-600">{unscheduleError}</p>
+                  )}
+                  {lateStatus === 'success' && (
+                    <p className="text-[10px] font-mono text-forest bg-forest/5 border border-forest/20 px-2 py-1.5 leading-snug">
+                      ✓ Synced to Late
+                    </p>
+                  )}
+                  {lateStatus === 'skipped' && !lateError && (
+                    <p className="text-[10px] font-mono text-gray-400 bg-gray-50 border border-outline px-2 py-1.5 leading-snug">
+                      Saved locally — add Late API key to auto-publish
+                    </p>
+                  )}
+                  {(lateStatus === 'error' || lateError) && (
+                    <div className="text-[10px] font-mono text-red-600 bg-red-50 border border-red-200 px-2 py-1.5">
+                      <p className="font-bold">Late API error</p>
+                      {lateError && <p className="mt-0.5 opacity-80">{lateError}</p>}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {/* Month nav */}
+                  <div className="flex items-center justify-between mb-1.5">
+                    <button
+                      onClick={() => setPickerMonth(new Date(pickerYear, pickerMonthIdx - 1, 1))}
+                      className="border border-outline px-1.5 py-0.5 font-mono text-xs hover:bg-gray-100 transition-colors"
+                    >←</button>
+                    <span className="text-[10px] uppercase font-mono tracking-wider">
+                      {MONTH_NAMES[pickerMonthIdx]} {pickerYear}
+                    </span>
+                    <button
+                      onClick={() => setPickerMonth(new Date(pickerYear, pickerMonthIdx + 1, 1))}
+                      className="border border-outline px-1.5 py-0.5 font-mono text-xs hover:bg-gray-100 transition-colors"
+                    >→</button>
+                  </div>
+
+                  {/* Day labels */}
+                  <div className="grid grid-cols-7 mb-0.5">
+                    {DAY_LABELS.map((d, i) => (
+                      <div key={i} className="text-[9px] uppercase font-mono text-gray-400 text-center py-0.5">{d}</div>
+                    ))}
+                  </div>
+
+                  {/* Day cells */}
+                  <div className="grid grid-cols-7">
+                    {pickerCells.map((cell, i) => {
+                      const isSelected = cell.dateStr === selectedDate
+                      const isDisabled = cell.isPast
+                      return (
+                        <button
+                          key={cell.dateStr + '-' + i}
+                          onClick={() => { if (!isDisabled) setSelectedDate(cell.dateStr) }}
+                          disabled={isDisabled}
+                          className={[
+                            'h-7 flex items-center justify-center text-[10px] font-mono transition-colors',
+                            isSelected
+                              ? 'bg-rust text-white font-bold'
+                              : cell.isToday
+                              ? 'text-rust font-bold bg-white'
+                              : cell.isCurrentMonth
+                              ? isDisabled
+                                ? 'text-gray-300 cursor-not-allowed'
+                                : 'text-graphite hover:bg-paper'
+                              : 'text-gray-300 cursor-not-allowed',
+                          ].filter(Boolean).join(' ')}
+                        >
+                          {cell.dayNum}
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {/* Time selector */}
+                  <div className="flex items-center gap-2 mt-2 border border-outline px-2 py-0.5">
+                    <span className="text-xs font-mono text-gray-400 uppercase flex-shrink-0">Time</span>
+                    <div className="flex items-center gap-0.5 ml-auto">
+                      <select
+                        value={selectedTime.split(':')[0]}
+                        onChange={(e) => setSelectedTime(`${e.target.value}:${selectedTime.split(':')[1]}`)}
+                        className="text-xs font-mono text-graphite bg-transparent border-none outline-none cursor-pointer appearance-none"
+                      >
+                        {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map((h) => (
+                          <option key={h} value={h}>{h}</option>
+                        ))}
+                      </select>
+                      <span className="text-xs font-mono text-gray-400">:</span>
+                      <select
+                        value={selectedTime.split(':')[1]}
+                        onChange={(e) => setSelectedTime(`${selectedTime.split(':')[0]}:${e.target.value}`)}
+                        className="text-xs font-mono text-graphite bg-transparent border-none outline-none cursor-pointer appearance-none"
+                      >
+                        {['00', '15', '30', '45'].map((m) => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Schedule button */}
+                  <div className="mt-2">
+                    {scheduleError && (
+                      <p className="text-[10px] font-mono text-red-600 mb-1">{scheduleError}</p>
+                    )}
+                    <button
+                      onClick={handleSchedule}
+                      disabled={!selectedDate || scheduling}
+                      className="btn-primary w-full text-xs py-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {scheduling ? 'SCHEDULING...' : selectedDate ? 'SCHEDULE' : 'SELECT A DATE'}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
         </div>
 
         {/* Body */}
@@ -615,147 +803,6 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
             {ad.aspect_ratio && (
               <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 uppercase">{ad.aspect_ratio}</span>
             )}
-          </div>
-
-          {/* ── Schedule Post ── */}
-          <div className="border border-outline">
-            <div className="px-4 py-3 border-b border-outline bg-gray-50 flex items-center justify-between">
-              <p className="text-xs uppercase font-mono text-gray-500 tracking-widest">Schedule Post</p>
-              {selectedDate && !scheduleConfirmed && (
-                <button
-                  onClick={() => { setSelectedDate(null); setPickerOpen(false) }}
-                  className="text-xs font-mono text-gray-400 hover:text-gray-700 transition-colors uppercase"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-
-            <div className="p-4 flex flex-col gap-4">
-              {scheduleConfirmed ? (
-                <>
-                  <div className="flex items-center gap-3 py-2">
-                    <span className="inline-block w-2 h-2 bg-forest flex-shrink-0" />
-                    <p className="text-sm font-mono text-graphite">
-                      Scheduled for{' '}
-                      <span className="font-bold">{formatSelectedDate(selectedDate!)}</span>
-                    </p>
-                    <button
-                      onClick={() => { setScheduleConfirmed(false); setSelectedDate(null); setLateStatus(null); setLateError(null) }}
-                      className="ml-auto text-xs font-mono uppercase text-gray-400 hover:text-gray-700 transition-colors"
-                    >
-                      Change
-                    </button>
-                  </div>
-
-                  {/* Late API status feedback */}
-                  {lateStatus === 'success' && (
-                    <p className="text-xs font-mono text-forest bg-forest/5 border border-forest/20 px-3 py-2">
-                      ✓ Synced to Late — post will auto-publish at the scheduled time
-                    </p>
-                  )}
-                  {lateStatus === 'skipped' && !lateError && (
-                    <p className="text-xs font-mono text-gray-400 bg-gray-50 border border-outline px-3 py-2">
-                      Saved locally only — add LATE_API_KEY and select platforms to auto-publish
-                    </p>
-                  )}
-                  {(lateStatus === 'error' || lateError) && (
-                    <div className="text-xs font-mono text-red-600 bg-red-50 border border-red-200 px-3 py-2">
-                      <p className="font-bold">Late API error — saved locally only</p>
-                      {lateError && <p className="mt-1 opacity-80">{lateError}</p>}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setPickerOpen((o) => !o)}
-                    className="flex items-center justify-between w-full border border-outline px-4 py-3 text-sm font-mono hover:bg-gray-50 transition-colors"
-                  >
-                    <span className={selectedDate ? 'text-graphite' : 'text-gray-400'}>
-                      {selectedDate ? formatSelectedDate(selectedDate) : 'Select a date'}
-                    </span>
-                    <CalendarIcon open={pickerOpen} />
-                  </button>
-
-                  {pickerOpen && (
-                    <div className="border border-outline">
-                      <div className="flex items-center justify-between px-3 py-2 border-b border-outline bg-gray-50">
-                        <button
-                          onClick={() => setPickerMonth(new Date(pickerYear, pickerMonthIdx - 1, 1))}
-                          className="border border-outline px-2 py-1 font-mono text-xs hover:bg-gray-100 transition-colors"
-                        >←</button>
-                        <span className="text-xs uppercase font-mono tracking-wider">
-                          {MONTH_NAMES[pickerMonthIdx]} {pickerYear}
-                        </span>
-                        <button
-                          onClick={() => setPickerMonth(new Date(pickerYear, pickerMonthIdx + 1, 1))}
-                          className="border border-outline px-2 py-1 font-mono text-xs hover:bg-gray-100 transition-colors"
-                        >→</button>
-                      </div>
-
-                      <div className="grid grid-cols-7 border-b border-outline">
-                        {DAY_LABELS.map((d, i) => (
-                          <div key={i} className="text-[10px] uppercase font-mono text-gray-400 text-center py-1.5">{d}</div>
-                        ))}
-                      </div>
-
-                      <div className="grid grid-cols-7">
-                        {pickerCells.map((cell, i) => {
-                          const isSelected = cell.dateStr === selectedDate
-                          const isLastRow = i >= pickerCells.length - 7
-                          const isDisabled = cell.isPast
-
-                          return (
-                            <button
-                              key={cell.dateStr + '-' + i}
-                              onClick={() => {
-                                if (isDisabled) return
-                                setSelectedDate(cell.dateStr)
-                                setPickerOpen(false)
-                              }}
-                              disabled={isDisabled}
-                              className={[
-                                'h-9 flex items-center justify-center text-xs font-mono transition-colors',
-                                'border-b border-r border-outline',
-                                (i + 1) % 7 === 0 ? 'border-r-0' : '',
-                                isLastRow ? 'border-b-0' : '',
-                                isSelected
-                                  ? 'bg-rust text-white font-bold'
-                                  : cell.isToday
-                                  ? 'text-rust font-bold bg-white'
-                                  : cell.isCurrentMonth
-                                  ? isDisabled
-                                    ? 'text-gray-300 bg-white cursor-not-allowed'
-                                    : 'text-graphite bg-white hover:bg-paper'
-                                  : 'text-gray-300 bg-gray-50 cursor-not-allowed',
-                              ].filter(Boolean).join(' ')}
-                            >
-                              {cell.dayNum}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {scheduleError && (
-                    <p className="text-xs text-red-600 font-mono">{scheduleError}</p>
-                  )}
-                  <button
-                    onClick={handleSchedule}
-                    disabled={!selectedDate || scheduling}
-                    className="btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {scheduling
-                      ? 'SCHEDULING...'
-                      : selectedDate
-                      ? `SCHEDULE FOR ${formatSelectedDate(selectedDate).toUpperCase()}`
-                      : 'SELECT A DATE TO SCHEDULE'}
-                  </button>
-                </>
-              )}
-            </div>
           </div>
 
         </div>

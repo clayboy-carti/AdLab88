@@ -73,7 +73,12 @@ export async function createLatePost(params: {
   console.log('[Late] POST /posts response', res.status, ':', text)
 
   if (!res.ok) throw new Error(`Late API ${res.status}: ${text}`)
-  return JSON.parse(text)
+
+  const raw = JSON.parse(text)
+  // Late may return the post directly or wrapped under a key like { post: {...} } or { data: {...} }
+  const post = (raw._id || raw.id) ? raw : (raw.post ?? raw.data ?? raw)
+  console.log('[Late] resolved post object:', JSON.stringify(post))
+  return post
 }
 
 export async function deleteLatePost(latePostId: string): Promise<void> {

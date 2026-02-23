@@ -100,82 +100,65 @@ export default function ReferenceImageUpload() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="border-2 border-dashed border-outline p-8 text-center bg-white">
-        <input
-          type="file"
-          accept="image/jpeg,image/png"
-          onChange={handleUpload}
-          disabled={uploading || images.length >= 5}
-          className="hidden"
-          id="image-upload"
-        />
-        <label
-          htmlFor="image-upload"
-          className={`cursor-pointer uppercase font-mono text-sm inline-block px-6 py-3 border border-outline ${
-            images.length >= 5 || uploading
-              ? 'opacity-50 cursor-not-allowed bg-gray-100'
-              : 'bg-rust text-white hover:bg-[#9a4429]'
-          }`}
-        >
-          {uploading ? 'UPLOADING...' : 'UPLOAD REFERENCE IMAGE'}
-        </label>
-        <p className="text-xs mt-3 text-gray-600">
-          {images.length}/5 images • JPEG/PNG • Max 5MB
-        </p>
-        {error && <p className="text-xs mt-2 text-red-600">{error}</p>}
-      </div>
+    <div className="space-y-3">
+      {/* Upload button */}
+      <input
+        type="file"
+        accept="image/jpeg,image/png"
+        onChange={handleUpload}
+        disabled={uploading || images.length >= 5}
+        className="hidden"
+        id="image-upload"
+      />
+      <label
+        htmlFor="image-upload"
+        className={`block w-full text-center font-mono text-xs uppercase py-2.5 border transition-colors cursor-pointer ${
+          images.length >= 5 || uploading
+            ? 'bg-gray-100 text-gray-400 border-outline cursor-not-allowed'
+            : 'bg-rust text-white border-rust hover:bg-[#9a4429]'
+        }`}
+      >
+        {uploading ? 'UPLOADING...' : 'UPLOAD REFERENCE'}
+      </label>
 
+      <p className="font-mono text-xs text-gray-400 text-center">
+        {images.length}/5 images · JPG / PNG · Max 5MB
+      </p>
+
+      {error && <p className="font-mono text-xs text-red-500">{error}</p>}
+
+      {/* Image slots */}
       {images.length > 0 && (
-        <div>
-          <h3 className="text-sm uppercase font-mono mb-1">YOUR REFERENCE IMAGES</h3>
-          <p className="text-xs text-gray-500 font-mono mb-3">
-            All uploaded images are used — most recent takes priority
-          </p>
-          <div className="grid grid-cols-5 gap-4">
-            {images.map((img, index) => (
-              <div
-                key={img.id}
-                className={`relative aspect-square border-2 transition-all group ${
-                  index === 0 ? 'border-rust' : 'border-outline'
-                }`}
-              >
-                <img
-                  src={img.signedUrl}
-                  alt={img.file_name}
-                  className="w-full h-full object-cover cursor-pointer"
-                  onClick={() => setPreviewImage(img)}
-                />
-                {index === 0 && (
-                  <div className="absolute top-1 right-1 bg-rust text-white px-2 py-1 text-xs font-mono">
-                    ACTIVE
-                  </div>
-                )}
-                <div className="absolute bottom-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => handleDelete(img.id, img.storage_path)}
-                    className="p-1 bg-black text-white hover:bg-red-600 transition-colors"
-                    title="Delete image"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  </button>
+        <div className="grid grid-cols-5 gap-2 pt-1">
+          {images.map((img, index) => (
+            <div
+              key={img.id}
+              className={`relative aspect-square border group ${
+                index === 0 ? 'border-rust' : 'border-outline'
+              }`}
+            >
+              <img
+                src={img.signedUrl}
+                alt={img.file_name}
+                className="w-full h-full object-cover cursor-pointer"
+                onClick={() => setPreviewImage(img)}
+              />
+              {index === 0 && (
+                <div className="absolute top-0 right-0 bg-rust text-white px-1 py-0.5 font-mono text-[9px] leading-none">
+                  ACTIVE
                 </div>
-              </div>
-            ))}
-          </div>
+              )}
+              <button
+                onClick={() => handleDelete(img.id, img.storage_path)}
+                className="absolute bottom-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white p-0.5"
+                title="Delete"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -194,19 +177,8 @@ export default function ReferenceImageUpload() {
               className="absolute top-2 right-2 bg-rust text-white p-2 hover:bg-[#9a4429] transition-colors z-10"
               title="Close preview"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
 
@@ -217,7 +189,7 @@ export default function ReferenceImageUpload() {
             />
 
             <div className="p-4 border-t border-outline bg-paper">
-              <p className="text-sm font-mono mb-3">{previewImage.file_name}</p>
+              <p className="font-mono text-xs mb-3">{previewImage.file_name}</p>
               <button
                 onClick={() => {
                   handleDelete(previewImage.id, previewImage.storage_path)

@@ -88,198 +88,235 @@ export default function CreatePage() {
 
   return (
     <div className="w-full p-4 lg:p-8">
-      <h1 className="text-3xl uppercase font-mono header-accent mb-8">CREATE AD</h1>
+      <div className="grid grid-cols-2 gap-6">
 
-      <div className="grid grid-cols-2 gap-8">
-        {/* Left Column: Inputs */}
-        <div className="space-y-6">
-          {/* Reference Images */}
-          <div className="card">
-            <h2 className="text-xl uppercase font-mono mb-1">Reference Images</h2>
-            <p className="text-xs text-gray-500 font-mono mb-4">
-              Optional — uploaded images are automatically used as a visual style guide
-            </p>
-            <ReferenceImageUpload />
-          </div>
+        {/* ── LEFT COLUMN ── */}
+        <div>
+          <p className="font-mono text-xs uppercase tracking-widest text-gray-500 mb-2">
+            [ CREATIVE INPUT MODULE ]
+          </p>
 
-          {/* Ad Context */}
-          <div className="card">
-            <h2 className="text-xl uppercase font-mono mb-1">Ad Context</h2>
-            <p className="text-xs text-gray-500 font-mono mb-4">
-              Tell the AI what this ad is promoting — offers, events, services
-            </p>
-            <textarea
-              value={contextText}
-              onChange={(e) => setContextText(e.target.value)}
-              placeholder={"e.g. 10% off first order · Free Estimates · Summer Sale · New location open"}
-              rows={4}
-              className="w-full border border-outline p-3 text-sm font-mono bg-white resize-none focus:outline-none focus:border-rust placeholder:text-gray-400"
-            />
-            <p className="text-xs text-gray-400 font-mono mt-1">
-              {contextText.length} / 300 characters
-            </p>
-          </div>
+          {/* Outer container */}
+          <div className="border border-outline">
 
-          {/* Image Settings */}
-          <div className="card">
-            <h2 className="text-xl uppercase font-mono mb-1">Image Settings</h2>
-            <p className="text-xs text-gray-500 font-mono mb-4">
-              Output quality and aspect ratio — applied regardless of reference image
-            </p>
+            {/* Section header bar */}
+            <div className="bg-[#e4dcc8] border-b border-outline px-4 py-2">
+              <span className="font-mono text-xs uppercase tracking-widest">Input Sources</span>
+            </div>
 
-            {/* Quality toggle */}
-            <div className="mb-4">
-              <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-2">Quality</p>
-              <div className="flex border border-outline">
-                {(['1K', '2K'] as const).map((q) => (
-                  <button
-                    key={q}
-                    onClick={() => setImageQuality(q)}
-                    className={`flex-1 py-2 text-sm font-mono uppercase transition-colors ${
-                      imageQuality === q
-                        ? 'bg-graphite text-white'
-                        : 'bg-white text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    {q}
-                  </button>
-                ))}
+            {/* Reference Images */}
+            <div className="border-b border-outline">
+              <div className="px-4 py-1.5 border-b border-outline bg-white">
+                <span className="font-mono text-xs text-gray-400 tracking-wider">— REFERENCE IMAGES MODULE —</span>
+              </div>
+              <div className="p-4 bg-white">
+                <ReferenceImageUpload />
               </div>
             </div>
 
-            {/* Aspect ratio */}
-            <div>
-              <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-2">Aspect Ratio</p>
-              <select
-                value={aspectRatio}
-                onChange={(e) => setAspectRatio(e.target.value)}
-                className="w-full border border-outline p-2 text-sm font-mono bg-white focus:outline-none focus:border-rust"
-              >
-                <option value="1:1">1:1 — Square</option>
-                <option value="9:16">9:16 — Portrait (Story / Reel)</option>
-                <option value="16:9">16:9 — Landscape (Banner / YouTube)</option>
-                <option value="3:4">3:4 — Portrait (Feed Post)</option>
-                <option value="4:3">4:3 — Standard</option>
-              </select>
+            {/* Ad Context */}
+            <div className="border-b border-outline">
+              <div className="px-4 py-1.5 border-b border-outline bg-white">
+                <span className="font-mono text-xs text-gray-400 tracking-wider">— AD CONTEXT MODULE —</span>
+              </div>
+              <div className="p-4 bg-white">
+                <div className="border border-outline">
+                  <div className="px-3 pt-3 pb-1">
+                    <p className="font-mono text-xs text-gray-400 uppercase tracking-widest mb-2">Context Brief</p>
+                    <textarea
+                      value={contextText}
+                      onChange={(e) => setContextText(e.target.value)}
+                      placeholder="e.g. 10% off first order · Free Estimates · Summer Sale · New location open"
+                      rows={3}
+                      className="w-full text-sm font-mono bg-transparent resize-none focus:outline-none placeholder:text-gray-300 border-none p-0"
+                    />
+                  </div>
+                  <div className="px-3 pb-2 text-right">
+                    <span className="font-mono text-xs text-gray-400">{contextText.length} / 300</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Image Settings — table rows */}
+            <div className="bg-white">
+              <div className="px-4 py-1.5 border-b border-outline">
+                <span className="font-mono text-xs text-gray-400 tracking-wider">— IMAGE SETTINGS MODULE —</span>
+              </div>
+
+              {/* Quality row */}
+              <div className="flex items-center border-b border-outline">
+                <div className="w-32 shrink-0 px-4 py-2.5 border-r border-outline">
+                  <span className="font-mono text-xs uppercase text-gray-500">Quality</span>
+                </div>
+                <div className="px-4 py-2 flex gap-2">
+                  {(['1K', '2K'] as const).map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => setImageQuality(q)}
+                      className={`font-mono text-xs uppercase px-3 py-1 border transition-colors ${
+                        imageQuality === q
+                          ? 'border-rust text-rust'
+                          : 'border-outline text-gray-400 hover:border-gray-400'
+                      }`}
+                    >
+                      [ {q} ]
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Aspect Ratio row */}
+              <div className="flex items-center">
+                <div className="w-32 shrink-0 px-4 py-2.5 border-r border-outline">
+                  <span className="font-mono text-xs uppercase text-gray-500">Aspect Ratio</span>
+                </div>
+                <div className="px-4 py-1.5 flex-1">
+                  <select
+                    value={aspectRatio}
+                    onChange={(e) => setAspectRatio(e.target.value)}
+                    className="w-full font-mono text-xs bg-transparent focus:outline-none border-none p-0 text-gray-700"
+                  >
+                    <option value="1:1">1:1 — Square</option>
+                    <option value="9:16">9:16 — Story / Reel</option>
+                    <option value="16:9">16:9 — Landscape</option>
+                    <option value="3:4">3:4 — Feed Portrait</option>
+                    <option value="4:3">4:3 — Standard</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Generate Button */}
+          {/* Generate button — outside container */}
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="btn-primary w-full"
+            className="btn-primary w-full mt-3"
           >
             {generating ? 'GENERATING...' : 'GENERATE AD'}
           </button>
 
-          {/* Error Display */}
           {error && (
-            <div className="p-4 bg-red-50 border border-red-300 text-red-800 text-sm">
-              <p className="font-mono uppercase mb-1">Error</p>
-              <p>{error}</p>
+            <div className="mt-3 border border-red-300 bg-red-50 p-3">
+              <p className="font-mono text-xs uppercase text-red-700 mb-1">Error</p>
+              <p className="font-mono text-xs text-red-600">{error}</p>
             </div>
           )}
         </div>
 
-        {/* Right Column: Generated Preview */}
-        <div className="card">
-          <h2 className="text-xl uppercase font-mono mb-4">Generated Preview</h2>
+        {/* ── RIGHT COLUMN ── */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <p className="font-mono text-xs uppercase tracking-widest text-gray-500">
+              [ LIVE OUTPUT ENGINE ]
+            </p>
+            <span className="font-mono text-xs border border-rust text-rust px-2 py-0.5">
+              [ MODEL: READY ]
+            </span>
+          </div>
 
-          {/* Loading State */}
-          {generating && (
-            <div className="border border-outline p-8 bg-gray-50">
-              <div className="flex items-center justify-center mb-4">
-                <div className="animate-spin h-8 w-8 border-4 border-rust border-t-transparent"></div>
-              </div>
-              <p className="text-center text-sm font-mono text-gray-700 mb-6">
-                {generationStage}
-              </p>
-              <div className="space-y-2 text-xs text-gray-600">
-                <p>✓ Loading brand profile and frameworks</p>
-                <p className="animate-pulse">→ Generating ad copy with AI...</p>
-                <p className="text-gray-400">→ Creating image with Gemini...</p>
-                <p className="text-gray-400">→ Saving to library...</p>
-              </div>
+          {/* Outer container */}
+          <div className="border border-outline flex flex-col">
+
+            {/* Header bar */}
+            <div className="bg-[#e4dcc8] border-b border-outline px-4 py-2">
+              <span className="font-mono text-xs uppercase tracking-widest">Generated Preview</span>
             </div>
-          )}
 
-          {/* Generated Ad Preview */}
-          {!generating && generatedAd && (
-            <div className="space-y-4">
-              {/* Generated Image */}
-              {generatedAd.generatedImageUrl && (
-                <div className="border border-outline overflow-hidden">
-                  <img
-                    src={generatedAd.generatedImageUrl}
-                    alt={generatedAd.hook}
-                    className="w-full h-auto"
-                  />
+            {/* Preview area */}
+            <div className="flex-1 min-h-[480px] relative bg-white">
+
+              {/* Loading state */}
+              {generating && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-8"
+                  style={{
+                    backgroundImage: 'radial-gradient(circle, #d4cbb8 1px, transparent 1px)',
+                    backgroundSize: '20px 20px',
+                  }}
+                >
+                  <div className="bg-white border border-outline p-6 text-center w-full max-w-xs">
+                    <div className="animate-spin h-6 w-6 border-2 border-rust border-t-transparent mx-auto mb-4" />
+                    <p className="font-mono text-xs text-gray-600 mb-4">{generationStage}</p>
+                    <div className="space-y-1.5 text-left">
+                      <p className="font-mono text-xs text-gray-500">✓ Loading brand profile</p>
+                      <p className="font-mono text-xs text-rust animate-pulse">→ Generating ad copy...</p>
+                      <p className="font-mono text-xs text-gray-300">→ Creating image...</p>
+                      <p className="font-mono text-xs text-gray-300">→ Saving to library...</p>
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {/* Ad Copy — what's ON the ad */}
-              <div className="border border-outline p-5 bg-white">
-                <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-3">
-                  Ad Copy
-                </p>
-                <h3 className="text-2xl font-bold leading-tight mb-2">
-                  {generatedAd.hook}
-                </h3>
-                <p className="text-sm font-bold text-rust mt-3">{generatedAd.cta}</p>
-                <div className="flex items-center gap-3 mt-3 pt-3 border-t border-outline">
-                  <p className="text-xs text-gray-400 font-mono">
-                    {generatedAd.positioning_angle}
-                  </p>
-                  <span className="text-gray-300">·</span>
-                  <p className="text-xs text-gray-400 font-mono">
-                    {generatedAd.target_platform}
+              {/* Generated ad */}
+              {!generating && generatedAd && (
+                <div className="p-4 space-y-3">
+                  {generatedAd.generatedImageUrl && (
+                    <div className="border border-outline overflow-hidden">
+                      <img
+                        src={generatedAd.generatedImageUrl}
+                        alt={generatedAd.hook}
+                        className="w-full h-auto"
+                      />
+                    </div>
+                  )}
+
+                  <div className="border border-outline p-4 bg-white">
+                    <p className="font-mono text-xs text-gray-400 uppercase tracking-widest mb-2">Ad Copy</p>
+                    <h3 className="text-xl font-bold leading-tight mb-2">{generatedAd.hook}</h3>
+                    <p className="text-sm font-bold text-rust">{generatedAd.cta}</p>
+                    <div className="flex items-center gap-3 mt-3 pt-3 border-t border-outline">
+                      <p className="font-mono text-xs text-gray-400">{generatedAd.positioning_angle}</p>
+                      <span className="text-gray-300">·</span>
+                      <p className="font-mono text-xs text-gray-400">{generatedAd.target_platform}</p>
+                    </div>
+                  </div>
+
+                  <div className="border border-outline p-4 bg-white">
+                    <p className="font-mono text-xs text-gray-400 uppercase tracking-widest mb-2">Social Caption</p>
+                    <p className="text-sm text-gray-700 leading-relaxed">{generatedAd.caption}</p>
+                  </div>
+
+                  <div className="border border-green-300 bg-green-50 p-3">
+                    <p className="font-mono text-xs uppercase text-green-700 mb-1">Saved to Library</p>
+                    <a href="/library" className="font-mono text-xs text-green-600 underline">View Library →</a>
+                  </div>
+
+                  <button
+                    onClick={() => { setGeneratedAd(null); setError(null) }}
+                    className="btn-secondary w-full"
+                  >
+                    GENERATE ANOTHER AD
+                  </button>
+                </div>
+              )}
+
+              {/* Empty state — dot grid */}
+              {!generating && !generatedAd && !error && (
+                <div
+                  className="absolute inset-0 flex flex-col items-center justify-center"
+                  style={{
+                    backgroundImage: 'radial-gradient(circle, #d4cbb8 1px, transparent 1px)',
+                    backgroundSize: '20px 20px',
+                  }}
+                >
+                  <p className="font-mono text-xs text-gray-500 text-center leading-relaxed">
+                    Awaiting input.<br />
+                    <span className="text-gray-400">Add context and click GENERATE AD.</span>
                   </p>
                 </div>
-              </div>
-
-              {/* Social Caption — the post body */}
-              <div className="border border-outline p-5 bg-white">
-                <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-3">
-                  Social Caption
-                </p>
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  {generatedAd.caption}
-                </p>
-              </div>
-
-              {/* Success */}
-              <div className="p-4 bg-green-50 border border-green-300 text-green-800 text-sm">
-                <p className="font-mono uppercase mb-1">Saved to Library</p>
-                <p>
-                  <a href="/library" className="underline font-medium">
-                    View Library →
-                  </a>
-                </p>
-              </div>
-
-              {/* Generate Another */}
-              <button
-                onClick={() => {
-                  setGeneratedAd(null)
-                  setError(null)
-                }}
-                className="btn-secondary w-full"
-              >
-                GENERATE ANOTHER AD
-              </button>
+              )}
             </div>
-          )}
 
-          {/* Empty State */}
-          {!generating && !generatedAd && !error && (
-            <div className="border border-outline p-8 text-center bg-gray-50">
-              <p className="text-gray-500 text-sm font-mono">
-                Add context, optionally upload a reference image, then click Generate
-              </p>
+            {/* Status bar */}
+            <div className="border-t border-outline px-4 py-2 bg-[#e4dcc8]">
+              <span className="font-mono text-xs text-gray-500 tracking-wider">
+                FORMAT: {aspectRatio}&nbsp;&nbsp;|&nbsp;&nbsp;QUALITY: {imageQuality}
+              </span>
             </div>
-          )}
+          </div>
         </div>
+
       </div>
     </div>
   )
