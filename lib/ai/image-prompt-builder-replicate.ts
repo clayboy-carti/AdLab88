@@ -24,14 +24,29 @@ export function buildReplicatePrompt(
 
   const industry = brand.what_we_do.toLowerCase()
 
-  // MODE 1: REFERENCE-BASED (Super simple prompt - let the model do the work)
+  // MODE 1: REFERENCE-BASED (Preserve exact format, swap content only)
   if (mode === 'reference') {
-    const prompt = `Use the reference image to create an ad focused on ${industry}.`
+    const offerLine = userContext ? ` The ad is promoting: "${userContext}".` : ''
+    const colorLine =
+      brand.brand_colors && brand.brand_colors.length > 0
+        ? ` Subtly incorporate brand colors (${brand.brand_colors.join(', ')}) where natural.`
+        : ''
 
-    console.log('[ReplicatePrompt] Mode: REFERENCE (template swap)')
+    const prompt = `Recreate this exact visual format and style as an advertisement for ${brand.company_name}.
+
+CRITICAL: Preserve the EXACT same layout, composition, and visual format from the reference image. If the reference is a meme, keep the meme format. If it is a two-panel image, keep the two panels. If it is a product shot, keep that structure. Do NOT replace the format with a generic infographic or marketing template.
+
+Use this copy:
+• Headline (bold, prominent): "${copy.hook}"
+• CTA: "${copy.cta}"
+${offerLine}${colorLine}
+
+Keep the visual format identical to the reference. Only swap in the new brand copy.`
+
+    console.log('[ReplicatePrompt] Mode: REFERENCE (format-preserving)')
     console.log(`  Brand: ${brand.company_name}`)
-    console.log(`  Industry: ${industry}`)
-    console.log(`  Prompt: "${prompt}"`)
+    console.log(`  Hook: ${copy.hook}`)
+    console.log(`  Prompt length: ${prompt.length} chars`)
 
     return prompt
   }

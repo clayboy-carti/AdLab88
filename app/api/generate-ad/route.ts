@@ -4,7 +4,6 @@ import {
   generateAdCopy,
   generateImageWithGemini,
   buildReplicatePrompt,
-  analyzeReferenceAndCreatePrompt,
 } from '@/lib/ai'
 import type { Brand } from '@/types/database'
 
@@ -105,19 +104,13 @@ export async function POST(request: Request) {
     console.log('[Generate] === PHASE 2: Building image prompt ===')
     let imagePrompt: string
 
-    if (hasReference) {
-      // REFERENCE MODE: Use GPT-4o Vision to analyze reference and create detailed prompt
-      console.log('[Generate] Analyzing reference image with GPT-4o Vision...')
-      imagePrompt = await analyzeReferenceAndCreatePrompt(
-        referenceImageUrl!,
-        brand as Brand,
-        generatedCopy,
-        userContext
-      )
-    } else {
-      // ORIGINAL MODE: Use framework-driven detailed prompt
-      imagePrompt = buildReplicatePrompt(generatedCopy, brand as Brand, 'original', userContext)
-    }
+    // Build prompt: reference mode preserves the exact visual format; original mode uses framework-driven prompt
+    imagePrompt = buildReplicatePrompt(
+      generatedCopy,
+      brand as Brand,
+      hasReference ? 'reference' : 'original',
+      userContext
+    )
 
     console.log('[Generate] ✅ Image prompt built')
     console.log(`[Generate]   Prompt length: ${imagePrompt.length} chars`)
