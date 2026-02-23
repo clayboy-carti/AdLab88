@@ -4,7 +4,9 @@ import {
   generateAdCopy,
   generateImageWithGemini,
   buildReplicatePrompt,
+  detectMemeTemplate,
 } from '@/lib/ai'
+import type { MemeContext } from '@/lib/ai/meme-detector'
 import type { Brand } from '@/types/database'
 
 export async function POST(request: Request) {
@@ -100,16 +102,35 @@ export async function POST(request: Request) {
     console.log(`[Generate]   Hook: ${generatedCopy.hook}`)
     console.log(`[Generate]   Positioning: ${generatedCopy.positioning_angle}`)
 
-    // 7. Build Replicate prompt (changes based on mode)
-    console.log('[Generate] === PHASE 2: Building image prompt ===')
+    // 7. Detect meme template (reference mode only)
+    let memeContext: MemeContext | null = null
+    if (hasReference) {
+      console.log('[Generate] === PHASE 2a: Detecting meme template ===')
+      memeContext = await detectMemeTemplate(
+        referenceImageUrl!,
+        brand as Brand,
+        generatedCopy,
+        userContext
+      )
+      if (memeContext) {
+        console.log(`[Generate] ✅ Meme detected: ${memeContext.templateName}`)
+      } else {
+        console.log('[Generate] No meme template detected — using standard reference mode')
+      }
+    }
+
+    // 8. Build image prompt
+    console.log('[Generate] === PHASE 2b: Building image prompt ===')
     let imagePrompt: string
 
-    // Build prompt: reference mode preserves the exact visual format; original mode uses framework-driven prompt
+    // Reference mode: meme-aware (panel text) or standard format-preserving
+    // Original mode: framework-driven creative prompt
     imagePrompt = buildReplicatePrompt(
       generatedCopy,
       brand as Brand,
       hasReference ? 'reference' : 'original',
-      userContext
+      userContext,
+      memeContext
     )
 
     console.log('[Generate] ✅ Image prompt built')

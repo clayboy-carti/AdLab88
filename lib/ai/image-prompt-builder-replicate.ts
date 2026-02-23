@@ -1,21 +1,26 @@
 import type { Brand } from '@/types/database'
 import type { GeneratedCopy } from './image-prompt-builder'
+import type { MemeContext } from './meme-detector'
 
 /**
- * Build Replicate prompt for image generation
- * TWO MODES:
- * 1. Reference mode: Simple prompt for template swap (keeps layout, swaps brand)
- * 2. Original mode: Detailed framework-driven prompt for creative generation
+ * Build Replicate prompt for image generation.
+ * THREE MODES:
+ * 1. Reference mode (meme detected): Panel-specific text placement, preserves meme format
+ * 2. Reference mode (no meme): Generic format-preserving prompt
+ * 3. Original mode: Detailed framework-driven prompt for creative generation
  *
  * @param copy - Generated ad copy
  * @param brand - Brand profile
  * @param mode - 'reference' (template swap) or 'original' (framework-driven)
+ * @param userContext - Optional user-provided offer/context
+ * @param memeContext - Optional meme detection result (panel structure + copy)
  */
 export function buildReplicatePrompt(
   copy: GeneratedCopy,
   brand: Brand,
   mode: 'reference' | 'original' = 'reference',
-  userContext?: string
+  userContext?: string,
+  memeContext?: MemeContext | null
 ): string {
   const brandColors =
     brand.brand_colors && brand.brand_colors.length > 0
@@ -24,13 +29,42 @@ export function buildReplicatePrompt(
 
   const industry = brand.what_we_do.toLowerCase()
 
-  // MODE 1: REFERENCE-BASED (Preserve exact format, swap content only)
+  // MODE 1: REFERENCE-BASED
   if (mode === 'reference') {
-    const offerLine = userContext ? ` The ad is promoting: "${userContext}".` : ''
     const colorLine =
       brand.brand_colors && brand.brand_colors.length > 0
-        ? ` Subtly incorporate brand colors (${brand.brand_colors.join(', ')}) where natural.`
+        ? `\nSubtly incorporate brand colors (${brand.brand_colors.join(', ')}) where natural.`
         : ''
+
+    // 1a. Meme-aware: panel-specific text placement
+    if (memeContext) {
+      const panelLines = memeContext.panels
+        .map(
+          (p) =>
+            `  • ${p.position.toUpperCase()} PANEL (${p.role}): "${p.suggestedCopy}"`
+        )
+        .join('\n')
+
+      const prompt = `Recreate this ${memeContext.templateName} as an advertisement for ${brand.company_name}.
+
+CRITICAL: Preserve the EXACT same meme format, layout, panels, and visual style from the reference image. Do NOT replace it with an infographic or generic ad template.
+
+Place the following text in each panel EXACTLY as specified — the text must match the semantic role of that panel:
+${panelLines}
+
+Keep everything else (character images, panel borders, background, font style) identical to the reference.${colorLine}`
+
+      console.log(`[ReplicatePrompt] Mode: REFERENCE — MEME (${memeContext.templateName})`)
+      memeContext.panels.forEach((p) =>
+        console.log(`  ${p.position.toUpperCase()}: "${p.suggestedCopy}"`)
+      )
+      console.log(`  Prompt length: ${prompt.length} chars`)
+
+      return prompt
+    }
+
+    // 1b. Standard reference: preserve format, swap copy
+    const offerLine = userContext ? ` The ad is promoting: "${userContext}".` : ''
 
     const prompt = `Recreate this exact visual format and style as an advertisement for ${brand.company_name}.
 
