@@ -26,18 +26,22 @@ export default async function LibraryPage() {
     console.error('[Library] Failed to fetch ads:', error)
   }
 
-  // Generate signed URLs for each ad image
-  const adsWithUrls = await Promise.all(
-    (ads || []).map(async (ad) => {
-      if (!ad.storage_path) return { ...ad, signedUrl: null }
+  // Generate signed URLs in a single batch request
+  const adList = ads || []
+  const paths = adList.map((ad) => ad.storage_path).filter(Boolean) as string[]
 
-      const { data } = await supabase.storage
-        .from('generated-ads')
-        .createSignedUrl(ad.storage_path, 3600)
+  const { data: signedUrlData } = paths.length > 0
+    ? await supabase.storage.from('generated-ads').createSignedUrls(paths, 3600)
+    : { data: [] }
 
-      return { ...ad, signedUrl: data?.signedUrl || null }
-    })
+  const urlMap = new Map(
+    (signedUrlData ?? []).map((item) => [item.path, item.signedUrl])
   )
+
+  const adsWithUrls = adList.map((ad) => ({
+    ...ad,
+    signedUrl: ad.storage_path ? (urlMap.get(ad.storage_path) ?? null) : null,
+  }))
 
   return (
     <div className="w-full p-4 lg:p-8">

@@ -220,36 +220,34 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
 
   const overlayRef = useRef<HTMLDivElement>(null)
 
-  // Load Late connected accounts
+  // Load accounts + scheduled post data in parallel, then apply all state in one batch
   useEffect(() => {
-    fetch('/api/social/accounts')
-      .then((r) => r.json())
-      .then(({ accounts, configured }) => {
-        setLateAccounts(accounts ?? [])
-        setLateConfigured(configured !== false)
-      })
-      .catch(() => {})
-      .finally(() => setAccountsLoading(false))
-  }, [])
+    const fetchAccounts = fetch('/api/social/accounts').then((r) => r.json())
+    const fetchSchedule = scheduledDate !== undefined
+      ? Promise.resolve(null)
+      : fetch(`/api/social/schedule?adId=${ad.id}`).then((r) => r.json())
 
-  // Pre-populate scheduled date + selected platforms if this ad is already scheduled
-  useEffect(() => {
-    if (scheduledDate !== undefined) return
-    fetch(`/api/social/schedule?adId=${ad.id}`)
-      .then((r) => r.json())
-      .then(({ postId, scheduledFor, platforms }) => {
-        if (scheduledFor) {
-          const [datePart, timePart] = scheduledFor.split('T')
-          setSelectedDate(datePart)
-          if (timePart) setSelectedTime(timePart.slice(0, 5))
-          setScheduleConfirmed(true)
-          setScheduledPostId(postId ?? null)
-        }
-        if (Array.isArray(platforms) && platforms.length > 0) {
-          setSelectedAccountIds(platforms)
+    Promise.all([fetchAccounts, fetchSchedule])
+      .then(([accountsData, scheduleData]) => {
+        setLateAccounts(accountsData.accounts ?? [])
+        setLateConfigured(accountsData.configured !== false)
+        setAccountsLoading(false)
+
+        if (scheduleData) {
+          const { postId, scheduledFor, platforms } = scheduleData
+          if (scheduledFor) {
+            const [datePart, timePart] = scheduledFor.split('T')
+            setSelectedDate(datePart)
+            if (timePart) setSelectedTime(timePart.slice(0, 5))
+            setScheduleConfirmed(true)
+            setScheduledPostId(postId ?? null)
+          }
+          if (Array.isArray(platforms) && platforms.length > 0) {
+            setSelectedAccountIds(platforms)
+          }
         }
       })
-      .catch(() => {})
+      .catch(() => setAccountsLoading(false))
   }, [ad.id, scheduledDate])
 
   useEffect(() => {
