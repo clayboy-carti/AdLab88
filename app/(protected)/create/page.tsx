@@ -194,7 +194,13 @@ export default function CreatePage() {
               {/* Creativity row */}
               <div className="flex items-start">
                 <div className="w-32 shrink-0 px-4 py-3 border-r border-outline self-stretch">
-                  <span className="font-mono text-xs uppercase text-gray-500">Creativity</span>
+                  <div className="flex items-center gap-1.5 relative group/tip">
+                    <span className="font-mono text-xs uppercase text-gray-500">Creativity</span>
+                    <span className="font-mono text-[9px] text-gray-400 border border-gray-300 rounded-full w-3.5 h-3.5 inline-flex items-center justify-center cursor-help flex-shrink-0 leading-none">?</span>
+                    <div className="absolute left-0 top-5 z-20 w-64 hidden group-hover/tip:block bg-gray-900 text-white font-mono text-[11px] leading-relaxed p-3 shadow-lg pointer-events-none">
+                      Use <span className="text-rust">Strict</span> or <span className="text-rust">Balanced</span> for meme templates — Gemini will preserve the format. Use <span className="text-rust">Loose</span> when you want only the vibe of a reference, not a literal copy.
+                    </div>
+                  </div>
                 </div>
                 <div className="px-4 pt-2.5 pb-3 flex-1">
                   {/* Notch labels */}
