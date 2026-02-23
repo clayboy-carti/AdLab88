@@ -29,15 +29,25 @@ export async function POST(request: Request) {
 
     // 2. Parse request body
     const body = await request.json()
-    const { user_context, image_quality, aspect_ratio } = body
+    const { user_context, image_quality, aspect_ratio, creativity } = body
     const userContext: string | undefined = user_context?.trim() || undefined
     const imageQuality: '1K' | '2K' = image_quality === '2K' ? '2K' : '1K'
     const imageAspectRatio: string = aspect_ratio || '1:1'
 
+    // Map 4-notch creativity slider (1–4) to Gemini temperature
+    const CREATIVITY_TEMPERATURES: Record<number, number> = {
+      1: 0.2, // Strict  — closely follows reference
+      2: 0.6, // Balanced — default
+      3: 1.0, // Creative — more interpretation
+      4: 1.4, // Loose   — freely reimagined
+    }
+    const creativityNotch = Number(creativity) || 2
+    const imageTemperature = CREATIVITY_TEMPERATURES[creativityNotch] ?? 0.6
+
     if (userContext) {
       console.log(`[Generate] Ad context provided: "${userContext}"`)
     }
-    console.log(`[Generate] Image quality: ${imageQuality}, Aspect ratio: ${imageAspectRatio}`)
+    console.log(`[Generate] Image quality: ${imageQuality}, Aspect ratio: ${imageAspectRatio}, Creativity: ${creativityNotch} (temp: ${imageTemperature})`)
 
     // 3. Fetch brand (ensure it exists)
     const { data: brand, error: brandError } = await supabase
@@ -145,7 +155,8 @@ export async function POST(request: Request) {
       hasReference ? 0.35 : 0.0,
       1, // 1 retry
       imageQuality,
-      imageAspectRatio
+      imageAspectRatio,
+      imageTemperature
     )
 
     console.log('[Generate] ✅ Image generation complete')

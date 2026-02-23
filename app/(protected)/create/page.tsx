@@ -22,6 +22,7 @@ export default function CreatePage() {
   const [contextText, setContextText] = useState('')
   const [imageQuality, setImageQuality] = useState<'1K' | '2K'>('1K')
   const [aspectRatio, setAspectRatio] = useState('1:1')
+  const [creativity, setCreativity] = useState(2)
   const [generating, setGenerating] = useState(false)
   const [generationStage, setGenerationStage] = useState<string>('')
   const [generatedAd, setGeneratedAd] = useState<GeneratedAd | null>(null)
@@ -57,6 +58,7 @@ export default function CreatePage() {
           user_context: contextText.trim() || undefined,
           image_quality: imageQuality,
           aspect_ratio: aspectRatio,
+          creativity,
         }),
       })
 
@@ -170,7 +172,7 @@ export default function CreatePage() {
               </div>
 
               {/* Aspect Ratio row */}
-              <div className="flex items-center">
+              <div className="flex items-center border-b border-outline">
                 <div className="w-32 shrink-0 px-4 py-2.5 border-r border-outline">
                   <span className="font-mono text-xs uppercase text-gray-500">Aspect Ratio</span>
                 </div>
@@ -186,6 +188,43 @@ export default function CreatePage() {
                     <option value="3:4">3:4 — Feed Portrait</option>
                     <option value="4:3">4:3 — Standard</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Creativity row */}
+              <div className="flex items-start">
+                <div className="w-32 shrink-0 px-4 py-3 border-r border-outline self-stretch">
+                  <span className="font-mono text-xs uppercase text-gray-500">Creativity</span>
+                </div>
+                <div className="px-4 pt-2.5 pb-3 flex-1">
+                  {/* Notch labels */}
+                  <div className="flex justify-between mb-1.5">
+                    {(['Strict', 'Balanced', 'Creative', 'Loose'] as const).map((label, i) => (
+                      <span
+                        key={label}
+                        className={`font-mono text-xs transition-colors ${
+                          creativity === i + 1 ? 'text-rust font-bold' : 'text-gray-300'
+                        }`}
+                      >
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                  {/* Range slider */}
+                  <input
+                    type="range"
+                    min={1}
+                    max={4}
+                    step={1}
+                    value={creativity}
+                    onChange={(e) => setCreativity(Number(e.target.value))}
+                    className="w-full accent-rust cursor-pointer"
+                  />
+                  {/* Min / max context */}
+                  <div className="flex justify-between mt-1.5">
+                    <span className="font-mono text-xs text-gray-400">Closely follows reference</span>
+                    <span className="font-mono text-xs text-gray-400">Freely reimagined</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -314,7 +353,7 @@ export default function CreatePage() {
             {/* Status bar */}
             <div className="border-t border-outline px-4 py-2 bg-[#e4dcc8]">
               <span className="font-mono text-xs text-gray-500 tracking-wider">
-                FORMAT: {aspectRatio}&nbsp;&nbsp;|&nbsp;&nbsp;QUALITY: {imageQuality}
+                FORMAT: {aspectRatio}&nbsp;&nbsp;|&nbsp;&nbsp;QUALITY: {imageQuality}&nbsp;&nbsp;|&nbsp;&nbsp;CREATIVITY: {['', 'STRICT', 'BALANCED', 'CREATIVE', 'LOOSE'][creativity]}
               </span>
             </div>
           </div>
