@@ -245,8 +245,7 @@ export default function ProfileForm({ profile }: Props) {
           {(resetStatus === 'idle' || resetStatus === 'error') && (
             <button
               onClick={sendPasswordReset}
-              disabled={resetStatus === 'saving'}
-              className="text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 transition-colors flex-shrink-0 disabled:opacity-50"
+              className="text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 transition-colors flex-shrink-0"
             >
               Send Reset Email
             </button>
