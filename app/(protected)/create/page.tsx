@@ -88,6 +88,9 @@ export default function CreatePage() {
 
   return (
     <div className="w-full p-4 lg:p-8">
+      <div className="flex items-baseline justify-between mb-8">
+        <h1 className="text-3xl font-mono header-accent">The Lab Bench</h1>
+      </div>
       <div className="grid grid-cols-2 gap-6">
 
         {/* ── LEFT COLUMN ── */}
