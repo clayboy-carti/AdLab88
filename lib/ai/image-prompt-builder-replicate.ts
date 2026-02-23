@@ -54,7 +54,6 @@ BRAND DETAILS:
 
 AD COPY (Display prominently):
 • Main headline (large, bold): "${copy.hook}"
-• Body copy (clear, readable): "${copy.caption}"
 • Call-to-action (prominent button/text): "${copy.cta}"
 ${offerLine}
 
@@ -64,7 +63,7 @@ VISUAL REQUIREMENTS:
 • Include relevant ${industry} imagery or icons
 • Clean, uncluttered layout with good whitespace
 • Typography should be bold and readable
-• Ensure text hierarchy (headline > body > CTA)
+• Ensure text hierarchy (headline > CTA)
 • High-quality, polished aesthetic
 • Square format (1:1 ratio) optimized for social media
 

@@ -31,9 +31,8 @@ export async function analyzeReferenceAndCreatePrompt(
 
   const analysisPrompt = `Use this reference image to write an ad prompt for a ${industry} company.
 
-The new ad should be for "${brand.company_name}" and include this copy:
+The new ad should be for "${brand.company_name}" and include this copy on the image:
 - Headline: "${generatedCopy.hook}"
-- Body: "${generatedCopy.caption}"
 - CTA: "${generatedCopy.cta}"
 ${contextBlock}
 Write a detailed, specific prompt that captures the visual style of the reference and adapts it for ${industry}. The copy should be direct and hit hard.
@@ -138,7 +137,8 @@ ${adCopyFramework}
 3. Match the brand voice from sample_copy precisely
 4. Use words_to_use naturally, avoid words_to_avoid completely
 5. Keep hook under 10 words, caption 20-60 words, CTA 3-5 words
-6. Focus ONLY on copy - do NOT generate image prompts (visuals handled separately)
+6. The caption is the SOCIAL POST caption (Facebook/Instagram text), NOT text on the image - only the hook and CTA appear on the image itself
+7. Focus ONLY on copy - do NOT generate image prompts (visuals handled separately)
 7. NO extra commentary outside the JSON structure
 
 Return ONLY the JSON object. No markdown, no explanation, just JSON.
@@ -159,7 +159,7 @@ ${contextSection}
 Your task:
 1. Select the best positioning angle from the frameworks
 2. Write a powerful hook (5-10 words, attention-grabbing)
-3. Write engaging caption copy (20-60 words, benefit-driven)
+3. Write engaging caption copy for the social post (20-60 words, benefit-driven) — this goes in the post text, NOT on the image
 4. Write a clear call-to-action (3-5 words, action-oriented)
 5. Explain your strategic choices
 
