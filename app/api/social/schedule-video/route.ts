@@ -147,12 +147,12 @@ export async function POST(request: Request) {
       }
 
       // Generate a long-lived signed URL (30 days) for the video
-      let imageUrl: string | undefined
+      let videoUrl: string | undefined
       if (video.storage_path) {
         const { data: signed } = await supabase.storage
           .from('generated-ads')
           .createSignedUrl(video.storage_path, 30 * 24 * 60 * 60)
-        if (signed?.signedUrl) imageUrl = signed.signedUrl
+        if (signed?.signedUrl) videoUrl = signed.signedUrl
       }
 
       // scheduledFor may be "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM" — normalise to full ISO-8601
@@ -165,7 +165,7 @@ export async function POST(request: Request) {
         scheduledFor: scheduledAtISO,
         timezone: 'UTC',
         platforms,
-        imageUrl,
+        videoUrl,
       })
 
       // Store the Late post ID (handle both _id and id)
