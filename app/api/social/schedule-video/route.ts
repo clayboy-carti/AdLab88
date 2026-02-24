@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     .from('scheduled_posts')
     .select('id, scheduled_for, platforms')
     .eq('user_id', user.id)
-    .eq('ad_id', videoId)
+    .eq('video_id', videoId)
     .eq('status', 'scheduled')
     .maybeSingle()
 
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
     .from('scheduled_posts')
     .select('id, late_post_id')
     .eq('user_id', user.id)
-    .eq('ad_id', videoId)
+    .eq('video_id', videoId)
     .eq('status', 'scheduled')
     .maybeSingle()
 
@@ -108,7 +108,7 @@ export async function POST(request: Request) {
       .from('scheduled_posts')
       .insert({
         user_id: user.id,
-        ad_id: videoId,
+        video_id: videoId,
         scheduled_for: scheduledFor,
         platform: 'video',
         caption: caption || '',
@@ -147,14 +147,15 @@ export async function POST(request: Request) {
       }
 
       // Generate a long-lived signed URL (30 days) for the video
-      let videoUrl: string | undefined
+      let imageUrl: string | undefined
       if (video.storage_path) {
         const { data: signed } = await supabase.storage
           .from('generated-ads')
           .createSignedUrl(video.storage_path, 30 * 24 * 60 * 60)
-        if (signed?.signedUrl) videoUrl = signed.signedUrl
+        if (signed?.signedUrl) imageUrl = signed.signedUrl
       }
 
+      // scheduledFor may be "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM" — normalise to full ISO-8601
       const scheduledAtISO = scheduledFor.includes('T')
         ? `${scheduledFor}:00Z`
         : `${scheduledFor}T12:00:00Z`
@@ -164,8 +165,11 @@ export async function POST(request: Request) {
         scheduledFor: scheduledAtISO,
         timezone: 'UTC',
         platforms,
-        videoUrl,
+        imageUrl,
       })
+
+      // Store the Late post ID (handle both _id and id)
+      console.log('[ScheduleVideo] latePost keys:', Object.keys(latePost), '| resolved latePostId:', latePost._id ?? latePost.id)
 
       const latePostId = latePost._id ?? latePost.id
       if (latePostId) {
