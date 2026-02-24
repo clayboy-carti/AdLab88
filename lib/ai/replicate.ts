@@ -270,3 +270,81 @@ export async function generateImageWithSeedream(
     `Seedream generation failed after ${retries + 1} attempts: ${lastError?.message || 'Unknown error'}`
   )
 }
+
+export interface GrokVideoResult {
+  storagePath: string
+  videoUrl: string
+}
+
+/**
+ * Generate a 5-second video from a text prompt using xai/grok-imagine-video via Replicate.
+ * The prompt should describe the product, scene, and desired motion.
+ *
+ * @param prompt - Full video prompt describing subject, scene, and motion
+ * @param userId - User ID for storage organisation
+ */
+export async function generateVideoWithGrok(
+  prompt: string,
+  userId: string
+): Promise<GrokVideoResult> {
+  console.log('[Grok Video] Generating video...')
+  console.log('[Grok Video] Model: xai/grok-imagine-video')
+  console.log(`[Grok Video] Prompt length: ${prompt.length} chars`)
+
+  const input = { prompt }
+
+  console.log('[Grok Video] Input payload:', JSON.stringify(input, null, 2))
+
+  const output = await getReplicate().run('xai/grok-imagine-video', { input })
+
+  console.log('[Grok Video] Raw output type:', typeof output)
+
+  // Replicate returns a FileOutput object — call .url() to get the download URL
+  let videoUrl: string
+  if (output && typeof (output as any).url === 'function') {
+    videoUrl = (output as any).url()
+  } else if (typeof output === 'string') {
+    videoUrl = output
+  } else {
+    console.error('[Grok Video] Unexpected output format:', output)
+    throw new Error('No valid video URL in Grok output')
+  }
+
+  if (!videoUrl || typeof videoUrl !== 'string') {
+    throw new Error(`Invalid video URL: ${videoUrl}`)
+  }
+
+  console.log('[Grok Video] ✅ Video generated successfully!')
+  console.log('[Grok Video] Video URL:', videoUrl)
+
+  // Download video from Replicate delivery URL
+  console.log('[Grok Video] Downloading video...')
+  const response = await fetch(videoUrl)
+  if (!response.ok) {
+    throw new Error(`Failed to download video: ${response.statusText}`)
+  }
+  const arrayBuffer = await response.arrayBuffer()
+  const videoBuffer = Buffer.from(arrayBuffer)
+  console.log(`[Grok Video] Downloaded ${videoBuffer.length} bytes`)
+
+  // Upload to Supabase — stored in generated-ads bucket under a videos/ prefix
+  const supabase = createClient()
+  const timestamp = Date.now()
+  const fileName = `${userId}/videos/${timestamp}-video.mp4`
+
+  console.log('[Grok Video] Uploading to Supabase Storage...')
+  const { error: uploadError } = await supabase.storage
+    .from('generated-ads')
+    .upload(fileName, videoBuffer, {
+      contentType: 'video/mp4',
+      upsert: false,
+    })
+
+  if (uploadError) {
+    console.error('[Grok Video] Supabase upload error:', uploadError)
+    throw new Error(`Failed to upload video to storage: ${uploadError.message}`)
+  }
+
+  console.log(`[Grok Video] ✅ Uploaded to: ${fileName}`)
+  return { storagePath: fileName, videoUrl }
+}

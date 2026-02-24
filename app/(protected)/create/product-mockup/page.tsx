@@ -105,6 +105,12 @@ export default function ProductMockupPage() {
   const [generatedAd, setGeneratedAd] = useState<GeneratedAd | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // Video generation state
+  const [motionPrompt, setMotionPrompt] = useState('')
+  const [generatingVideo, setGeneratingVideo] = useState(false)
+  const [generatedVideo, setGeneratedVideo] = useState<{ id: string; videoUrl: string } | null>(null)
+  const [videoError, setVideoError] = useState<string | null>(null)
+
   const handleGenerate = async () => {
     setGenerating(true)
     setError(null)
@@ -144,6 +150,33 @@ export default function ProductMockupPage() {
       setGenerationStage('')
     } finally {
       setGenerating(false)
+    }
+  }
+
+  const handleGenerateVideo = async () => {
+    if (!generatedAd) return
+    setGeneratingVideo(true)
+    setVideoError(null)
+    setGeneratedVideo(null)
+
+    try {
+      const response = await fetch('/api/generate-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ad_id: generatedAd.id,
+          motion_prompt: motionPrompt.trim() || undefined,
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Video generation failed')
+
+      setGeneratedVideo({ id: data.video.id, videoUrl: data.video.videoUrl })
+    } catch (err: any) {
+      setVideoError(err.message || 'Failed to generate video')
+    } finally {
+      setGeneratingVideo(false)
     }
   }
 
@@ -394,8 +427,100 @@ export default function ProductMockupPage() {
                     <a href="/library" className="font-mono text-xs text-green-600 underline">View Library →</a>
                   </div>
 
+                  {/* ── ANIMATE THIS ── */}
+                  <div className="border border-outline">
+                    <div className="bg-[#e4dcc8] border-b border-outline px-4 py-2 flex items-center justify-between">
+                      <span className="font-mono text-xs uppercase tracking-widest">Animate This</span>
+                      <span className="font-mono text-xs text-gray-500 border border-outline px-2 py-0.5">
+                        [ GROK VIDEO · 5s ]
+                      </span>
+                    </div>
+
+                    {/* Video player — shown once video is ready */}
+                    {generatedVideo && (
+                      <div className="border-b border-outline">
+                        <video
+                          src={generatedVideo.videoUrl}
+                          controls
+                          autoPlay
+                          loop
+                          className="w-full h-auto"
+                        />
+                      </div>
+                    )}
+
+                    {/* Video generating state */}
+                    {generatingVideo && (
+                      <div className="p-6 flex flex-col items-center gap-3 bg-white">
+                        <div className="animate-spin h-5 w-5 border-2 border-rust border-t-transparent" />
+                        <p className="font-mono text-xs text-gray-500">Animating with Grok Video...</p>
+                        <p className="font-mono text-xs text-gray-400 text-center">
+                          This takes 60–120 seconds. Hang tight.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Motion prompt + trigger — hidden while generating or after video is ready */}
+                    {!generatingVideo && !generatedVideo && (
+                      <div className="p-4 bg-white space-y-3">
+                        <div className="border border-outline">
+                          <div className="px-3 py-1.5 border-b border-outline bg-[#f7f4ef]">
+                            <p className="font-mono text-xs text-gray-400 uppercase tracking-widest">
+                              Motion (optional)
+                            </p>
+                          </div>
+                          <div className="px-3 pt-3 pb-2">
+                            <textarea
+                              value={motionPrompt}
+                              onChange={(e) => setMotionPrompt(e.target.value)}
+                              placeholder={
+                                'e.g. slow 360° product rotation · steam rising from the surface · camera slowly pulls back · subtle water ripples'
+                              }
+                              rows={2}
+                              className="w-full text-sm font-mono bg-transparent resize-none focus:outline-none placeholder:text-gray-300 border-none p-0"
+                            />
+                          </div>
+                        </div>
+
+                        {videoError && (
+                          <div className="border border-red-300 bg-red-50 p-3">
+                            <p className="font-mono text-xs text-red-600">{videoError}</p>
+                          </div>
+                        )}
+
+                        <button
+                          onClick={handleGenerateVideo}
+                          className="btn-primary w-full"
+                        >
+                          GENERATE VIDEO
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Re-generate option once video is done */}
+                    {generatedVideo && !generatingVideo && (
+                      <div className="p-3 bg-white border-t border-outline">
+                        <button
+                          onClick={() => {
+                            setGeneratedVideo(null)
+                            setVideoError(null)
+                          }}
+                          className="font-mono text-xs text-gray-500 hover:text-rust transition-colors"
+                        >
+                          ← Generate another video
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   <button
-                    onClick={() => { setGeneratedAd(null); setError(null) }}
+                    onClick={() => {
+                      setGeneratedAd(null)
+                      setError(null)
+                      setGeneratedVideo(null)
+                      setVideoError(null)
+                      setMotionPrompt('')
+                    }}
                     className="btn-secondary w-full"
                   >
                     GENERATE ANOTHER MOCKUP

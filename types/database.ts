@@ -83,3 +83,13 @@ export type GeneratedAd = {
   estimated_performance?: string
   created_at: string
 }
+
+export type GeneratedVideo = {
+  id: string
+  user_id: string
+  source_ad_id: string | null
+  motion_prompt: string | null
+  storage_path: string
+  content_type: 'product_video'
+  created_at: string
+}
