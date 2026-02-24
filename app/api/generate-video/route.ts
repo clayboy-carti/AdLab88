@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { ad_id, motion_prompt } = body as { ad_id: string; motion_prompt?: string }
+    const { ad_id, motion_prompt, aspect_ratio } = body as { ad_id: string; motion_prompt?: string; aspect_ratio?: string }
 
     if (!ad_id) {
       return NextResponse.json({ error: 'ad_id is required' }, { status: 400 })
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     console.log('[generate-video] Starting video generation for ad:', ad_id)
     console.log('[generate-video] Video prompt:', videoPrompt.substring(0, 200))
 
-    const { storagePath, videoUrl } = await generateVideoWithGrok(videoPrompt, user.id, sourceImageUrl)
+    const { storagePath, videoUrl } = await generateVideoWithGrok(videoPrompt, user.id, sourceImageUrl, aspect_ratio)
 
     // Save record to generated_videos table
     const { data: videoRecord, error: insertError } = await supabase

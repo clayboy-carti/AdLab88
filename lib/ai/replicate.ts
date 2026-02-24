@@ -288,17 +288,22 @@ export interface GrokVideoResult {
 export async function generateVideoWithGrok(
   prompt: string,
   userId: string,
-  imageUrl?: string
+  imageUrl?: string,
+  aspectRatio?: string
 ): Promise<GrokVideoResult> {
   console.log('[Grok Video] Generating video...')
   console.log('[Grok Video] Model: xai/grok-imagine-video')
   console.log(`[Grok Video] Prompt length: ${prompt.length} chars`)
   console.log(`[Grok Video] Mode: ${imageUrl ? 'image-to-video' : 'text-to-video'}`)
+  console.log(`[Grok Video] Aspect ratio: ${aspectRatio ?? 'default (16:9)'}`)
 
   const input: Record<string, string> = { prompt }
   if (imageUrl) {
     input.image = imageUrl
     console.log('[Grok Video] Reference image URL set')
+  }
+  if (aspectRatio) {
+    input.aspect_ratio = aspectRatio
   }
 
   console.log('[Grok Video] Input keys:', Object.keys(input).join(', '))

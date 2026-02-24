@@ -166,6 +166,7 @@ export default function ProductMockupPage() {
         body: JSON.stringify({
           ad_id: generatedAd.id,
           motion_prompt: motionPrompt.trim() || undefined,
+          aspect_ratio: aspectRatio,
         }),
       })
 
