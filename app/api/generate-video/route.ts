@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     // Fetch the source ad so we can build a rich scene-aware video prompt
     const { data: sourceAd, error: adError } = await supabase
       .from('generated_ads')
-      .select('id, image_generation_prompt, hook')
+      .select('id, image_generation_prompt, hook, storage_path')
       .eq('id', ad_id)
       .eq('user_id', user.id)
       .single()
@@ -46,11 +46,21 @@ export async function POST(req: NextRequest) {
       videoPrompt = motionPart
     }
 
+    // Get a short-lived signed URL for the source image so Replicate can fetch it
+    let sourceImageUrl: string | undefined
+    if (sourceAd.storage_path) {
+      const { data: imgSignedUrl } = await supabase.storage
+        .from('generated-ads')
+        .createSignedUrl(sourceAd.storage_path, 300) // 5-min window is plenty
+      sourceImageUrl = imgSignedUrl?.signedUrl ?? undefined
+      console.log('[generate-video] Source image URL obtained:', !!sourceImageUrl)
+    }
+
     console.log('[generate-video] Starting video generation for ad:', ad_id)
     console.log('[generate-video] Video prompt:', videoPrompt.substring(0, 200))
 
-    // Generate the video via Grok
-    const { storagePath, videoUrl } = await generateVideoWithGrok(videoPrompt, user.id)
+    // Generate the video via Grok — passes image reference when available
+    const { storagePath, videoUrl } = await generateVideoWithGrok(videoPrompt, user.id, sourceImageUrl)
 
     // Save record to generated_videos table
     const { data: videoRecord, error: insertError } = await supabase

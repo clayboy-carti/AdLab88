@@ -277,23 +277,31 @@ export interface GrokVideoResult {
 }
 
 /**
- * Generate a 5-second video from a text prompt using xai/grok-imagine-video via Replicate.
- * The prompt should describe the product, scene, and desired motion.
+ * Generate a 5-second video using xai/grok-imagine-video via Replicate.
+ * When imageUrl is provided the model animates from the reference image (image-to-video).
+ * Without imageUrl it falls back to text-to-video.
  *
  * @param prompt - Full video prompt describing subject, scene, and motion
  * @param userId - User ID for storage organisation
+ * @param imageUrl - Optional signed URL of the source product image to use as reference
  */
 export async function generateVideoWithGrok(
   prompt: string,
-  userId: string
+  userId: string,
+  imageUrl?: string
 ): Promise<GrokVideoResult> {
   console.log('[Grok Video] Generating video...')
   console.log('[Grok Video] Model: xai/grok-imagine-video')
   console.log(`[Grok Video] Prompt length: ${prompt.length} chars`)
+  console.log(`[Grok Video] Mode: ${imageUrl ? 'image-to-video' : 'text-to-video'}`)
 
-  const input = { prompt }
+  const input: Record<string, string> = { prompt }
+  if (imageUrl) {
+    input.image_url = imageUrl
+    console.log('[Grok Video] Reference image URL (truncated):', imageUrl.substring(0, 120))
+  }
 
-  console.log('[Grok Video] Input payload:', JSON.stringify(input, null, 2))
+  console.log('[Grok Video] Input payload:', JSON.stringify({ ...input, image_url: input.image_url ? '[signed-url]' : undefined }, null, 2))
 
   const output = await getReplicate().run('xai/grok-imagine-video', { input })
 
