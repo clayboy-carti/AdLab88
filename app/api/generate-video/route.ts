@@ -46,9 +46,10 @@ export async function POST(req: NextRequest) {
       videoPrompt = motionPart
     }
 
-    // Download the source image bytes so we can pass the file directly to Replicate
-    // (signed URLs are not reachable from Replicate's servers)
-    let sourceImageBlob: Blob | undefined
+    // Download the source image and encode it as a base64 data URI.
+    // Passing a Blob/File relies on Replicate's files API which may 4xx and doesn't
+    // fall back. A data URI is a plain string — no upload step, no MIME inference.
+    let sourceImageDataUri: string | undefined
     if (sourceAd.storage_path) {
       const { data: imageBlob, error: downloadError } = await supabase.storage
         .from('generated-ads')
@@ -56,11 +57,7 @@ export async function POST(req: NextRequest) {
       if (downloadError || !imageBlob) {
         console.warn('[generate-video] Could not download source image, falling back to text-to-video:', downloadError?.message)
       } else {
-        // Wrap in a File so Replicate can infer the format from the filename extension.
-        // Supabase download() returns a Blob with an empty MIME type, which causes
-        // "Invalid image format" errors from the model.
-        const filename = sourceAd.storage_path.split('/').pop() || 'image.png'
-        const ext = filename.split('.').pop()?.toLowerCase() ?? 'png'
+        const ext = sourceAd.storage_path.split('.').pop()?.toLowerCase() ?? 'png'
         const mimeMap: Record<string, string> = {
           png: 'image/png',
           jpg: 'image/jpeg',
@@ -68,16 +65,18 @@ export async function POST(req: NextRequest) {
           webp: 'image/webp',
         }
         const mimeType = mimeMap[ext] ?? 'image/png'
-        sourceImageBlob = new File([imageBlob], filename, { type: mimeType })
-        console.log('[generate-video] Source image ready:', filename, mimeType, imageBlob.size, 'bytes')
+        const arrayBuffer = await imageBlob.arrayBuffer()
+        const base64 = Buffer.from(arrayBuffer).toString('base64')
+        sourceImageDataUri = `data:${mimeType};base64,${base64}`
+        console.log('[generate-video] Source image encoded:', mimeType, arrayBuffer.byteLength, 'bytes')
       }
     }
 
     console.log('[generate-video] Starting video generation for ad:', ad_id)
     console.log('[generate-video] Video prompt:', videoPrompt.substring(0, 200))
 
-    // Generate the video via Grok — passes image blob as reference when available
-    const { storagePath, videoUrl } = await generateVideoWithGrok(videoPrompt, user.id, sourceImageBlob)
+    // Generate the video via Grok — passes image data URI as reference when available
+    const { storagePath, videoUrl } = await generateVideoWithGrok(videoPrompt, user.id, sourceImageDataUri)
 
     // Save record to generated_videos table
     const { data: videoRecord, error: insertError } = await supabase
