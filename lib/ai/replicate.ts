@@ -278,30 +278,30 @@ export interface GrokVideoResult {
 
 /**
  * Generate a 5-second video using xai/grok-imagine-video via Replicate.
- * When imageUrl is provided the model animates from the reference image (image-to-video).
- * Without imageUrl it falls back to text-to-video.
+ * When imageBlob is provided the model animates from the reference image (image-to-video).
+ * Without imageBlob it falls back to text-to-video.
  *
  * @param prompt - Full video prompt describing subject, scene, and motion
  * @param userId - User ID for storage organisation
- * @param imageUrl - Optional signed URL of the source product image to use as reference
+ * @param imageBlob - Optional image file blob to use as the reference frame
  */
 export async function generateVideoWithGrok(
   prompt: string,
   userId: string,
-  imageUrl?: string
+  imageBlob?: Blob
 ): Promise<GrokVideoResult> {
   console.log('[Grok Video] Generating video...')
   console.log('[Grok Video] Model: xai/grok-imagine-video')
   console.log(`[Grok Video] Prompt length: ${prompt.length} chars`)
-  console.log(`[Grok Video] Mode: ${imageUrl ? 'image-to-video' : 'text-to-video'}`)
+  console.log(`[Grok Video] Mode: ${imageBlob ? 'image-to-video' : 'text-to-video'}`)
 
-  const input: Record<string, string> = { prompt }
-  if (imageUrl) {
-    input.image_url = imageUrl
-    console.log('[Grok Video] Reference image URL (truncated):', imageUrl.substring(0, 120))
+  const input: Record<string, unknown> = { prompt }
+  if (imageBlob) {
+    input.image = imageBlob
+    console.log('[Grok Video] Reference image size:', imageBlob.size, 'bytes')
   }
 
-  console.log('[Grok Video] Input payload:', JSON.stringify({ ...input, image_url: input.image_url ? '[signed-url]' : undefined }, null, 2))
+  console.log('[Grok Video] Input keys:', Object.keys(input).join(', '))
 
   const output = await getReplicate().run('xai/grok-imagine-video', { input })
 

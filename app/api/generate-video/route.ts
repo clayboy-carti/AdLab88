@@ -46,21 +46,26 @@ export async function POST(req: NextRequest) {
       videoPrompt = motionPart
     }
 
-    // Get a short-lived signed URL for the source image so Replicate can fetch it
-    let sourceImageUrl: string | undefined
+    // Download the source image bytes so we can pass the file directly to Replicate
+    // (signed URLs are not reachable from Replicate's servers)
+    let sourceImageBlob: Blob | undefined
     if (sourceAd.storage_path) {
-      const { data: imgSignedUrl } = await supabase.storage
+      const { data: imageBlob, error: downloadError } = await supabase.storage
         .from('generated-ads')
-        .createSignedUrl(sourceAd.storage_path, 300) // 5-min window is plenty
-      sourceImageUrl = imgSignedUrl?.signedUrl ?? undefined
-      console.log('[generate-video] Source image URL obtained:', !!sourceImageUrl)
+        .download(sourceAd.storage_path)
+      if (downloadError || !imageBlob) {
+        console.warn('[generate-video] Could not download source image, falling back to text-to-video:', downloadError?.message)
+      } else {
+        sourceImageBlob = imageBlob
+        console.log('[generate-video] Source image downloaded:', imageBlob.size, 'bytes')
+      }
     }
 
     console.log('[generate-video] Starting video generation for ad:', ad_id)
     console.log('[generate-video] Video prompt:', videoPrompt.substring(0, 200))
 
-    // Generate the video via Grok — passes image reference when available
-    const { storagePath, videoUrl } = await generateVideoWithGrok(videoPrompt, user.id, sourceImageUrl)
+    // Generate the video via Grok — passes image blob as reference when available
+    const { storagePath, videoUrl } = await generateVideoWithGrok(videoPrompt, user.id, sourceImageBlob)
 
     // Save record to generated_videos table
     const { data: videoRecord, error: insertError } = await supabase
