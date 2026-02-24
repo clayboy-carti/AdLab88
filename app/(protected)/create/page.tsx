@@ -20,6 +20,7 @@ interface GeneratedAd {
 }
 
 type GenerationMode = 'single' | 'batch'
+type PostType = 'ad' | 'product_mockup'
 
 export default function CreatePage() {
   const [contextText, setContextText] = useState('')
@@ -27,6 +28,7 @@ export default function CreatePage() {
   const [aspectRatio, setAspectRatio] = useState('1:1')
   const [creativity, setCreativity] = useState(2)
   const [mode, setMode] = useState<GenerationMode>('single')
+  const [postType, setPostType] = useState<PostType>('ad')
   const [generating, setGenerating] = useState(false)
   const [generationStage, setGenerationStage] = useState<string>('')
   const [generatedAd, setGeneratedAd] = useState<GeneratedAd | null>(null)
@@ -35,6 +37,15 @@ export default function CreatePage() {
 
   const handleModeChange = (next: GenerationMode) => {
     setMode(next)
+    setGeneratedAd(null)
+    setGeneratedBatch(null)
+    setError(null)
+  }
+
+  const handlePostTypeChange = (next: PostType) => {
+    setPostType(next)
+    // Product mockup doesn't support batch — fall back to single
+    if (next === 'product_mockup' && mode === 'batch') setMode('single')
     setGeneratedAd(null)
     setGeneratedBatch(null)
     setError(null)
@@ -71,6 +82,7 @@ export default function CreatePage() {
           image_quality: imageQuality,
           aspect_ratio: aspectRatio,
           creativity,
+          post_type: postType,
         }),
       })
 
@@ -124,6 +136,7 @@ export default function CreatePage() {
           image_quality: imageQuality,
           aspect_ratio: aspectRatio,
           creativity,
+          post_type: postType,
         }),
       })
 
@@ -158,29 +171,69 @@ export default function CreatePage() {
             [ CREATIVE INPUT MODULE ]
           </p>
 
+          {/* Post Type selector */}
+          <div className="border border-outline mb-3">
+            <div className="bg-[#e4dcc8] border-b border-outline px-4 py-2">
+              <span className="font-mono text-xs uppercase tracking-widest">Post Type</span>
+            </div>
+            <div className="flex bg-white">
+              {([
+                { value: 'ad', label: '[ AD ]' },
+                { value: 'product_mockup', label: '[ PRODUCT MOCKUP ]' },
+              ] as const).map(({ value, label }, idx) => (
+                <button
+                  key={value}
+                  onClick={() => handlePostTypeChange(value)}
+                  className={`flex-1 font-mono text-xs uppercase py-2.5 transition-colors ${
+                    idx === 0 ? 'border-r border-outline' : ''
+                  } ${
+                    postType === value
+                      ? 'bg-rust text-white'
+                      : 'bg-white text-gray-500 hover:bg-gray-50'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {postType === 'product_mockup' && (
+              <div className="px-4 py-2 bg-white border-t border-outline">
+                <p className="font-mono text-xs text-gray-400 leading-relaxed">
+                  Upload a product photo as your reference. Describe the scene and Gemini will place it there.
+                </p>
+              </div>
+            )}
+          </div>
+
           {/* Generation Mode toggle */}
           <div className="border border-outline mb-3">
             <div className="bg-[#e4dcc8] border-b border-outline px-4 py-2">
               <span className="font-mono text-xs uppercase tracking-widest">Generation Mode</span>
             </div>
             <div className="flex bg-white">
-              {(['single', 'batch'] as const).map((m, idx) => (
-                <button
-                  key={m}
-                  onClick={() => handleModeChange(m)}
-                  className={`flex-1 font-mono text-xs uppercase py-2.5 transition-colors ${
-                    idx === 0 ? 'border-r border-outline' : ''
-                  } ${
-                    mode === m
-                      ? 'bg-rust text-white'
-                      : 'bg-white text-gray-500 hover:bg-gray-50'
-                  }`}
-                >
-                  {m === 'single' ? '[ SINGLE ]' : '[ BATCH × 5 ]'}
-                </button>
-              ))}
+              {(['single', 'batch'] as const).map((m, idx) => {
+                const isBatchDisabled = m === 'batch' && postType === 'product_mockup'
+                return (
+                  <button
+                    key={m}
+                    onClick={() => !isBatchDisabled && handleModeChange(m)}
+                    disabled={isBatchDisabled}
+                    className={`flex-1 font-mono text-xs uppercase py-2.5 transition-colors ${
+                      idx === 0 ? 'border-r border-outline' : ''
+                    } ${
+                      isBatchDisabled
+                        ? 'bg-white text-gray-300 cursor-not-allowed'
+                        : mode === m
+                          ? 'bg-rust text-white'
+                          : 'bg-white text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    {m === 'single' ? '[ SINGLE ]' : '[ BATCH × 5 ]'}
+                  </button>
+                )
+              })}
             </div>
-            {mode === 'batch' && (
+            {mode === 'batch' && postType === 'ad' && (
               <div className="px-4 py-2 bg-white border-t border-outline">
                 <p className="font-mono text-xs text-gray-400 leading-relaxed">
                   5 ads — one per positioning angle — saved to your library in one run.
@@ -207,19 +260,27 @@ export default function CreatePage() {
               </div>
             </div>
 
-            {/* Ad Context */}
+            {/* Context */}
             <div className="border-b border-outline">
               <div className="px-4 py-1.5 border-b border-outline bg-white">
-                <span className="font-mono text-xs text-gray-400 tracking-wider">— AD CONTEXT MODULE —</span>
+                <span className="font-mono text-xs text-gray-400 tracking-wider">
+                  {postType === 'product_mockup' ? '— SCENE DESCRIPTION MODULE —' : '— AD CONTEXT MODULE —'}
+                </span>
               </div>
               <div className="p-4 bg-white">
                 <div className="border border-outline">
                   <div className="px-3 pt-3 pb-1">
-                    <p className="font-mono text-xs text-gray-400 uppercase tracking-widest mb-2">Context Brief</p>
+                    <p className="font-mono text-xs text-gray-400 uppercase tracking-widest mb-2">
+                      {postType === 'product_mockup' ? 'Scene Description' : 'Context Brief'}
+                    </p>
                     <textarea
                       value={contextText}
                       onChange={(e) => setContextText(e.target.value)}
-                      placeholder="e.g. 10% off first order · Free Estimates · Summer Sale · New location open"
+                      placeholder={
+                        postType === 'product_mockup'
+                          ? 'e.g. morning coffee on a marble countertop · hands holding the product outdoors · minimalist white studio'
+                          : 'e.g. 10% off first order · Free Estimates · Summer Sale · New location open'
+                      }
                       rows={3}
                       className="w-full text-sm font-mono bg-transparent resize-none focus:outline-none placeholder:text-gray-300 border-none p-0"
                     />
@@ -332,7 +393,11 @@ export default function CreatePage() {
           >
             {generating
               ? mode === 'batch' ? 'RUNNING BATCH...' : 'GENERATING...'
-              : mode === 'batch' ? 'RUN BATCH' : 'GENERATE AD'}
+              : mode === 'batch'
+                ? 'RUN BATCH'
+                : postType === 'product_mockup'
+                  ? 'GENERATE MOCKUP'
+                  : 'GENERATE AD'}
           </button>
 
           {error && (
@@ -461,7 +526,9 @@ export default function CreatePage() {
                     <span className="text-gray-400">
                       {mode === 'batch'
                         ? 'Click RUN BATCH to generate 5 variations.'
-                        : 'Add context and click GENERATE AD.'}
+                        : postType === 'product_mockup'
+                          ? 'Upload a product photo, describe the scene, and click GENERATE MOCKUP.'
+                          : 'Add context and click GENERATE AD.'}
                     </span>
                   </p>
                 </div>

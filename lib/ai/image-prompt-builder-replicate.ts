@@ -4,21 +4,22 @@ import type { MemeContext } from './meme-detector'
 
 /**
  * Build Replicate prompt for image generation.
- * THREE MODES:
+ * FOUR MODES:
  * 1. Reference mode (meme detected): Panel-specific text placement, preserves meme format
  * 2. Reference mode (no meme): Generic format-preserving prompt
  * 3. Original mode: Detailed framework-driven prompt for creative generation
+ * 4. Product mockup mode: Places the reference product into a lifestyle scene
  *
  * @param copy - Generated ad copy
  * @param brand - Brand profile
- * @param mode - 'reference' (template swap) or 'original' (framework-driven)
- * @param userContext - Optional user-provided offer/context
+ * @param mode - 'reference' | 'original' | 'product_mockup'
+ * @param userContext - Optional user-provided offer/context or scene description
  * @param memeContext - Optional meme detection result (panel structure + copy)
  */
 export function buildReplicatePrompt(
   copy: GeneratedCopy,
   brand: Brand,
-  mode: 'reference' | 'original' = 'reference',
+  mode: 'reference' | 'original' | 'product_mockup' = 'reference',
   userContext?: string,
   memeContext?: MemeContext | null
 ): string {
@@ -80,6 +81,37 @@ Keep the visual format identical to the reference. Only swap in the new brand co
     console.log('[ReplicatePrompt] Mode: REFERENCE (format-preserving)')
     console.log(`  Brand: ${brand.company_name}`)
     console.log(`  Hook: ${copy.hook}`)
+    console.log(`  Prompt length: ${prompt.length} chars`)
+
+    return prompt
+  }
+
+  // MODE 3: PRODUCT MOCKUP (lifestyle scene placement)
+  if (mode === 'product_mockup') {
+    const scene = userContext || 'a clean, natural lifestyle setting that suits the product'
+    const colorHint =
+      brand.brand_colors && brand.brand_colors.length > 0
+        ? `\nSubtly incorporate the brand colors (${brand.brand_colors.join(', ')}) in the background or environment where natural.`
+        : ''
+
+    const prompt = `Create a photorealistic product lifestyle photo for ${brand.company_name}.
+
+TASK: Place the product shown in the reference image into the following scene:
+"${scene}"
+
+CRITICAL RULES:
+• Keep the product EXACTLY as it appears — same shape, label, colors, and branding. Do not alter the product itself.
+• The product should look naturally placed in the scene, not composited or photoshopped
+• Professional commercial product photography quality — sharp focus, well-lit, polished
+• The product is the clear focal point of the image
+• NO text overlays, NO ad copy, NO headlines on the image — pure visual
+• Photorealistic render, not illustrated or stylized${colorHint}
+
+Style reference: high-end lifestyle product photography. Think editorial, aspirational, social-media-ready.`.trim()
+
+    console.log('[ReplicatePrompt] Mode: PRODUCT MOCKUP')
+    console.log(`  Brand: ${brand.company_name}`)
+    console.log(`  Scene: ${scene}`)
     console.log(`  Prompt length: ${prompt.length} chars`)
 
     return prompt

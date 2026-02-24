@@ -8,6 +8,7 @@ import {
 } from '@/lib/ai'
 import type { MemeContext } from '@/lib/ai/meme-detector'
 import type { Brand } from '@/types/database'
+import type { GeneratedAd } from '@/lib/validations/generation'
 
 export async function POST(request: Request) {
   console.log('[Generate] Starting ad generation...')
@@ -29,10 +30,11 @@ export async function POST(request: Request) {
 
     // 2. Parse request body
     const body = await request.json()
-    const { user_context, image_quality, aspect_ratio, creativity } = body
+    const { user_context, image_quality, aspect_ratio, creativity, post_type } = body
     const userContext: string | undefined = user_context?.trim() || undefined
     const imageQuality: '1K' | '2K' = image_quality === '2K' ? '2K' : '1K'
     const imageAspectRatio: string = aspect_ratio || '1:1'
+    const postType: 'ad' | 'product_mockup' = post_type === 'product_mockup' ? 'product_mockup' : 'ad'
 
     // Map 4-notch creativity slider (1–4) to Gemini temperature
     const CREATIVITY_TEMPERATURES: Record<number, number> = {
@@ -104,17 +106,35 @@ export async function POST(request: Request) {
       console.log('[Generate] No reference images uploaded - will generate original ad')
     }
 
-    // 6. Generate ad copy with OpenAI (frameworks for copy only)
-    console.log('[Generate] === PHASE 1: Generating copy with frameworks ===')
-    const generatedCopy = await generateAdCopy(brand as Brand, 1, userContext)
+    // 6. Generate copy — skip OpenAI for product mockups (visual is the focus)
+    let generatedCopy: GeneratedAd
 
-    console.log('[Generate] ✅ Copy generation complete')
-    console.log(`[Generate]   Hook: ${generatedCopy.hook}`)
-    console.log(`[Generate]   Positioning: ${generatedCopy.positioning_angle}`)
+    if (postType === 'product_mockup') {
+      console.log('[Generate] === PHASE 1: Product mockup — using default copy ===')
+      const sceneLabel = userContext ? userContext.slice(0, 60) : 'lifestyle shot'
+      generatedCopy = {
+        positioning_angle: 'Product Mockup',
+        angle_justification: 'Lifestyle product placement — visual focus',
+        hook: `${brand.company_name} — ${sceneLabel}`,
+        caption: userContext || `Product lifestyle shot for ${brand.company_name}.`,
+        cta: 'Shop Now',
+        brand_voice_match: 'Visual-first',
+        framework_applied: 'Product Mockup',
+        target_platform: 'Instagram / Social',
+        estimated_performance: undefined,
+      }
+      console.log('[Generate] ✅ Mockup defaults set')
+    } else {
+      console.log('[Generate] === PHASE 1: Generating copy with frameworks ===')
+      generatedCopy = await generateAdCopy(brand as Brand, 1, userContext)
+      console.log('[Generate] ✅ Copy generation complete')
+      console.log(`[Generate]   Hook: ${generatedCopy.hook}`)
+      console.log(`[Generate]   Positioning: ${generatedCopy.positioning_angle}`)
+    }
 
-    // 7. Detect meme template (reference mode only)
+    // 7. Detect meme template (ad reference mode only — skip for mockups)
     let memeContext: MemeContext | null = null
-    if (hasReference) {
+    if (hasReference && postType === 'ad') {
       console.log('[Generate] === PHASE 2a: Detecting meme template ===')
       memeContext = await detectMemeTemplate(
         referenceImageUrl!,
@@ -133,12 +153,20 @@ export async function POST(request: Request) {
     console.log('[Generate] === PHASE 2b: Building image prompt ===')
     let imagePrompt: string
 
+    // Product mockup: place reference product into a scene
     // Reference mode: meme-aware (panel text) or standard format-preserving
     // Original mode: framework-driven creative prompt
+    const promptMode =
+      postType === 'product_mockup'
+        ? 'product_mockup'
+        : hasReference
+          ? 'reference'
+          : 'original'
+
     imagePrompt = buildReplicatePrompt(
       generatedCopy,
       brand as Brand,
-      hasReference ? 'reference' : 'original',
+      promptMode,
       userContext,
       memeContext
     )
