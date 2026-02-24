@@ -278,35 +278,27 @@ export interface GrokVideoResult {
 
 /**
  * Generate a 5-second video using xai/grok-imagine-video via Replicate.
- * When imageFile is provided the model animates from the reference image (image-to-video).
- * Without imageFile it falls back to text-to-video.
+ * When imageUrl is provided the model animates from the reference image (image-to-video).
+ * Without imageUrl it falls back to text-to-video.
  *
  * @param prompt - Full video prompt describing subject, scene, and motion
  * @param userId - User ID for storage organisation
- * @param imageFile - Optional File object (with name + MIME type) to use as the reference frame
+ * @param imageUrl - Optional publicly accessible HTTPS URL for the source image
  */
 export async function generateVideoWithGrok(
   prompt: string,
   userId: string,
-  imageFile?: File
+  imageUrl?: string
 ): Promise<GrokVideoResult> {
   console.log('[Grok Video] Generating video...')
   console.log('[Grok Video] Model: xai/grok-imagine-video')
   console.log(`[Grok Video] Prompt length: ${prompt.length} chars`)
-  console.log(`[Grok Video] Mode: ${imageFile ? 'image-to-video' : 'text-to-video'}`)
+  console.log(`[Grok Video] Mode: ${imageUrl ? 'image-to-video' : 'text-to-video'}`)
 
   const input: Record<string, string> = { prompt }
-  if (imageFile) {
-    // The grok-imagine-video model only accepts HTTPS file URLs — upload to Replicate's
-    // files API first to get a stable delivery URL, then pass that as input.image.
-    console.log('[Grok Video] Uploading reference image to Replicate files API...')
-    const uploaded = await getReplicate().files.create(imageFile)
-    const imageUrl: string = (uploaded as any).urls?.get
-    if (!imageUrl) {
-      throw new Error('Replicate file upload did not return a URL')
-    }
+  if (imageUrl) {
     input.image = imageUrl
-    console.log('[Grok Video] Reference image uploaded:', imageUrl)
+    console.log('[Grok Video] Reference image URL set')
   }
 
   console.log('[Grok Video] Input keys:', Object.keys(input).join(', '))

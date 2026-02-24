@@ -46,36 +46,26 @@ export async function POST(req: NextRequest) {
       videoPrompt = motionPart
     }
 
-    // Download the source image and build a File object with the correct MIME type.
-    // replicate.ts will upload it to Replicate's files API to get a proper HTTPS URL,
-    // which is the only input format the grok-imagine-video model accepts.
-    let sourceImageFile: File | undefined
+    // Create a signed URL for the source image. Supabase signed URLs are standard
+    // HTTPS URLs with auth baked into query params — no extra headers needed —
+    // so Replicate's model runner can fetch them directly as a file URL.
+    let sourceImageUrl: string | undefined
     if (sourceAd.storage_path) {
-      const { data: imageBlob, error: downloadError } = await supabase.storage
+      const { data: signedData, error: signedError } = await supabase.storage
         .from('generated-ads')
-        .download(sourceAd.storage_path)
-      if (downloadError || !imageBlob) {
-        console.warn('[generate-video] Could not download source image, falling back to text-to-video:', downloadError?.message)
+        .createSignedUrl(sourceAd.storage_path, 600) // 10-min window
+      if (signedError || !signedData?.signedUrl) {
+        console.warn('[generate-video] Could not create signed URL, falling back to text-to-video:', signedError?.message)
       } else {
-        const filename = sourceAd.storage_path.split('/').pop() || 'image.png'
-        const ext = filename.split('.').pop()?.toLowerCase() ?? 'png'
-        const mimeMap: Record<string, string> = {
-          png: 'image/png',
-          jpg: 'image/jpeg',
-          jpeg: 'image/jpeg',
-          webp: 'image/webp',
-        }
-        const mimeType = mimeMap[ext] ?? 'image/png'
-        sourceImageFile = new File([imageBlob], filename, { type: mimeType })
-        console.log('[generate-video] Source image ready:', filename, mimeType, imageBlob.size, 'bytes')
+        sourceImageUrl = signedData.signedUrl
+        console.log('[generate-video] Source image signed URL created')
       }
     }
 
     console.log('[generate-video] Starting video generation for ad:', ad_id)
     console.log('[generate-video] Video prompt:', videoPrompt.substring(0, 200))
 
-    // Generate the video via Grok — uploads image to Replicate and passes the URL
-    const { storagePath, videoUrl } = await generateVideoWithGrok(videoPrompt, user.id, sourceImageFile)
+    const { storagePath, videoUrl } = await generateVideoWithGrok(videoPrompt, user.id, sourceImageUrl)
 
     // Save record to generated_videos table
     const { data: videoRecord, error: insertError } = await supabase
