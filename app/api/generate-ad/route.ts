@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import {
   generateAdCopy,
   generateImageWithGemini,
+  generateImageWithSeedream,
   buildReplicatePrompt,
   detectMemeTemplate,
 } from '@/lib/ai'
@@ -30,11 +31,12 @@ export async function POST(request: Request) {
 
     // 2. Parse request body
     const body = await request.json()
-    const { user_context, image_quality, aspect_ratio, creativity, post_type } = body
+    const { user_context, image_quality, aspect_ratio, creativity, post_type, image_model } = body
     const userContext: string | undefined = user_context?.trim() || undefined
     const imageQuality: '1K' | '2K' = image_quality === '2K' ? '2K' : '1K'
     const imageAspectRatio: string = aspect_ratio || '1:1'
     const postType: 'ad' | 'product_mockup' = post_type === 'product_mockup' ? 'product_mockup' : 'ad'
+    const imageModelChoice: 'gemini' | 'seedream' = image_model === 'seedream' ? 'seedream' : 'gemini'
 
     // Map 4-notch creativity slider (1–4) to Gemini temperature
     const CREATIVITY_TEMPERATURES: Record<number, number> = {
@@ -49,7 +51,7 @@ export async function POST(request: Request) {
     if (userContext) {
       console.log(`[Generate] Ad context provided: "${userContext}"`)
     }
-    console.log(`[Generate] Image quality: ${imageQuality}, Aspect ratio: ${imageAspectRatio}, Creativity: ${creativityNotch} (temp: ${imageTemperature})`)
+    console.log(`[Generate] Image quality: ${imageQuality}, Aspect ratio: ${imageAspectRatio}, Creativity: ${creativityNotch} (temp: ${imageTemperature}), Model: ${imageModelChoice}`)
 
     // 3. Fetch brand (ensure it exists)
     const { data: brand, error: brandError } = await supabase
@@ -174,18 +176,32 @@ export async function POST(request: Request) {
     console.log('[Generate] ✅ Image prompt built')
     console.log(`[Generate]   Prompt length: ${imagePrompt.length} chars`)
 
-    // 8. Generate image with Gemini
-    console.log('[Generate] === PHASE 3: Generating image with Gemini 2.0 Flash ===')
-    const generatedImage = await generateImageWithGemini(
-      referenceImageUrl, // null if no reference (text-to-image mode)
-      imagePrompt,
-      user.id,
-      hasReference ? 0.35 : 0.0,
-      1, // 1 retry
-      imageQuality,
-      imageAspectRatio,
-      imageTemperature
-    )
+    // 8. Generate image (model selected by caller)
+    let generatedImage: { storagePath: string; generatedImageUrl: string }
+
+    if (imageModelChoice === 'seedream') {
+      console.log('[Generate] === PHASE 3: Generating image with Seedream 4 (Replicate) ===')
+      generatedImage = await generateImageWithSeedream(
+        referenceImageUrl,
+        imagePrompt,
+        user.id,
+        imageQuality,
+        imageAspectRatio,
+        1 // 1 retry
+      )
+    } else {
+      console.log('[Generate] === PHASE 3: Generating image with Gemini 2.0 Flash ===')
+      generatedImage = await generateImageWithGemini(
+        referenceImageUrl, // null if no reference (text-to-image mode)
+        imagePrompt,
+        user.id,
+        hasReference ? 0.35 : 0.0,
+        1, // 1 retry
+        imageQuality,
+        imageAspectRatio,
+        imageTemperature
+      )
+    }
 
     console.log('[Generate] ✅ Image generation complete')
     console.log(`[Generate]   Storage path: ${generatedImage.storagePath}`)

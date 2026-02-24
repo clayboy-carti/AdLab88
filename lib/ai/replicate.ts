@@ -174,3 +174,99 @@ export async function generateImageWithReplicate(
     `Replicate generation failed after ${retries + 1} attempts: ${lastError?.message || 'Unknown error'}`
   )
 }
+
+/**
+ * Generate image using Seedream 4 via Replicate.
+ * Supports text-to-image and image-to-image (reference passed as URL in image_input array).
+ *
+ * @param referenceImageUrl - Signed URL of the reference image, or null for text-to-image
+ * @param prompt - Text prompt describing the scene / edit
+ * @param userId - Used to organise the storage path
+ * @param imageSize - '1K' (1024px) or '2K' (2048px)
+ * @param aspectRatio - e.g. '1:1', '9:16', '16:9', '3:4', '4:3'
+ * @param retries - Number of retry attempts (default 1)
+ */
+export async function generateImageWithSeedream(
+  referenceImageUrl: string | null,
+  prompt: string,
+  userId: string,
+  imageSize: '1K' | '2K' = '1K',
+  aspectRatio = '1:1',
+  retries = 1
+): Promise<ReplicateGenerationResult> {
+  let lastError: Error | null = null
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const hasReference = !!referenceImageUrl
+      console.log(`[Seedream] Generating image (attempt ${attempt + 1}/${retries + 1})...`)
+      console.log(`[Seedream] Model: bytedance/seedream-4`)
+      console.log(
+        `[Seedream] Mode: ${hasReference ? 'image-to-image (with reference)' : 'text-to-image'}`
+      )
+      console.log(`[Seedream] Quality: ${imageSize}, Aspect ratio: ${aspectRatio}`)
+      console.log(`[Seedream] Prompt length: ${prompt.length} chars`)
+
+      const input: any = {
+        prompt,
+        size: imageSize,
+        aspect_ratio: aspectRatio,
+        enhance_prompt: true,
+        sequential_image_generation: 'disabled',
+      }
+
+      if (hasReference) {
+        input.image_input = [referenceImageUrl]
+        console.log(`[Seedream] Reference image: ${referenceImageUrl!.substring(0, 100)}...`)
+      }
+
+      console.log('[Seedream] Full input payload:', JSON.stringify(input, null, 2))
+
+      const output = await getReplicate().run('bytedance/seedream-4', { input })
+
+      console.log('[Seedream] Raw output type:', typeof output)
+      console.log('[Seedream] Raw output:', JSON.stringify(output).substring(0, 200))
+
+      // Handle different output formats (string URL, array of URLs, object with url)
+      let imageUrl: string
+      if (typeof output === 'string') {
+        imageUrl = output
+      } else if (Array.isArray(output) && output.length > 0) {
+        imageUrl = String(output[0])
+      } else if (output && typeof output === 'object' && 'url' in output) {
+        imageUrl = (output as any).url
+      } else {
+        console.error('[Seedream] Unexpected output format:', output)
+        throw new Error('No valid image URL in Seedream output')
+      }
+
+      if (!imageUrl || typeof imageUrl !== 'string') {
+        throw new Error(`Invalid image URL: ${imageUrl}`)
+      }
+
+      console.log('[Seedream] ✅ Image generated successfully!')
+      console.log('[Seedream] Image URL:', imageUrl)
+
+      const imageBuffer = await downloadImage(imageUrl)
+      console.log(`[Seedream] Downloaded ${imageBuffer.length} bytes`)
+
+      const storagePath = await uploadToSupabase(imageBuffer, userId)
+
+      return { storagePath, generatedImageUrl: imageUrl }
+    } catch (error: any) {
+      lastError = error
+      console.error(`[Seedream] Attempt ${attempt + 1} failed:`, error.message || error)
+
+      if (attempt < retries) {
+        const delayMs = 3000 * (attempt + 1)
+        console.log(`[Seedream] Retrying in ${delayMs}ms...`)
+        await new Promise((resolve) => setTimeout(resolve, delayMs))
+      }
+    }
+  }
+
+  console.error('[Seedream] All retry attempts failed')
+  throw new Error(
+    `Seedream generation failed after ${retries + 1} attempts: ${lastError?.message || 'Unknown error'}`
+  )
+}

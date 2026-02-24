@@ -21,6 +21,7 @@ interface GeneratedAd {
 
 export default function ProductMockupPage() {
   const [sceneText, setSceneText] = useState('')
+  const [imageModel, setImageModel] = useState<'gemini' | 'seedream'>('gemini')
   const [imageQuality, setImageQuality] = useState<'1K' | '2K'>('1K')
   const [aspectRatio, setAspectRatio] = useState('1:1')
   const [generating, setGenerating] = useState(false)
@@ -36,7 +37,8 @@ export default function ProductMockupPage() {
 
     const t1 = setTimeout(() => setGenerationStage('Analyzing product reference...'), 2000)
     const t2 = setTimeout(() => setGenerationStage('Building scene prompt...'), 6000)
-    const t3 = setTimeout(() => setGenerationStage('Placing product in scene with Gemini...'), 10000)
+    const modelLabel = imageModel === 'seedream' ? 'Seedream 4' : 'Gemini'
+    const t3 = setTimeout(() => setGenerationStage(`Placing product in scene with ${modelLabel}...`), 10000)
     const t4 = setTimeout(() => setGenerationStage('Saving to your library...'), 35000)
     const clearAll = () => [t1, t2, t3, t4].forEach(clearTimeout)
 
@@ -50,6 +52,7 @@ export default function ProductMockupPage() {
           aspect_ratio: aspectRatio,
           creativity: 2,
           post_type: 'product_mockup',
+          image_model: imageModel,
         }),
       })
 
@@ -106,7 +109,7 @@ export default function ProductMockupPage() {
               <div className="p-4 bg-white">
                 <ReferenceImageUpload />
                 <p className="font-mono text-xs text-gray-400 mt-2 leading-relaxed">
-                  Upload a clean photo of your product. Gemini will use it as the source.
+                  Upload a clean photo of your product. The selected model will use it as the source.
                 </p>
               </div>
             </div>
@@ -139,6 +142,23 @@ export default function ProductMockupPage() {
             <div className="bg-white">
               <div className="px-4 py-1.5 border-b border-outline">
                 <span className="font-mono text-xs text-gray-400 tracking-wider">— IMAGE SETTINGS —</span>
+              </div>
+
+              {/* Model row */}
+              <div className="flex items-center border-b border-outline">
+                <div className="w-32 shrink-0 px-4 py-2.5 border-r border-outline">
+                  <span className="font-mono text-xs uppercase text-gray-500">Model</span>
+                </div>
+                <div className="px-4 py-1.5 flex-1">
+                  <select
+                    value={imageModel}
+                    onChange={(e) => setImageModel(e.target.value as 'gemini' | 'seedream')}
+                    className="w-full font-mono text-xs bg-transparent focus:outline-none border-none p-0 text-gray-700"
+                  >
+                    <option value="gemini">Gemini Image Pro</option>
+                    <option value="seedream">Seedream 4 (Replicate)</option>
+                  </select>
+                </div>
               </div>
 
               {/* Quality row */}
@@ -209,7 +229,7 @@ export default function ProductMockupPage() {
               [ LIVE OUTPUT ENGINE ]
             </p>
             <span className="font-mono text-xs border border-rust text-rust px-2 py-0.5">
-              [ MODEL: READY ]
+              [ {imageModel === 'seedream' ? 'SEEDREAM 4' : 'GEMINI'}: READY ]
             </span>
           </div>
 
@@ -297,7 +317,7 @@ export default function ProductMockupPage() {
             {/* Status bar */}
             <div className="border-t border-outline px-4 py-2 bg-[#e4dcc8]">
               <span className="font-mono text-xs text-gray-500 tracking-wider">
-                FORMAT: {aspectRatio}&nbsp;&nbsp;|&nbsp;&nbsp;QUALITY: {imageQuality}&nbsp;&nbsp;|&nbsp;&nbsp;TYPE: PRODUCT MOCKUP
+                FORMAT: {aspectRatio}&nbsp;&nbsp;|&nbsp;&nbsp;QUALITY: {imageQuality}&nbsp;&nbsp;|&nbsp;&nbsp;MODEL: {imageModel === 'seedream' ? 'SEEDREAM 4' : 'GEMINI'}&nbsp;&nbsp;|&nbsp;&nbsp;TYPE: PRODUCT MOCKUP
               </span>
             </div>
           </div>
