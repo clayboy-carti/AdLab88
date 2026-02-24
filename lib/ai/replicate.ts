@@ -278,27 +278,35 @@ export interface GrokVideoResult {
 
 /**
  * Generate a 5-second video using xai/grok-imagine-video via Replicate.
- * When imageDataUri is provided the model animates from the reference image (image-to-video).
- * Without imageDataUri it falls back to text-to-video.
+ * When imageFile is provided the model animates from the reference image (image-to-video).
+ * Without imageFile it falls back to text-to-video.
  *
  * @param prompt - Full video prompt describing subject, scene, and motion
  * @param userId - User ID for storage organisation
- * @param imageDataUri - Optional base64 data URI of the source image (data:image/png;base64,...)
+ * @param imageFile - Optional File object (with name + MIME type) to use as the reference frame
  */
 export async function generateVideoWithGrok(
   prompt: string,
   userId: string,
-  imageDataUri?: string
+  imageFile?: File
 ): Promise<GrokVideoResult> {
   console.log('[Grok Video] Generating video...')
   console.log('[Grok Video] Model: xai/grok-imagine-video')
   console.log(`[Grok Video] Prompt length: ${prompt.length} chars`)
-  console.log(`[Grok Video] Mode: ${imageDataUri ? 'image-to-video' : 'text-to-video'}`)
+  console.log(`[Grok Video] Mode: ${imageFile ? 'image-to-video' : 'text-to-video'}`)
 
   const input: Record<string, string> = { prompt }
-  if (imageDataUri) {
-    input.image = imageDataUri
-    console.log('[Grok Video] Reference image: data URI,', imageDataUri.length, 'chars')
+  if (imageFile) {
+    // The grok-imagine-video model only accepts HTTPS file URLs — upload to Replicate's
+    // files API first to get a stable delivery URL, then pass that as input.image.
+    console.log('[Grok Video] Uploading reference image to Replicate files API...')
+    const uploaded = await getReplicate().files.create(imageFile)
+    const imageUrl: string = (uploaded as any).urls?.get
+    if (!imageUrl) {
+      throw new Error('Replicate file upload did not return a URL')
+    }
+    input.image = imageUrl
+    console.log('[Grok Video] Reference image uploaded:', imageUrl)
   }
 
   console.log('[Grok Video] Input keys:', Object.keys(input).join(', '))
