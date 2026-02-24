@@ -6,6 +6,81 @@ import ReferenceImageUpload from '@/components/create/ReferenceImageUpload'
 
 export const dynamic = 'force-dynamic'
 
+const SCENE_PRESETS = [
+  {
+    name: 'Studio Product Shoot',
+    description: 'The scene is a controlled studio environment with a seamless backdrop, professional softbox lighting, high dynamic range detail, sharp focus, minimal shadows, and a commercial product photography style.',
+  },
+  {
+    name: 'White Infinity (White Abyss)',
+    description: 'The subject exists in a pure white infinite void with no visible floor line, soft ambient lighting, a subtle grounding shadow beneath the subject, and a hyper-clean futuristic minimal aesthetic.',
+  },
+  {
+    name: 'Black Void Luxury',
+    description: 'The scene is a deep matte black environment with dramatic directional lighting, strong contrast, subtle rim lighting outlining the subject, and a high-end luxury commercial style.',
+  },
+  {
+    name: 'Lifestyle – Natural Home',
+    description: 'The subject is placed in a realistic lived-in home environment with natural window light, warm tones, depth of field, and an authentic lifestyle photography feel.',
+  },
+  {
+    name: 'Outdoor Golden Hour',
+    description: 'The scene is outdoors during golden hour with warm sunlight, soft lens flare, long shadows, cinematic color grading, and shallow depth of field.',
+  },
+  {
+    name: 'Modern Minimal Interior',
+    description: 'The subject is placed in a modern architectural interior with neutral tones, clean lines, soft indirect lighting, and a contemporary design aesthetic.',
+  },
+  {
+    name: 'Industrial Warehouse',
+    description: 'The scene is a large industrial warehouse with concrete floors, exposed beams, moody directional lighting, a gritty atmosphere, and dramatic shadows.',
+  },
+  {
+    name: 'Street Editorial',
+    description: 'The subject is captured in an urban street setting with natural light, real-world imperfections, shallow depth of field, and an editorial fashion photography vibe.',
+  },
+  {
+    name: 'Cinematic Film Still',
+    description: 'The scene is composed like a movie frame with cinematic lighting, intentional framing, cinematic color grading, dynamic composition, and subtle film grain texture.',
+  },
+  {
+    name: 'Nature Minimal',
+    description: 'The subject is placed in a minimal natural setting such as sand, stone, grass, or water with soft natural light and a calm grounded atmosphere.',
+  },
+  {
+    name: 'Luxury Marble Pedestal',
+    description: 'The subject is elevated on a marble or stone pedestal in a refined environment with soft studio lighting and a luxury cosmetic brand aesthetic.',
+  },
+  {
+    name: 'Abstract Gradient Space',
+    description: 'The background is a smooth abstract gradient with soft diffused lighting, minimal shadows, and a modern digital branding aesthetic.',
+  },
+  {
+    name: 'High Fashion Runway',
+    description: 'The subject is positioned in a high-end fashion runway environment with dramatic spotlighting, a dark background, and editorial photography styling.',
+  },
+  {
+    name: 'Kitchen Counter Reality',
+    description: 'The subject is placed naturally on a realistic kitchen counter with daylight illumination, subtle environmental details, and authentic candid product placement.',
+  },
+  {
+    name: 'Glass Reflection Studio',
+    description: 'The subject sits on a glossy reflective surface with a mirror-like floor reflection, professional studio lighting, and a premium commercial photography style.',
+  },
+  {
+    name: 'Desert Landscape',
+    description: 'The subject is positioned in an open desert landscape with bright sunlight, textured sand, an expansive horizon, and cinematic depth.',
+  },
+  {
+    name: 'Moody Rain Scene',
+    description: 'The environment includes light rainfall, wet reflective surfaces, cool tones, cinematic contrast, and atmospheric depth.',
+  },
+  {
+    name: 'Soft Pastel Brand Space',
+    description: 'The subject is placed in a soft pastel-toned environment with diffused lighting, clean surfaces, minimal shadows, and a modern brand photography aesthetic.',
+  },
+]
+
 interface GeneratedAd {
   id: string
   positioning_angle: string
@@ -21,6 +96,7 @@ interface GeneratedAd {
 
 export default function ProductMockupPage() {
   const [sceneText, setSceneText] = useState('')
+  const [selectedPreset, setSelectedPreset] = useState('')
   const [imageModel, setImageModel] = useState<'gemini' | 'seedream'>('gemini')
   const [imageQuality, setImageQuality] = useState<'1K' | '2K'>('1K')
   const [aspectRatio, setAspectRatio] = useState('1:1')
@@ -119,13 +195,45 @@ export default function ProductMockupPage() {
               <div className="px-4 py-1.5 border-b border-outline bg-white">
                 <span className="font-mono text-xs text-gray-400 tracking-wider">— SCENE DESCRIPTION —</span>
               </div>
-              <div className="p-4 bg-white">
+              <div className="p-4 bg-white space-y-3">
+                {/* Scene Preset Dropdown */}
+                <div className="border border-outline">
+                  <div className="px-3 py-1.5 border-b border-outline bg-[#f7f4ef]">
+                    <p className="font-mono text-xs text-gray-400 uppercase tracking-widest">Scene Preset</p>
+                  </div>
+                  <div className="px-3 py-2">
+                    <select
+                      value={selectedPreset}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setSelectedPreset(val)
+                        if (val) {
+                          const preset = SCENE_PRESETS.find((p) => p.name === val)
+                          if (preset) setSceneText(preset.description)
+                        }
+                      }}
+                      className="w-full font-mono text-xs bg-transparent focus:outline-none border-none p-0 text-gray-700"
+                    >
+                      <option value="">— Select a scene preset —</option>
+                      {SCENE_PRESETS.map((preset) => (
+                        <option key={preset.name} value={preset.name}>
+                          {preset.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Custom / editable scene text */}
                 <div className="border border-outline">
                   <div className="px-3 pt-3 pb-1">
-                    <p className="font-mono text-xs text-gray-400 uppercase tracking-widest mb-2">Describe the Scene</p>
+                    <p className="font-mono text-xs text-gray-400 uppercase tracking-widest mb-2">Scene Details</p>
                     <textarea
                       value={sceneText}
-                      onChange={(e) => setSceneText(e.target.value)}
+                      onChange={(e) => {
+                        setSceneText(e.target.value)
+                        setSelectedPreset('')
+                      }}
                       placeholder="e.g. morning coffee on a marble countertop · hands holding the product outdoors · minimalist white studio"
                       rows={3}
                       className="w-full text-sm font-mono bg-transparent resize-none focus:outline-none placeholder:text-gray-300 border-none p-0"
