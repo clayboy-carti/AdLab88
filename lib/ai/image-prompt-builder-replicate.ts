@@ -94,20 +94,26 @@ Keep the visual format identical to the reference. Only swap in the new brand co
         ? `\nSubtly incorporate the brand colors (${brand.brand_colors.join(', ')}) in the background or environment where natural.`
         : ''
 
-    const prompt = `Create a photorealistic product lifestyle photo for ${brand.company_name}.
+    const prompt = `Create a photorealistic lifestyle photo for ${brand.company_name}.
 
-TASK: Place the product shown in the reference image into the following scene:
-"${scene}"
+SCENE: ${scene}
 
-CRITICAL RULES:
-• Keep the product EXACTLY as it appears — same shape, label, colors, and branding. Do not alter the product itself.
-• The product should look naturally placed in the scene, not composited or photoshopped
-• Professional commercial product photography quality — sharp focus, well-lit, polished
-• The product is the clear focal point of the image
-• NO text overlays, NO ad copy, NO headlines on the image — pure visual
-• Photorealistic render, not illustrated or stylized${colorHint}
+TASK: Generate this scene exactly as described, with the product from the reference image naturally integrated into it. The scene description is the director — let it determine the camera angle, framing, distance, and composition. If the scene describes a person wearing or using the product, show the full person/environment; do NOT zoom into the product or reframe as a close-up product shot.
 
-Style reference: high-end lifestyle product photography. Think editorial, aspirational, social-media-ready.`.trim()
+PRODUCT ACCURACY:
+• Reproduce the product exactly — same shape, label, colors, and branding. Do not alter the product.
+• The product should look naturally worn, held, or placed — not composited or photoshopped in.
+
+COMPOSITION:
+• Frame and compose to match the described scene (e.g. full-body, street-level, wide environment, etc.)
+• The product is visible and recognizable within the scene — but the scene context drives the shot, not the other way around.
+
+VISUAL STYLE:
+• Photorealistic — no illustrations, no stylized renders
+• Natural lighting appropriate to the described setting
+• NO text overlays, NO ad copy, NO headlines — pure visual${colorHint}
+
+Quality benchmark: editorial lifestyle photography — authentic, aspirational, social-media-ready.`.trim()
 
     console.log('[ReplicatePrompt] Mode: PRODUCT MOCKUP')
     console.log(`  Brand: ${brand.company_name}`)
