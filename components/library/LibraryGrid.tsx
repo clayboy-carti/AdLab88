@@ -6,6 +6,7 @@ import AdSetCard from './AdSetCard'
 import AdSetModal from './AdSetModal'
 import AdModal from './AdModal'
 import VideoCard, { type VideoItem } from './VideoCard'
+import VideoModal from './VideoModal'
 
 // ─── Feed grouping ────────────────────────────────────────────────────────────
 
@@ -72,14 +73,16 @@ export default function LibraryGrid({
   initialVideos?: VideoItem[]
 }) {
   const [ads, setAds] = useState<Ad[]>(initialAds)
+  const [videos, setVideos] = useState<VideoItem[]>(initialVideos)
   const [filter, setFilter] = useState<Filter>('all')
 
   // Two modal levels: set picker → ad detail
   const [selectedSet, setSelectedSet] = useState<{ batchId: string; ads: Ad[] } | null>(null)
   const [selectedAd, setSelectedAd] = useState<Ad | null>(null)
+  const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null)
 
   const adFeed = useMemo(() => buildFeed(ads), [ads])
-  const unifiedFeed = useMemo(() => buildUnifiedFeed(adFeed, initialVideos), [adFeed, initialVideos])
+  const unifiedFeed = useMemo(() => buildUnifiedFeed(adFeed, videos), [adFeed, videos])
 
   // Keep selectedSet in sync with ads state (e.g. after a delete)
   const liveSetAds = selectedSet
@@ -116,12 +119,17 @@ export default function LibraryGrid({
     setSelectedAd(ad)
   }
 
+  const handleVideoDelete = (videoId: string) => {
+    setVideos((prev) => prev.filter((v) => v.id !== videoId))
+    setSelectedVideo(null)
+  }
+
   return (
     <>
       {/* ── Filter tabs ── */}
       <div className="flex gap-2 mb-6 border-b border-outline pb-4">
         {(['all', 'images', 'videos'] as Filter[]).map((f) => {
-          const count = f === 'all' ? ads.length + initialVideos.length : f === 'images' ? ads.length : initialVideos.length
+          const count = f === 'all' ? ads.length + videos.length : f === 'images' ? ads.length : videos.length
           return (
             <button
               key={f}
@@ -142,7 +150,7 @@ export default function LibraryGrid({
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {filter === 'all' && unifiedFeed.map((item) => {
           if (item.kind === 'video') {
-            return <VideoCard key={item.video.id} video={item.video} />
+            return <VideoCard key={item.video.id} video={item.video} onClick={() => setSelectedVideo(item.video)} />
           }
           const feedItem = item.item
           if (feedItem.type === 'set') {
@@ -171,8 +179,8 @@ export default function LibraryGrid({
           )
         )}
 
-        {filter === 'videos' && initialVideos.map((video) => (
-          <VideoCard key={video.id} video={video} />
+        {filter === 'videos' && videos.map((video) => (
+          <VideoCard key={video.id} video={video} onClick={() => setSelectedVideo(video)} />
         ))}
       </div>
 
@@ -194,6 +202,15 @@ export default function LibraryGrid({
           onHookUpdate={handleHookUpdate}
           onCtaUpdate={handleCtaUpdate}
           onDelete={handleDelete}
+        />
+      )}
+
+      {/* ── Video detail modal ── */}
+      {selectedVideo && (
+        <VideoModal
+          video={selectedVideo}
+          onClose={() => setSelectedVideo(null)}
+          onDelete={handleVideoDelete}
         />
       )}
     </>

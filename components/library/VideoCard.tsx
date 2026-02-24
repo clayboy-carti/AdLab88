@@ -1,7 +1,5 @@
 'use client'
 
-import { useRef } from 'react'
-
 export interface VideoItem {
   id: string
   source_ad_id: string | null
@@ -11,46 +9,32 @@ export interface VideoItem {
   signedUrl: string | null
 }
 
-export default function VideoCard({ video }: { video: VideoItem }) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-
+export default function VideoCard({ video, onClick }: { video: VideoItem; onClick?: () => void }) {
   const formattedDate = new Date(video.created_at).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   })
 
-  const handleClick = () => {
-    const el = videoRef.current
-    if (!el) return
-    if (el.paused) {
-      el.play()
-    } else {
-      el.pause()
-    }
-  }
-
   return (
-    <div className="border border-outline bg-white flex flex-col text-left w-full">
-      {/* Video */}
-      <div
-        className="border-b border-outline overflow-hidden bg-gray-900 aspect-video w-full relative cursor-pointer group"
-        onClick={handleClick}
-      >
+    <button
+      onClick={onClick}
+      className="border border-outline bg-white flex flex-col text-left w-full hover:border-graphite transition-colors group"
+    >
+      {/* Video thumbnail */}
+      <div className="border-b border-outline overflow-hidden bg-gray-900 aspect-video w-full relative">
         {video.signedUrl ? (
           <>
             <video
-              ref={videoRef}
               src={video.signedUrl}
               className="w-full h-full object-cover"
               muted
               playsInline
               preload="metadata"
-              loop
             />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               <span className="bg-black/60 text-white text-xs font-mono uppercase px-3 py-1.5">
-                Click to play
+                View →
               </span>
             </div>
           </>
@@ -78,8 +62,8 @@ export default function VideoCard({ video }: { video: VideoItem }) {
 
       <div className="flex items-center justify-between px-5 py-3 border-t border-outline bg-gray-50 w-full">
         <span className="text-xs font-mono text-gray-400">{formattedDate}</span>
-        <span className="text-xs font-mono text-gray-400 uppercase">Product Video</span>
+        <span className="text-xs font-mono text-gray-400 uppercase opacity-0 group-hover:opacity-100 transition-opacity">View →</span>
       </div>
-    </div>
+    </button>
   )
 }

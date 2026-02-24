@@ -47,6 +47,7 @@ export async function createLatePost(params: {
   timezone?: string
   platforms: LatePlatform[]
   imageUrl?: string       // Supabase signed URL — Late auto-proxies Supabase URLs
+  videoUrl?: string       // Supabase signed URL for video media
 }): Promise<LatePost> {
   const body: Record<string, unknown> = {
     content: params.content,
@@ -56,7 +57,9 @@ export async function createLatePost(params: {
   }
 
   // mediaItems is required for Instagram; field name is mediaItems (not mediaUrls)
-  if (params.imageUrl) {
+  if (params.videoUrl) {
+    body.mediaItems = [{ type: 'video', url: params.videoUrl }]
+  } else if (params.imageUrl) {
     body.mediaItems = [{ type: 'image', url: params.imageUrl }]
   }
 
