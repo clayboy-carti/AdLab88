@@ -56,8 +56,20 @@ export async function POST(req: NextRequest) {
       if (downloadError || !imageBlob) {
         console.warn('[generate-video] Could not download source image, falling back to text-to-video:', downloadError?.message)
       } else {
-        sourceImageBlob = imageBlob
-        console.log('[generate-video] Source image downloaded:', imageBlob.size, 'bytes')
+        // Wrap in a File so Replicate can infer the format from the filename extension.
+        // Supabase download() returns a Blob with an empty MIME type, which causes
+        // "Invalid image format" errors from the model.
+        const filename = sourceAd.storage_path.split('/').pop() || 'image.png'
+        const ext = filename.split('.').pop()?.toLowerCase() ?? 'png'
+        const mimeMap: Record<string, string> = {
+          png: 'image/png',
+          jpg: 'image/jpeg',
+          jpeg: 'image/jpeg',
+          webp: 'image/webp',
+        }
+        const mimeType = mimeMap[ext] ?? 'image/png'
+        sourceImageBlob = new File([imageBlob], filename, { type: mimeType })
+        console.log('[generate-video] Source image ready:', filename, mimeType, imageBlob.size, 'bytes')
       }
     }
 
