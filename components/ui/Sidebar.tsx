@@ -72,7 +72,7 @@ export default function Sidebar() {
             className={[
               'flex items-center justify-center lg:justify-start',
               'lg:px-4 py-3 uppercase font-mono text-sm border border-transparent transition-colors',
-              pathname === link.href
+              pathname === link.href || pathname.startsWith(link.href + '/')
                 ? 'bg-rust text-outline border-outline'
                 : 'hover:bg-paper/10',
             ].join(' ')}
