@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
   const { data } = await supabase
     .from('scheduled_posts')
-    .select('id, scheduled_for, platforms')
+    .select('id, scheduled_for, platforms, caption')
     .eq('user_id', user.id)
     .eq('video_id', videoId)
     .eq('status', 'scheduled')
@@ -34,6 +34,7 @@ export async function GET(request: Request) {
     postId: (data as any)?.id ?? null,
     scheduledFor: data?.scheduled_for ?? null,
     platforms: (data as any)?.platforms ?? [],
+    caption: (data as any)?.caption ?? '',
   })
 }
 

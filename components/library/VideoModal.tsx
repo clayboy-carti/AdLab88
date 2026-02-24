@@ -150,6 +150,11 @@ export default function VideoModal({ video, onClose, onDelete }: VideoModalProps
   const [lateSkipReason, setLateSkipReason] = useState<'no_api_key' | 'no_platforms' | null>(null)
   const [lateError, setLateError] = useState<string | null>(null)
 
+  // Save caption on existing scheduled post
+  const [captionSaving, setCaptionSaving] = useState(false)
+  const [captionSaved, setCaptionSaved] = useState(false)
+  const [captionSaveError, setCaptionSaveError] = useState<string | null>(null)
+
   // Load accounts + existing schedule
   useEffect(() => {
     const fetchAccounts = fetchAccountsCached()
@@ -161,7 +166,7 @@ export default function VideoModal({ video, onClose, onDelete }: VideoModalProps
         setLateConfigured(accountsData.configured !== false)
         setAccountsLoading(false)
 
-        const { postId, scheduledFor, platforms } = scheduleData
+        const { postId, scheduledFor, platforms, caption } = scheduleData
         if (scheduledFor) {
           const [datePart, timePart] = scheduledFor.split('T')
           setSelectedDate(datePart)
@@ -171,6 +176,9 @@ export default function VideoModal({ video, onClose, onDelete }: VideoModalProps
         }
         if (Array.isArray(platforms) && platforms.length > 0) {
           setSelectedAccountIds(platforms)
+        }
+        if (caption) {
+          setPostCaption(caption)
         }
       })
       .catch(() => setAccountsLoading(false))
@@ -287,6 +295,48 @@ export default function VideoModal({ video, onClose, onDelete }: VideoModalProps
       setScheduleError(err.message)
     } finally {
       setScheduling(false)
+    }
+  }
+
+  // ── Save caption on already-scheduled post
+  const handleSaveCaption = async () => {
+    if (!selectedDate) return
+    setCaptionSaving(true)
+    setCaptionSaved(false)
+    setCaptionSaveError(null)
+    try {
+      const platforms: LatePlatform[] = selectedAccountIds
+        .map((id) => {
+          const acct = lateAccounts.find((a) => a._id === id)
+          return acct ? { platform: acct.platform, accountId: acct._id } : null
+        })
+        .filter(Boolean) as LatePlatform[]
+
+      const res = await fetch('/api/social/schedule-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          videoId: video.id,
+          scheduledFor: `${selectedDate}T${selectedTime}`,
+          caption: postCaption,
+          platforms,
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to save caption')
+      }
+      const data = await res.json()
+      setScheduledPostId(data.post?.id ?? scheduledPostId)
+      setLateStatus(data.lateStatus ?? null)
+      setLateSkipReason(data.lateSkipReason ?? null)
+      setLateError(data.lateError ?? null)
+      setCaptionSaved(true)
+      setTimeout(() => setCaptionSaved(false), 3000)
+    } catch (err: any) {
+      setCaptionSaveError(err.message)
+    } finally {
+      setCaptionSaving(false)
     }
   }
 
@@ -661,21 +711,40 @@ export default function VideoModal({ video, onClose, onDelete }: VideoModalProps
           <div className="border border-outline p-4">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs uppercase font-mono text-gray-400 tracking-widest">Post Caption</p>
-              <button
-                onClick={handleCopyCaption}
-                disabled={!postCaption}
-                className="flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                {captionCopied ? <><CheckIcon /><span>Copied</span></> : <><CopyIcon /><span>Copy</span></>}
-              </button>
+              <div className="flex items-center gap-2">
+                {scheduleConfirmed && (
+                  <button
+                    onClick={handleSaveCaption}
+                    disabled={captionSaving}
+                    className="flex items-center gap-1.5 text-xs font-mono uppercase border border-rust text-rust px-3 py-1.5 hover:bg-rust hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {captionSaving
+                      ? <span>Saving...</span>
+                      : captionSaved
+                      ? <><CheckIcon /><span>Saved</span></>
+                      : <span>Save Caption</span>
+                    }
+                  </button>
+                )}
+                <button
+                  onClick={handleCopyCaption}
+                  disabled={!postCaption}
+                  className="flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {captionCopied ? <><CheckIcon /><span>Copied</span></> : <><CopyIcon /><span>Copy</span></>}
+                </button>
+              </div>
             </div>
             <textarea
               value={postCaption}
-              onChange={(e) => setPostCaption(e.target.value)}
+              onChange={(e) => { setPostCaption(e.target.value); setCaptionSaved(false) }}
               placeholder="Write a caption for this video post…"
               rows={4}
               className="w-full border border-outline p-3 text-sm font-mono bg-white resize-none focus:outline-none focus:border-rust placeholder:text-gray-300"
             />
+            {captionSaveError && (
+              <p className="text-[10px] font-mono text-red-600 mt-2">{captionSaveError}</p>
+            )}
           </div>
 
         </div>
