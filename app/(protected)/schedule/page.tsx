@@ -22,7 +22,7 @@ export default async function SchedulePage() {
         hook, cta, positioning_angle, target_platform, framework_applied, created_at, storage_path
       ),
       generated_videos (
-        storage_path
+        storage_path, motion_prompt, source_ad_id, created_at
       )
     `)
     .eq('user_id', user.id)
@@ -67,6 +67,9 @@ export default async function SchedulePage() {
       ad_created_at: ad?.created_at ?? undefined,
       storage_path: storagePath,
       signedUrl: storagePath ? (urlMap.get(storagePath) ?? null) : null,
+      motion_prompt: video?.motion_prompt ?? undefined,
+      source_ad_id: video?.source_ad_id ?? undefined,
+      video_created_at: video?.created_at ?? undefined,
     }
   })
 
