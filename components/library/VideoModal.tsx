@@ -298,39 +298,52 @@ export default function VideoModal({ video, onClose, onDelete }: VideoModalProps
     }
   }
 
-  // ── Save caption on already-scheduled post
+  // ── Save caption (works whether or not the video is scheduled)
   const handleSaveCaption = async () => {
-    if (!selectedDate) return
     setCaptionSaving(true)
     setCaptionSaved(false)
     setCaptionSaveError(null)
     try {
-      const platforms: LatePlatform[] = selectedAccountIds
-        .map((id) => {
-          const acct = lateAccounts.find((a) => a._id === id)
-          return acct ? { platform: acct.platform, accountId: acct._id } : null
-        })
-        .filter(Boolean) as LatePlatform[]
+      if (scheduleConfirmed && selectedDate) {
+        // Already scheduled — re-POST so Late is updated too
+        const platforms: LatePlatform[] = selectedAccountIds
+          .map((id) => {
+            const acct = lateAccounts.find((a) => a._id === id)
+            return acct ? { platform: acct.platform, accountId: acct._id } : null
+          })
+          .filter(Boolean) as LatePlatform[]
 
-      const res = await fetch('/api/social/schedule-video', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          videoId: video.id,
-          scheduledFor: `${selectedDate}T${selectedTime}`,
-          caption: postCaption,
-          platforms,
-        }),
-      })
-      if (!res.ok) {
+        const res = await fetch('/api/social/schedule-video', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            videoId: video.id,
+            scheduledFor: `${selectedDate}T${selectedTime}`,
+            caption: postCaption,
+            platforms,
+          }),
+        })
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data.error || 'Failed to save caption')
+        }
         const data = await res.json()
-        throw new Error(data.error || 'Failed to save caption')
+        setScheduledPostId(data.post?.id ?? scheduledPostId)
+        setLateStatus(data.lateStatus ?? null)
+        setLateSkipReason(data.lateSkipReason ?? null)
+        setLateError(data.lateError ?? null)
+      } else {
+        // Not yet scheduled — persist caption on the video itself
+        const res = await fetch('/api/social/schedule-video', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ videoId: video.id, caption: postCaption }),
+        })
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data.error || 'Failed to save caption')
+        }
       }
-      const data = await res.json()
-      setScheduledPostId(data.post?.id ?? scheduledPostId)
-      setLateStatus(data.lateStatus ?? null)
-      setLateSkipReason(data.lateSkipReason ?? null)
-      setLateError(data.lateError ?? null)
       setCaptionSaved(true)
       setTimeout(() => setCaptionSaved(false), 3000)
     } catch (err: any) {
@@ -712,20 +725,18 @@ export default function VideoModal({ video, onClose, onDelete }: VideoModalProps
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs uppercase font-mono text-gray-400 tracking-widest">Post Caption</p>
               <div className="flex items-center gap-2">
-                {scheduleConfirmed && (
-                  <button
-                    onClick={handleSaveCaption}
-                    disabled={captionSaving}
-                    className="flex items-center gap-1.5 text-xs font-mono uppercase border border-rust text-rust px-3 py-1.5 hover:bg-rust hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {captionSaving
-                      ? <span>Saving...</span>
-                      : captionSaved
-                      ? <><CheckIcon /><span>Saved</span></>
-                      : <span>Save Caption</span>
-                    }
-                  </button>
-                )}
+                <button
+                  onClick={handleSaveCaption}
+                  disabled={captionSaving}
+                  className="flex items-center gap-1.5 text-xs font-mono uppercase border border-rust text-rust px-3 py-1.5 hover:bg-rust hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {captionSaving
+                    ? <span>Saving...</span>
+                    : captionSaved
+                    ? <><CheckIcon /><span>Saved</span></>
+                    : <span>Save Caption</span>
+                  }
+                </button>
                 <button
                   onClick={handleCopyCaption}
                   disabled={!postCaption}

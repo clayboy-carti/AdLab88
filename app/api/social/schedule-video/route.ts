@@ -30,11 +30,19 @@ export async function GET(request: Request) {
     .eq('status', 'scheduled')
     .maybeSingle()
 
+  // Fall back to the caption stored on the video itself (saved before scheduling)
+  const { data: videoData } = await supabase
+    .from('generated_videos')
+    .select('caption')
+    .eq('id', videoId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
   return NextResponse.json({
     postId: (data as any)?.id ?? null,
     scheduledFor: data?.scheduled_for ?? null,
     platforms: (data as any)?.platforms ?? [],
-    caption: (data as any)?.caption ?? '',
+    caption: (data as any)?.caption ?? (videoData as any)?.caption ?? '',
   })
 }
 
@@ -190,6 +198,41 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ post, lateStatus, lateSkipReason, lateError }, { status: 201 })
+}
+
+// ── PATCH: save caption on a video before (or after) scheduling ──────────────
+
+export async function PATCH(request: Request) {
+  const supabase = createClient()
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const body = await request.json()
+  const { videoId, caption } = body as { videoId: string; caption?: string }
+
+  if (!videoId) {
+    return NextResponse.json({ error: 'videoId is required' }, { status: 400 })
+  }
+
+  const { error } = await supabase
+    .from('generated_videos')
+    .update({ caption: caption ?? '' })
+    .eq('id', videoId)
+    .eq('user_id', user.id)
+
+  if (error) {
+    console.error('[SaveCaption] DB error:', error)
+    return NextResponse.json({ error: 'Failed to save caption' }, { status: 500 })
+  }
+
+  return NextResponse.json({ success: true })
 }
 
 // ── DELETE: cancel a scheduled video post ────────────────────────────────────
