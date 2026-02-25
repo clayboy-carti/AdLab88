@@ -15,18 +15,23 @@ export default async function LibraryPage() {
     redirect('/login')
   }
 
-  // Fetch ads and videos in parallel
-  const [adsResult, videosResult] = await Promise.all([
+  // Fetch ads, videos, and folders in parallel
+  const [adsResult, videosResult, foldersResult] = await Promise.all([
     supabase
       .from('generated_ads')
-      .select('id, user_id, batch_id, positioning_angle, hook, caption, cta, storage_path, framework_applied, target_platform, created_at, image_quality, aspect_ratio')
+      .select('id, user_id, batch_id, positioning_angle, hook, caption, cta, storage_path, framework_applied, target_platform, created_at, image_quality, aspect_ratio, folder_id')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false }),
     supabase
       .from('generated_videos')
-      .select('id, source_ad_id, motion_prompt, storage_path, created_at')
+      .select('id, source_ad_id, motion_prompt, storage_path, created_at, folder_id')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false }),
+    supabase
+      .from('folders')
+      .select('id, name, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: true }),
   ])
 
   if (adsResult.error) {
@@ -35,9 +40,13 @@ export default async function LibraryPage() {
   if (videosResult.error) {
     console.error('[Library] Failed to fetch videos:', videosResult.error)
   }
+  if (foldersResult.error) {
+    console.error('[Library] Failed to fetch folders:', foldersResult.error)
+  }
 
   const adList = adsResult.data ?? []
   const videoList = videosResult.data ?? []
+  const folderList = foldersResult.data ?? []
 
   // Generate signed URLs for ads and videos in parallel
   const adPaths = adList.map((ad) => ad.storage_path).filter(Boolean) as string[]
@@ -85,7 +94,11 @@ export default async function LibraryPage() {
           </a>
         </div>
       ) : (
-        <LibraryGrid initialAds={adsWithUrls} initialVideos={videosWithUrls} />
+        <LibraryGrid
+          initialAds={adsWithUrls}
+          initialVideos={videosWithUrls}
+          initialFolders={folderList}
+        />
       )}
     </div>
   )

@@ -7,6 +7,7 @@ export interface VideoItem {
   storage_path: string
   created_at: string
   signedUrl: string | null
+  folder_id?: string | null
 }
 
 export default function VideoCard({ video, onClick }: { video: VideoItem; onClick?: () => void }) {

@@ -14,6 +14,7 @@ export interface Ad {
   storage_path: string | null
   signedUrl: string | null
   batch_id?: string | null
+  folder_id?: string | null
 }
 
 export default function AdCard({ ad, onClick }: { ad: Ad; onClick: () => void }) {
