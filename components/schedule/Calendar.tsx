@@ -12,6 +12,7 @@ export interface ScheduledPost {
   status: 'scheduled' | 'published' | 'failed' | 'cancelled'
   // Ad details joined from generated_ads
   adId?: string
+  videoId?: string
   hook?: string
   cta?: string
   positioning_angle?: string

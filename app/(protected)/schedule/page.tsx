@@ -17,9 +17,12 @@ export default async function SchedulePage() {
   const { data: rows, error } = await supabase
     .from('scheduled_posts')
     .select(`
-      id, scheduled_for, platform, caption, status, ad_id,
+      id, scheduled_for, platform, caption, status, ad_id, video_id,
       generated_ads (
         hook, cta, positioning_angle, target_platform, framework_applied, created_at, storage_path
+      ),
+      generated_videos (
+        storage_path
       )
     `)
     .eq('user_id', user.id)
@@ -33,7 +36,7 @@ export default async function SchedulePage() {
   // Batch-generate signed URLs in one request
   const rowList = rows || []
   const storagePaths = rowList
-    .map((r) => (r.generated_ads as any)?.storage_path)
+    .map((r) => (r.generated_ads as any)?.storage_path ?? (r.generated_videos as any)?.storage_path)
     .filter(Boolean) as string[]
 
   const { data: signedUrlData } = storagePaths.length > 0
@@ -46,21 +49,24 @@ export default async function SchedulePage() {
 
   const posts: ScheduledPost[] = rowList.map((row) => {
     const ad = row.generated_ads as any
+    const video = row.generated_videos as any
+    const storagePath = ad?.storage_path ?? video?.storage_path ?? null
     return {
       id: row.id,
-      date: row.scheduled_for,
+      date: row.scheduled_for.slice(0, 10),
       platform: row.platform,
       caption: row.caption,
       status: row.status,
-      adId: row.ad_id,
+      adId: row.ad_id ?? undefined,
+      videoId: (row as any).video_id ?? undefined,
       hook: ad?.hook ?? undefined,
       cta: ad?.cta ?? undefined,
       positioning_angle: ad?.positioning_angle ?? undefined,
       target_platform: ad?.target_platform ?? undefined,
       framework_applied: ad?.framework_applied ?? undefined,
       ad_created_at: ad?.created_at ?? undefined,
-      storage_path: ad?.storage_path ?? null,
-      signedUrl: ad?.storage_path ? (urlMap.get(ad.storage_path) ?? null) : null,
+      storage_path: storagePath,
+      signedUrl: storagePath ? (urlMap.get(storagePath) ?? null) : null,
     }
   })
 
