@@ -8,6 +8,7 @@ interface VideoModalProps {
   video: VideoItem
   onClose: () => void
   onDelete?: (videoId: string) => void
+  initialCaption?: string
 }
 
 // ─── Accounts cache (shared with AdModal — module-level) ─────────────────────
@@ -106,12 +107,13 @@ function PlatformIcon({ platform }: { platform: string }) {
 
 // ─── Main Modal ──────────────────────────────────────────────────────────────
 
-export default function VideoModal({ video, onClose, onDelete }: VideoModalProps) {
+export default function VideoModal({ video, onClose, onDelete, initialCaption }: VideoModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
 
   // Post caption for social scheduling (not persisted, only used when scheduling)
-  const [postCaption, setPostCaption] = useState('')
+  const [postCaption, setPostCaption] = useState(initialCaption ?? '')
+  const [captionEditing, setCaptionEditing] = useState(false)
   const [captionCopied, setCaptionCopied] = useState(false)
   const motionCopied = false // handled by motionCopiedState below
   const [motionCopiedState, setMotionCopiedState] = useState(false)
@@ -345,6 +347,7 @@ export default function VideoModal({ video, onClose, onDelete }: VideoModalProps
         }
       }
       setCaptionSaved(true)
+      setCaptionEditing(false)
       setTimeout(() => setCaptionSaved(false), 3000)
     } catch (err: any) {
       setCaptionSaveError(err.message)
@@ -726,35 +729,45 @@ export default function VideoModal({ video, onClose, onDelete }: VideoModalProps
               <p className="text-xs uppercase font-mono text-gray-400 tracking-widest">Post Caption</p>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={handleSaveCaption}
-                  disabled={captionSaving}
-                  className="flex items-center gap-1.5 text-xs font-mono uppercase border border-rust text-rust px-3 py-1.5 hover:bg-rust hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  {captionSaving
-                    ? <span>Saving...</span>
-                    : captionSaved
-                    ? <><CheckIcon /><span>Saved</span></>
-                    : <span>Save Caption</span>
-                  }
-                </button>
-                <button
                   onClick={handleCopyCaption}
                   disabled={!postCaption}
                   className="flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   {captionCopied ? <><CheckIcon /><span>Copied</span></> : <><CopyIcon /><span>Copy</span></>}
                 </button>
+                {!captionEditing && (
+                  <button
+                    onClick={() => { setCaptionEditing(true); setCaptionSaved(false) }}
+                    className="flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 transition-colors"
+                  >
+                    <EditIcon /><span>Edit</span>
+                  </button>
+                )}
               </div>
             </div>
-            <textarea
-              value={postCaption}
-              onChange={(e) => { setPostCaption(e.target.value); setCaptionSaved(false) }}
-              placeholder="Write a caption for this video post…"
-              rows={4}
-              className="w-full border border-outline p-3 text-sm font-mono bg-white resize-none focus:outline-none focus:border-rust placeholder:text-gray-300"
-            />
-            {captionSaveError && (
-              <p className="text-[10px] font-mono text-red-600 mt-2">{captionSaveError}</p>
+            {captionEditing ? (
+              <div className="flex flex-col gap-3">
+                <textarea
+                  autoFocus
+                  value={postCaption}
+                  onChange={(e) => setPostCaption(e.target.value)}
+                  rows={4}
+                  className="w-full border border-outline p-3 text-sm font-mono bg-white resize-none focus:outline-none focus:border-rust"
+                />
+                {captionSaveError && <p className="text-xs text-red-600 font-mono">{captionSaveError}</p>}
+                <div className="flex gap-2">
+                  <button onClick={handleSaveCaption} disabled={captionSaving} className="btn-primary text-sm px-4 py-2">
+                    {captionSaving ? 'SAVING...' : 'SAVE'}
+                  </button>
+                  <button onClick={() => { setCaptionEditing(false); setCaptionSaveError(null) }} disabled={captionSaving} className="btn-secondary text-sm px-4 py-2">
+                    CANCEL
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                {postCaption || <span className="text-gray-300">No caption yet</span>}
+              </p>
             )}
           </div>
 
@@ -793,6 +806,15 @@ function TrashIcon() {
       <path d="M10 11v6" />
       <path d="M14 11v6" />
       <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+    </svg>
+  )
+}
+
+function EditIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
     </svg>
   )
 }

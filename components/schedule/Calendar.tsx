@@ -629,6 +629,7 @@ export default function Calendar({ posts = [] }: CalendarProps) {
           video={selectedVideo}
           onClose={() => setSelectedPost(null)}
           onDelete={handleVideoDelete}
+          initialCaption={selectedPost.caption ?? ''}
         />
       )}
     </>
