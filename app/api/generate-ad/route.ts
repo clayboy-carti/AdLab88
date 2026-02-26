@@ -3,10 +3,13 @@ import { NextResponse } from 'next/server'
 import {
   generateAdCopy,
   generateImageWithGemini,
+  generateImageWithSeedream,
   buildReplicatePrompt,
-  analyzeReferenceAndCreatePrompt,
+  detectMemeTemplate,
 } from '@/lib/ai'
+import type { MemeContext } from '@/lib/ai/meme-detector'
 import type { Brand } from '@/types/database'
+import type { GeneratedAd } from '@/lib/validations/generation'
 
 export async function POST(request: Request) {
   console.log('[Generate] Starting ad generation...')
@@ -28,15 +31,27 @@ export async function POST(request: Request) {
 
     // 2. Parse request body
     const body = await request.json()
-    const { user_context, image_quality, aspect_ratio } = body
+    const { user_context, image_quality, aspect_ratio, creativity, post_type, image_model, title, reference_image_id, reference_image_ids, folder_id } = body
     const userContext: string | undefined = user_context?.trim() || undefined
     const imageQuality: '1K' | '2K' = image_quality === '2K' ? '2K' : '1K'
     const imageAspectRatio: string = aspect_ratio || '1:1'
+    const postType: 'ad' | 'product_mockup' = post_type === 'product_mockup' ? 'product_mockup' : 'ad'
+    const imageModelChoice: 'gemini' | 'seedream' = image_model === 'seedream' ? 'seedream' : 'gemini'
+
+    // Map 4-notch creativity slider (1–4) to Gemini temperature
+    const CREATIVITY_TEMPERATURES: Record<number, number> = {
+      1: 0.2, // Strict  — closely follows reference
+      2: 0.6, // Balanced — default
+      3: 1.0, // Creative — more interpretation
+      4: 1.4, // Loose   — freely reimagined
+    }
+    const creativityNotch = Number(creativity) || 2
+    const imageTemperature = CREATIVITY_TEMPERATURES[creativityNotch] ?? 0.6
 
     if (userContext) {
       console.log(`[Generate] Ad context provided: "${userContext}"`)
     }
-    console.log(`[Generate] Image quality: ${imageQuality}, Aspect ratio: ${imageAspectRatio}`)
+    console.log(`[Generate] Image quality: ${imageQuality}, Aspect ratio: ${imageAspectRatio}, Creativity: ${creativityNotch} (temp: ${imageTemperature}), Model: ${imageModelChoice}`)
 
     // 3. Fetch brand (ensure it exists)
     const { data: brand, error: brandError } = await supabase
@@ -55,84 +70,180 @@ export async function POST(request: Request) {
 
     console.log(`[Generate] Brand loaded: ${brand.company_name}`)
 
-    // 4-5. Auto-fetch the user's most recently uploaded reference image (if any)
-    let referenceImageUrl: string | null = null
+    // 4-5. Resolve reference image(s)
+    // Product mockups: use the explicitly selected reference_image_ids from the request body.
+    // Ads: auto-fetch the user's most recently uploaded image (legacy behavior).
+    let referenceImageUrls: string[] = []
     let usedReferenceImageId: string | null = null
 
-    const { data: referenceImages } = await supabase
-      .from('reference_images')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
+    if (postType === 'product_mockup') {
+      // Accept either reference_image_ids (array) or legacy reference_image_id (single)
+      const selectedIds: string[] = Array.isArray(reference_image_ids)
+        ? reference_image_ids.filter(Boolean)
+        : reference_image_id
+          ? [reference_image_id]
+          : []
 
-    const referenceImage = referenceImages?.[0] ?? null
-    const hasReference = !!referenceImage
+      if (selectedIds.length > 0) {
+        const { data: refImgs } = await supabase
+          .from('reference_images')
+          .select('id, file_name, storage_path')
+          .eq('user_id', user.id)
+          .in('id', selectedIds)
 
-    console.log(
-      `[Generate] Mode: ${hasReference ? `Reference-based (${referenceImage!.file_name})` : 'Original framework-driven creation'}`
-    )
+        if (refImgs && refImgs.length > 0) {
+          const paths = refImgs.map((img) => img.storage_path)
+          const { data: signedUrlData, error: urlError } = await supabase.storage
+            .from('reference-images')
+            .createSignedUrls(paths, 3600)
 
-    if (hasReference) {
-      const { data: signedUrlData, error: urlError } = await supabase.storage
-        .from('reference-images')
-        .createSignedUrl(referenceImage!.storage_path, 3600)
+          if (urlError || !signedUrlData) {
+            console.error('[Generate] Failed to create signed URLs:', urlError)
+            return NextResponse.json(
+              { error: 'Failed to access reference images' },
+              { status: 500 }
+            )
+          }
 
-      if (urlError || !signedUrlData?.signedUrl) {
-        console.error('[Generate] Failed to create signed URL:', urlError)
-        return NextResponse.json(
-          { error: 'Failed to access reference image' },
-          { status: 500 }
-        )
+          const urlMap = new Map(signedUrlData.map((item) => [item.path, item.signedUrl]))
+          referenceImageUrls = refImgs.map((img) => urlMap.get(img.storage_path) ?? '').filter(Boolean)
+          usedReferenceImageId = refImgs[0].id // store first as primary for DB record
+          console.log(`[Generate] Product mockup: using ${referenceImageUrls.length} reference image(s) (${refImgs.map(i => i.file_name).join(', ')})`)
+        }
+      } else {
+        console.log('[Generate] Product mockup: no reference selected — generating without reference')
       }
-
-      referenceImageUrl = signedUrlData.signedUrl
-      usedReferenceImageId = referenceImage!.id
-      console.log('[Generate] Reference image signed URL created')
     } else {
-      console.log('[Generate] No reference images uploaded - will generate original ad')
+      // Ads: auto-fetch the most recently uploaded reference image
+      const { data: referenceImages } = await supabase
+        .from('reference_images')
+        .select('id, file_name, storage_path')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+
+      const referenceImage = referenceImages?.[0] ?? null
+
+      if (referenceImage) {
+        const { data: signedUrlData, error: urlError } = await supabase.storage
+          .from('reference-images')
+          .createSignedUrl(referenceImage.storage_path, 3600)
+
+        if (urlError || !signedUrlData?.signedUrl) {
+          console.error('[Generate] Failed to create signed URL:', urlError)
+          return NextResponse.json(
+            { error: 'Failed to access reference image' },
+            { status: 500 }
+          )
+        }
+
+        referenceImageUrls = [signedUrlData.signedUrl]
+        usedReferenceImageId = referenceImage.id
+        console.log(`[Generate] Ad: auto-using most recent reference (${referenceImage.file_name})`)
+      } else {
+        console.log('[Generate] No reference images uploaded — will generate original ad')
+      }
     }
 
-    // 6. Generate ad copy with OpenAI (frameworks for copy only)
-    console.log('[Generate] === PHASE 1: Generating copy with frameworks ===')
-    const generatedCopy = await generateAdCopy(brand as Brand, 1, userContext)
+    const hasReference = referenceImageUrls.length > 0
+    console.log(
+      `[Generate] Mode: ${hasReference ? `Reference-based (ID: ${usedReferenceImageId}, ${referenceImageUrls.length} image(s))` : 'Original framework-driven creation'}`
+    )
 
-    console.log('[Generate] ✅ Copy generation complete')
-    console.log(`[Generate]   Hook: ${generatedCopy.hook}`)
-    console.log(`[Generate]   Positioning: ${generatedCopy.positioning_angle}`)
+    // 6. Generate copy — skip OpenAI for product mockups (visual is the focus)
+    let generatedCopy: GeneratedAd
 
-    // 7. Build Replicate prompt (changes based on mode)
-    console.log('[Generate] === PHASE 2: Building image prompt ===')
-    let imagePrompt: string
+    if (postType === 'product_mockup') {
+      console.log('[Generate] === PHASE 1: Product mockup — using default copy ===')
+      const sceneLabel = userContext ? userContext.slice(0, 60) : 'lifestyle shot'
+      generatedCopy = {
+        positioning_angle: 'Product Mockup',
+        angle_justification: 'Lifestyle product placement — visual focus',
+        hook: `${brand.company_name} — ${sceneLabel}`,
+        caption: userContext || `Product lifestyle shot for ${brand.company_name}.`,
+        cta: 'Shop Now',
+        brand_voice_match: 'Visual-first',
+        framework_applied: 'Product Mockup',
+        target_platform: 'Instagram / Social',
+        estimated_performance: undefined,
+      }
+      console.log('[Generate] ✅ Mockup defaults set')
+    } else {
+      console.log('[Generate] === PHASE 1: Generating copy with frameworks ===')
+      generatedCopy = await generateAdCopy(brand as Brand, 1, userContext)
+      console.log('[Generate] ✅ Copy generation complete')
+      console.log(`[Generate]   Hook: ${generatedCopy.hook}`)
+      console.log(`[Generate]   Positioning: ${generatedCopy.positioning_angle}`)
+    }
 
-    if (hasReference) {
-      // REFERENCE MODE: Use GPT-4o Vision to analyze reference and create detailed prompt
-      console.log('[Generate] Analyzing reference image with GPT-4o Vision...')
-      imagePrompt = await analyzeReferenceAndCreatePrompt(
-        referenceImageUrl!,
+    // 7. Detect meme template (ad reference mode only — skip for mockups)
+    let memeContext: MemeContext | null = null
+    if (hasReference && postType === 'ad') {
+      console.log('[Generate] === PHASE 2a: Detecting meme template ===')
+      memeContext = await detectMemeTemplate(
+        referenceImageUrls[0],
         brand as Brand,
         generatedCopy,
         userContext
       )
-    } else {
-      // ORIGINAL MODE: Use framework-driven detailed prompt
-      imagePrompt = buildReplicatePrompt(generatedCopy, brand as Brand, 'original', userContext)
+      if (memeContext) {
+        console.log(`[Generate] ✅ Meme detected: ${memeContext.templateName}`)
+      } else {
+        console.log('[Generate] No meme template detected — using standard reference mode')
+      }
     }
+
+    // 8. Build image prompt
+    console.log('[Generate] === PHASE 2b: Building image prompt ===')
+    let imagePrompt: string
+
+    // Product mockup: place reference product into a scene
+    // Reference mode: meme-aware (panel text) or standard format-preserving
+    // Original mode: framework-driven creative prompt
+    const promptMode =
+      postType === 'product_mockup'
+        ? 'product_mockup'
+        : hasReference
+          ? 'reference'
+          : 'original'
+
+    imagePrompt = buildReplicatePrompt(
+      generatedCopy,
+      brand as Brand,
+      promptMode,
+      userContext,
+      memeContext
+    )
 
     console.log('[Generate] ✅ Image prompt built')
     console.log(`[Generate]   Prompt length: ${imagePrompt.length} chars`)
 
-    // 8. Generate image with Gemini
-    console.log('[Generate] === PHASE 3: Generating image with Gemini 2.0 Flash ===')
-    const generatedImage = await generateImageWithGemini(
-      referenceImageUrl, // null if no reference (text-to-image mode)
-      imagePrompt,
-      user.id,
-      hasReference ? 0.35 : 0.0,
-      1, // 1 retry
-      imageQuality,
-      imageAspectRatio
-    )
+    // 8. Generate image (model selected by caller)
+    let generatedImage: { storagePath: string; generatedImageUrl: string }
+
+    if (imageModelChoice === 'seedream') {
+      console.log('[Generate] === PHASE 3: Generating image with Seedream 4 (Replicate) ===')
+      generatedImage = await generateImageWithSeedream(
+        referenceImageUrls.length > 0 ? referenceImageUrls : null,
+        imagePrompt,
+        user.id,
+        imageQuality,
+        imageAspectRatio,
+        1 // 1 retry
+      )
+    } else {
+      console.log('[Generate] === PHASE 3: Generating image with Gemini 2.0 Flash ===')
+      generatedImage = await generateImageWithGemini(
+        referenceImageUrls.length > 0 ? referenceImageUrls : null,
+        imagePrompt,
+        user.id,
+        hasReference ? 0.35 : 0.0,
+        1, // 1 retry
+        imageQuality,
+        imageAspectRatio,
+        imageTemperature
+      )
+    }
 
     console.log('[Generate] ✅ Image generation complete')
     console.log(`[Generate]   Storage path: ${generatedImage.storagePath}`)
@@ -158,6 +269,8 @@ export async function POST(request: Request) {
         storage_path: generatedImage.storagePath,
         image_quality: imageQuality,
         aspect_ratio: imageAspectRatio,
+        title: title?.trim() || null,
+        folder_id: folder_id ?? null,
       })
       .select()
       .single()

@@ -10,11 +10,28 @@ interface AdModalProps {
   onCaptionUpdate: (adId: string, newCaption: string) => void
   onHookUpdate?: (adId: string, newHook: string) => void
   onCtaUpdate?: (adId: string, newCta: string) => void
+  onTitleUpdate?: (adId: string, newTitle: string) => void
   onDelete?: (adId: string) => void
   scheduledDate?: string | null
 }
 
-type EditableField = 'hook' | 'cta' | 'caption'
+type EditableField = 'title' | 'hook' | 'cta' | 'caption'
+
+// ─── Accounts cache (module-level, persists across modal opens) ──────────────
+const ACCOUNTS_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+let accountsCache: { accounts: LateAccount[]; configured: boolean; ts: number } | null = null
+
+function fetchAccountsCached(): Promise<{ accounts: LateAccount[]; configured: boolean }> {
+  if (accountsCache && Date.now() - accountsCache.ts < ACCOUNTS_CACHE_TTL) {
+    return Promise.resolve({ accounts: accountsCache.accounts, configured: accountsCache.configured })
+  }
+  return fetch('/api/social/accounts')
+    .then((r) => r.json())
+    .then((data) => {
+      accountsCache = { accounts: data.accounts ?? [], configured: data.configured !== false, ts: Date.now() }
+      return { accounts: accountsCache.accounts, configured: accountsCache.configured }
+    })
+}
 
 // ─── Calendar helpers ────────────────────────────────────────────────────────
 
@@ -173,8 +190,9 @@ function PlatformIcon({ platform }: { platform: string }) {
 
 // ─── Main Modal ──────────────────────────────────────────────────────────────
 
-export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, onCtaUpdate, onDelete, scheduledDate }: AdModalProps) {
+export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, onCtaUpdate, onTitleUpdate, onDelete, scheduledDate }: AdModalProps) {
   // Editable field values
+  const [title, setTitle] = useState(ad.title ?? '')
   const [hook, setHook] = useState(ad.hook)
   const [cta, setCta] = useState(ad.cta)
   const [caption, setCaption] = useState(ad.caption)
@@ -215,40 +233,39 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
   const [unscheduling, setUnscheduling] = useState(false)
   const [unscheduleError, setUnscheduleError] = useState<string | null>(null)
   const [lateStatus, setLateStatus] = useState<'skipped' | 'success' | 'error' | null>(null)
+  const [lateSkipReason, setLateSkipReason] = useState<'no_api_key' | 'no_platforms' | null>(null)
   const [lateError, setLateError] = useState<string | null>(null)
 
   const overlayRef = useRef<HTMLDivElement>(null)
 
-  // Load Late connected accounts
+  // Load accounts + scheduled post data in parallel, then apply all state in one batch
   useEffect(() => {
-    fetch('/api/social/accounts')
-      .then((r) => r.json())
-      .then(({ accounts, configured }) => {
-        setLateAccounts(accounts ?? [])
-        setLateConfigured(configured !== false)
-      })
-      .catch(() => {})
-      .finally(() => setAccountsLoading(false))
-  }, [])
+    const fetchAccounts = fetchAccountsCached()
+    const fetchSchedule = scheduledDate !== undefined
+      ? Promise.resolve(null)
+      : fetch(`/api/social/schedule?adId=${ad.id}`).then((r) => r.json())
 
-  // Pre-populate scheduled date + selected platforms if this ad is already scheduled
-  useEffect(() => {
-    if (scheduledDate !== undefined) return
-    fetch(`/api/social/schedule?adId=${ad.id}`)
-      .then((r) => r.json())
-      .then(({ postId, scheduledFor, platforms }) => {
-        if (scheduledFor) {
-          const [datePart, timePart] = scheduledFor.split('T')
-          setSelectedDate(datePart)
-          if (timePart) setSelectedTime(timePart.slice(0, 5))
-          setScheduleConfirmed(true)
-          setScheduledPostId(postId ?? null)
-        }
-        if (Array.isArray(platforms) && platforms.length > 0) {
-          setSelectedAccountIds(platforms)
+    Promise.all([fetchAccounts, fetchSchedule])
+      .then(([accountsData, scheduleData]) => {
+        setLateAccounts(accountsData.accounts ?? [])
+        setLateConfigured(accountsData.configured !== false)
+        setAccountsLoading(false)
+
+        if (scheduleData) {
+          const { postId, scheduledFor, platforms } = scheduleData
+          if (scheduledFor) {
+            const [datePart, timePart] = scheduledFor.split('T')
+            setSelectedDate(datePart)
+            if (timePart) setSelectedTime(timePart.slice(0, 5))
+            setScheduleConfirmed(true)
+            setScheduledPostId(postId ?? null)
+          }
+          if (Array.isArray(platforms) && platforms.length > 0) {
+            setSelectedAccountIds(platforms)
+          }
         }
       })
-      .catch(() => {})
+      .catch(() => setAccountsLoading(false))
   }, [ad.id, scheduledDate])
 
   useEffect(() => {
@@ -283,6 +300,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
 
   const handleCancel = () => {
     // Revert the in-progress field to the original ad value
+    if (editingField === 'title') setTitle(ad.title ?? '')
     if (editingField === 'hook') setHook(ad.hook)
     if (editingField === 'cta') setCta(ad.cta)
     if (editingField === 'caption') setCaption(ad.caption)
@@ -293,7 +311,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
   // ── Save
   const handleSave = async () => {
     if (!editingField) return
-    const valueMap: Record<EditableField, string> = { hook, cta, caption }
+    const valueMap: Record<EditableField, string> = { title, hook, cta, caption }
     const value = valueMap[editingField]
 
     setSaving(true)
@@ -309,7 +327,8 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
         throw new Error(data.error || 'Save failed')
       }
       // Notify parent
-      if (editingField === 'caption') onCaptionUpdate(ad.id, value)
+      if (editingField === 'title') onTitleUpdate?.(ad.id, value)
+      else if (editingField === 'caption') onCaptionUpdate(ad.id, value)
       else if (editingField === 'hook') onHookUpdate?.(ad.id, value)
       else if (editingField === 'cta') onCtaUpdate?.(ad.id, value)
       setEditingField(null)
@@ -361,6 +380,10 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
   // ── Schedule
   const handleSchedule = async () => {
     if (!selectedDate) return
+    if (lateConfigured && lateAccounts.length > 0 && selectedAccountIds.length === 0) {
+      setScheduleError('Please select at least one social media account')
+      return
+    }
     setScheduling(true)
     setScheduleError(null)
     try {
@@ -391,6 +414,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
       setScheduleConfirmed(true)
       setScheduledPostId(data.post?.id ?? null)
       setLateStatus(data.lateStatus ?? null)
+      setLateSkipReason(data.lateSkipReason ?? null)
       setLateError(data.lateError ?? null)
     } catch (err: any) {
       setScheduleError(err.message)
@@ -407,6 +431,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
       setScheduleConfirmed(false)
       setSelectedDate(null)
       setLateStatus(null)
+      setLateSkipReason(null)
       setLateError(null)
       return
     }
@@ -421,6 +446,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
       setSelectedDate(null)
       setScheduledPostId(null)
       setLateStatus(null)
+      setLateSkipReason(null)
       setLateError(null)
     } catch (err: any) {
       setUnscheduleError(err.message)
@@ -521,7 +547,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
             ) : !lateConfigured ? (
               <div className="flex-1 p-5 flex flex-col gap-3">
                 <p className="text-xs font-mono text-gray-500 leading-relaxed">
-                  Add your <span className="text-graphite font-bold">LATE_API_KEY</span> to .env.local to enable social posting.
+                  Add your <span className="text-graphite font-bold">LATE_API_KEY</span> to Vercel environment variables (enable for Preview + Production) or .env.local for local development.
                 </p>
                 <a
                   href="https://getlate.dev"
@@ -623,7 +649,17 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
                       ✓ Synced to Late
                     </p>
                   )}
-                  {lateStatus === 'skipped' && !lateError && (
+                  {lateStatus === 'skipped' && !lateError && lateSkipReason === 'no_api_key' && (
+                    <p className="text-[10px] font-mono text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1.5 leading-snug">
+                      Saved locally — LATE_API_KEY not found in environment. Check Vercel env vars (enable for Preview + Production).
+                    </p>
+                  )}
+                  {lateStatus === 'skipped' && !lateError && lateSkipReason === 'no_platforms' && (
+                    <p className="text-[10px] font-mono text-gray-400 bg-gray-50 border border-outline px-2 py-1.5 leading-snug">
+                      Saved locally — select accounts on the left to publish to Late
+                    </p>
+                  )}
+                  {lateStatus === 'skipped' && !lateError && !lateSkipReason && (
                     <p className="text-[10px] font-mono text-gray-400 bg-gray-50 border border-outline px-2 py-1.5 leading-snug">
                       Saved locally — add Late API key to auto-publish
                     </p>
@@ -721,10 +757,10 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
                     )}
                     <button
                       onClick={handleSchedule}
-                      disabled={!selectedDate || scheduling}
+                      disabled={!selectedDate || scheduling || (lateConfigured && lateAccounts.length > 0 && selectedAccountIds.length === 0)}
                       className="btn-primary w-full text-xs py-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      {scheduling ? 'SCHEDULING...' : selectedDate ? 'SCHEDULE' : 'SELECT A DATE'}
+                      {scheduling ? 'SCHEDULING...' : !selectedDate ? 'SELECT A DATE' : (lateConfigured && lateAccounts.length > 0 && selectedAccountIds.length === 0) ? 'SELECT AN ACCOUNT' : 'SCHEDULE'}
                     </button>
                   </div>
                 </>
@@ -736,6 +772,23 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
 
         {/* Body */}
         <div className="p-6 flex flex-col gap-4">
+
+          {/* Title */}
+          <EditableSection
+            label="Title"
+            value={title}
+            onChange={setTitle}
+            displayClassName="text-base font-bold text-graphite leading-snug"
+            rows={1}
+            isEditing={editingField === 'title'}
+            isSaving={saving && editingField === 'title'}
+            isCopied={copiedField === 'title'}
+            error={editingField === 'title' ? saveError : null}
+            onCopy={() => handleCopy('title', title)}
+            onEdit={() => handleEdit('title')}
+            onSave={handleSave}
+            onCancel={handleCancel}
+          />
 
           {/* Hook */}
           <EditableSection

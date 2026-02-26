@@ -28,24 +28,24 @@ export default function ReferenceImageUpload() {
 
     const { data, error } = await supabase
       .from('reference_images')
-      .select('*')
+      .select('id, user_id, storage_path, file_name, file_size, mime_type, created_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
     if (!error && data) {
-      const imagesWithUrls = await Promise.all(
-        data.map(async (img) => {
-          const { data: urlData } = await supabase.storage
-            .from('reference-images')
-            .createSignedUrl(img.storage_path, 3600)
+      const paths = data.map((img) => img.storage_path)
+      const { data: urlData } = await supabase.storage
+        .from('reference-images')
+        .createSignedUrls(paths, 3600)
 
-          return {
-            ...img,
-            signedUrl: urlData?.signedUrl || '',
-          }
-        })
+      const urlMap = new Map(
+        (urlData ?? []).map((item) => [item.path, item.signedUrl])
       )
-      setImages(imagesWithUrls)
+
+      setImages(data.map((img) => ({
+        ...img,
+        signedUrl: urlMap.get(img.storage_path) ?? '',
+      })))
     }
   }
 

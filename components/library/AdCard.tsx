@@ -2,6 +2,7 @@
 
 export interface Ad {
   id: string
+  title?: string | null
   hook: string
   caption: string
   cta: string
@@ -13,6 +14,8 @@ export interface Ad {
   created_at: string
   storage_path: string | null
   signedUrl: string | null
+  batch_id?: string | null
+  folder_id?: string | null
 }
 
 export default function AdCard({ ad, onClick }: { ad: Ad; onClick: () => void }) {
@@ -45,9 +48,13 @@ export default function AdCard({ ad, onClick }: { ad: Ad; onClick: () => void })
 
       {/* Copy */}
       <div className="p-5 flex flex-col gap-3 flex-1 w-full">
+        {ad.title && (
+          <p className="font-bold text-graphite leading-snug">{ad.title}</p>
+        )}
+
         <div>
           <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-1">Hook</p>
-          <p className="font-bold text-graphite leading-snug">{ad.hook}</p>
+          <p className={`text-graphite leading-snug ${ad.title ? 'text-sm text-gray-600' : 'font-bold'}`}>{ad.hook}</p>
         </div>
 
         <div>

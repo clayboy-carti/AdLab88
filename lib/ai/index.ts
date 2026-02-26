@@ -1,5 +1,8 @@
 // Copy generation (frameworks-driven)
-export { generateAdCopy, analyzeReferenceAndCreatePrompt } from './openai'
+export { generateAdCopy, generateBatchAdCopy, analyzeReferenceAndCreatePrompt } from './openai'
+
+// Meme template detection (GPT-4o Vision)
+export { detectMemeTemplate, type MemeContext, type MemePanel } from './meme-detector'
 
 // Visual analysis (GPT-4o Vision)
 export { analyzeImageStyle, type VisualAnalysis } from './vision'
@@ -10,6 +13,9 @@ export { buildReplicatePrompt } from './image-prompt-builder-replicate'
 
 // Image generation (DALL-E)
 export { generateImageWithDalle, type DalleGenerationResult } from './dalle'
+
+// Image generation (Seedream 4 via Replicate)
+export { generateImageWithSeedream } from './replicate'
 
 // Image generation (Gemini 2.0 Flash - text-to-image and image-to-image)
 export { generateImageWithGemini, type GeminiGenerationResult } from './gemini-image'

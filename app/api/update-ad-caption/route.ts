@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
-const ALLOWED_FIELDS = ['caption', 'hook', 'cta'] as const
+const ALLOWED_FIELDS = ['caption', 'hook', 'cta', 'title'] as const
 type AllowedField = typeof ALLOWED_FIELDS[number]
 
 export async function PATCH(request: Request) {
@@ -36,7 +36,7 @@ export async function PATCH(request: Request) {
   }
 
   if (Object.keys(updates).length === 0) {
-    return NextResponse.json({ error: 'At least one field (caption, hook, cta) is required' }, { status: 400 })
+    return NextResponse.json({ error: 'At least one field (title, caption, hook, cta) is required' }, { status: 400 })
   }
 
   // Update only if the row belongs to this user (ownership enforced)

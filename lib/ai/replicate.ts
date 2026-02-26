@@ -174,3 +174,197 @@ export async function generateImageWithReplicate(
     `Replicate generation failed after ${retries + 1} attempts: ${lastError?.message || 'Unknown error'}`
   )
 }
+
+/**
+ * Generate image using Seedream 4 via Replicate.
+ * Supports text-to-image and image-to-image (reference passed as URL in image_input array).
+ *
+ * @param referenceImageUrl - Signed URL of the reference image, or null for text-to-image
+ * @param prompt - Text prompt describing the scene / edit
+ * @param userId - Used to organise the storage path
+ * @param imageSize - '1K' (1024px) or '2K' (2048px)
+ * @param aspectRatio - e.g. '1:1', '9:16', '16:9', '3:4', '4:3'
+ * @param retries - Number of retry attempts (default 1)
+ */
+export async function generateImageWithSeedream(
+  referenceImageUrls: string | string[] | null,
+  prompt: string,
+  userId: string,
+  imageSize: '1K' | '2K' = '1K',
+  aspectRatio = '1:1',
+  retries = 1
+): Promise<ReplicateGenerationResult> {
+  // Normalise to a flat array
+  const refUrls: string[] = Array.isArray(referenceImageUrls)
+    ? referenceImageUrls.filter(Boolean)
+    : referenceImageUrls
+      ? [referenceImageUrls]
+      : []
+
+  let lastError: Error | null = null
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const hasReference = refUrls.length > 0
+      console.log(`[Seedream] Generating image (attempt ${attempt + 1}/${retries + 1})...`)
+      console.log(`[Seedream] Model: bytedance/seedream-4`)
+      console.log(
+        `[Seedream] Mode: ${hasReference ? `image-to-image (${refUrls.length} reference${refUrls.length > 1 ? 's' : ''})` : 'text-to-image'}`
+      )
+      console.log(`[Seedream] Quality: ${imageSize}, Aspect ratio: ${aspectRatio}`)
+      console.log(`[Seedream] Prompt length: ${prompt.length} chars`)
+
+      const input: any = {
+        prompt,
+        size: imageSize,
+        aspect_ratio: aspectRatio,
+        enhance_prompt: true,
+        sequential_image_generation: 'disabled',
+      }
+
+      if (hasReference) {
+        input.image_input = refUrls
+        console.log(`[Seedream] Reference images (${refUrls.length}): ${refUrls.map(u => u.substring(0, 60)).join(', ')}...`)
+      }
+
+      console.log('[Seedream] Full input payload:', JSON.stringify(input, null, 2))
+
+      const output = await getReplicate().run('bytedance/seedream-4', { input })
+
+      console.log('[Seedream] Raw output type:', typeof output)
+      console.log('[Seedream] Raw output:', JSON.stringify(output).substring(0, 200))
+
+      // Handle different output formats (string URL, array of URLs, object with url)
+      let imageUrl: string
+      if (typeof output === 'string') {
+        imageUrl = output
+      } else if (Array.isArray(output) && output.length > 0) {
+        imageUrl = String(output[0])
+      } else if (output && typeof output === 'object' && 'url' in output) {
+        imageUrl = (output as any).url
+      } else {
+        console.error('[Seedream] Unexpected output format:', output)
+        throw new Error('No valid image URL in Seedream output')
+      }
+
+      if (!imageUrl || typeof imageUrl !== 'string') {
+        throw new Error(`Invalid image URL: ${imageUrl}`)
+      }
+
+      console.log('[Seedream] ✅ Image generated successfully!')
+      console.log('[Seedream] Image URL:', imageUrl)
+
+      const imageBuffer = await downloadImage(imageUrl)
+      console.log(`[Seedream] Downloaded ${imageBuffer.length} bytes`)
+
+      const storagePath = await uploadToSupabase(imageBuffer, userId)
+
+      return { storagePath, generatedImageUrl: imageUrl }
+    } catch (error: any) {
+      lastError = error
+      console.error(`[Seedream] Attempt ${attempt + 1} failed:`, error.message || error)
+
+      if (attempt < retries) {
+        const delayMs = 3000 * (attempt + 1)
+        console.log(`[Seedream] Retrying in ${delayMs}ms...`)
+        await new Promise((resolve) => setTimeout(resolve, delayMs))
+      }
+    }
+  }
+
+  console.error('[Seedream] All retry attempts failed')
+  throw new Error(
+    `Seedream generation failed after ${retries + 1} attempts: ${lastError?.message || 'Unknown error'}`
+  )
+}
+
+export interface GrokVideoResult {
+  storagePath: string
+  videoUrl: string
+}
+
+/**
+ * Generate a 5-second video using xai/grok-imagine-video via Replicate.
+ * When imageUrl is provided the model animates from the reference image (image-to-video).
+ * Without imageUrl it falls back to text-to-video.
+ *
+ * @param prompt - Full video prompt describing subject, scene, and motion
+ * @param userId - User ID for storage organisation
+ * @param imageUrl - Optional publicly accessible HTTPS URL for the source image
+ */
+export async function generateVideoWithGrok(
+  prompt: string,
+  userId: string,
+  imageUrl?: string,
+  aspectRatio?: string
+): Promise<GrokVideoResult> {
+  console.log('[Grok Video] Generating video...')
+  console.log('[Grok Video] Model: xai/grok-imagine-video')
+  console.log(`[Grok Video] Prompt length: ${prompt.length} chars`)
+  console.log(`[Grok Video] Mode: ${imageUrl ? 'image-to-video' : 'text-to-video'}`)
+  console.log(`[Grok Video] Aspect ratio: ${aspectRatio ?? 'default (16:9)'}`)
+
+  const input: Record<string, string> = { prompt }
+  if (imageUrl) {
+    input.image = imageUrl
+    console.log('[Grok Video] Reference image URL set')
+  }
+  if (aspectRatio) {
+    input.aspect_ratio = aspectRatio
+  }
+
+  console.log('[Grok Video] Input keys:', Object.keys(input).join(', '))
+
+  const output = await getReplicate().run('xai/grok-imagine-video', { input })
+
+  console.log('[Grok Video] Raw output type:', typeof output)
+
+  // Replicate returns a FileOutput object — call .url() to get the download URL
+  let videoUrl: string
+  if (output && typeof (output as any).url === 'function') {
+    videoUrl = (output as any).url()
+  } else if (typeof output === 'string') {
+    videoUrl = output
+  } else {
+    console.error('[Grok Video] Unexpected output format:', output)
+    throw new Error('No valid video URL in Grok output')
+  }
+
+  if (!videoUrl || typeof videoUrl !== 'string') {
+    throw new Error(`Invalid video URL: ${videoUrl}`)
+  }
+
+  console.log('[Grok Video] ✅ Video generated successfully!')
+  console.log('[Grok Video] Video URL:', videoUrl)
+
+  // Download video from Replicate delivery URL
+  console.log('[Grok Video] Downloading video...')
+  const response = await fetch(videoUrl)
+  if (!response.ok) {
+    throw new Error(`Failed to download video: ${response.statusText}`)
+  }
+  const arrayBuffer = await response.arrayBuffer()
+  const videoBuffer = Buffer.from(arrayBuffer)
+  console.log(`[Grok Video] Downloaded ${videoBuffer.length} bytes`)
+
+  // Upload to Supabase — stored in generated-ads bucket under a videos/ prefix
+  const supabase = createClient()
+  const timestamp = Date.now()
+  const fileName = `${userId}/videos/${timestamp}-video.mp4`
+
+  console.log('[Grok Video] Uploading to Supabase Storage...')
+  const { error: uploadError } = await supabase.storage
+    .from('generated-ads')
+    .upload(fileName, videoBuffer, {
+      contentType: 'video/mp4',
+      upsert: false,
+    })
+
+  if (uploadError) {
+    console.error('[Grok Video] Supabase upload error:', uploadError)
+    throw new Error(`Failed to upload video to storage: ${uploadError.message}`)
+  }
+
+  console.log(`[Grok Video] ✅ Uploaded to: ${fileName}`)
+  return { storagePath: fileName, videoUrl }
+}

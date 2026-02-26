@@ -1,7 +1,7 @@
 import OpenAI from 'openai'
 import type { Brand } from '@/types/database'
 import { getFrameworks } from '@/lib/frameworks'
-import { parseGeneratedAd, type GeneratedAd } from '@/lib/validations/generation'
+import { parseGeneratedAd, batchAdCopyResponseSchema, type GeneratedAd } from '@/lib/validations/generation'
 
 // Lazy-initialize to avoid module-scope instantiation during Next.js build
 let _openai: OpenAI | null = null
@@ -31,9 +31,8 @@ export async function analyzeReferenceAndCreatePrompt(
 
   const analysisPrompt = `Use this reference image to write an ad prompt for a ${industry} company.
 
-The new ad should be for "${brand.company_name}" and include this copy:
+The new ad should be for "${brand.company_name}" and include this copy on the image:
 - Headline: "${generatedCopy.hook}"
-- Body: "${generatedCopy.caption}"
 - CTA: "${generatedCopy.cta}"
 ${contextBlock}
 Write a detailed, specific prompt that captures the visual style of the reference and adapts it for ${industry}. The copy should be direct and hit hard.
@@ -138,7 +137,8 @@ ${adCopyFramework}
 3. Match the brand voice from sample_copy precisely
 4. Use words_to_use naturally, avoid words_to_avoid completely
 5. Keep hook under 10 words, caption 20-60 words, CTA 3-5 words
-6. Focus ONLY on copy - do NOT generate image prompts (visuals handled separately)
+6. The caption is the SOCIAL POST caption (Facebook/Instagram text), NOT text on the image - only the hook and CTA appear on the image itself
+7. Focus ONLY on copy - do NOT generate image prompts (visuals handled separately)
 7. NO extra commentary outside the JSON structure
 
 Return ONLY the JSON object. No markdown, no explanation, just JSON.
@@ -159,7 +159,7 @@ ${contextSection}
 Your task:
 1. Select the best positioning angle from the frameworks
 2. Write a powerful hook (5-10 words, attention-grabbing)
-3. Write engaging caption copy (20-60 words, benefit-driven)
+3. Write engaging caption copy for the social post (20-60 words, benefit-driven) — this goes in the post text, NOT on the image
 4. Write a clear call-to-action (3-5 words, action-oriented)
 5. Explain your strategic choices
 
@@ -252,4 +252,138 @@ export async function generateAdCopy(
   throw new Error(
     `OpenAI generation failed after ${retries + 1} attempts: ${lastError?.message || 'Unknown error'}`
   )
+}
+
+// The 5 positioning angles used for batch generation — one per slot, guaranteed diversity
+const BATCH_ANGLES = [
+  'The Specialist',
+  'The Results',
+  'The Anti-Category',
+  'The Speed',
+  'The Simplicity',
+] as const
+
+/**
+ * Build user prompt for batch copy generation (5 variants, one per angle)
+ */
+function buildBatchUserPrompt(angles: readonly string[], userContext?: string): string {
+  const contextSection = userContext
+    ? `\nCURRENT OFFER / AD CONTEXT (incorporate naturally into all 5 variations):\n"${userContext}"\n`
+    : ''
+
+  const angleList = angles
+    .map((angle, i) => `  Variation ${i + 1}: ${angle}`)
+    .join('\n')
+
+  return `
+Generate EXACTLY 5 ad copy variations for the brand profile in the system prompt.
+${contextSection}
+CRITICAL: Each variation MUST use a DIFFERENT, pre-assigned positioning angle listed below.
+You are NOT allowed to choose your own angles. Use each one EXACTLY as written, including "The" prefix:
+
+${angleList}
+
+For each variation:
+1. Use ONLY the assigned positioning angle — set it verbatim as the positioning_angle field
+2. Write a powerful hook (5-10 words) that expresses THAT specific angle
+3. Write an engaging social post caption (20-60 words) — this is the post text, NOT image text
+4. Write a CTA (3-5 words) suited to that angle
+5. Apply the most appropriate copy framework (PAS/AIDA/BAB/FAB)
+6. Match the brand voice from the sample copy
+
+Return ONLY the following JSON object. No markdown, no explanation, just JSON:
+
+{
+  "variations": [
+    {
+      "positioning_angle": "The Specialist",
+      "angle_justification": "...",
+      "hook": "...",
+      "caption": "...",
+      "cta": "...",
+      "brand_voice_match": "...",
+      "framework_applied": "...",
+      "target_platform": "...",
+      "estimated_performance": "..."
+    },
+    ... (4 more objects, one per assigned angle)
+  ]
+}
+`.trim()
+}
+
+/**
+ * Generate 5 ad copy variants in a single GPT call — one per positioning angle.
+ * Uses fixed angles to guarantee diversity across the batch.
+ */
+export async function generateBatchAdCopy(
+  brand: Brand,
+  angles: readonly string[] = BATCH_ANGLES,
+  userContext?: string
+): Promise<GeneratedAd[]> {
+  const frameworks = await getFrameworks()
+  const systemPrompt = buildSystemPrompt(frameworks, brand)
+  const userPrompt = buildBatchUserPrompt(angles, userContext)
+
+  let lastError: Error | null = null
+
+  for (let attempt = 0; attempt <= 1; attempt++) {
+    try {
+      console.log(`[OpenAI Batch] Generating 5 variants (attempt ${attempt + 1}/2)...`)
+
+      const response = await getOpenAI().chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 4000,
+        response_format: { type: 'json_object' },
+      })
+
+      const content = response.choices[0]?.message?.content
+      if (!content) throw new Error('No content in OpenAI response')
+
+      let root: unknown
+      try {
+        root = JSON.parse(content)
+      } catch {
+        throw new Error('Failed to parse OpenAI batch response as JSON')
+      }
+
+      // Validate the full { variations: [...] } structure with Zod
+      const parsed = batchAdCopyResponseSchema.parse(root)
+
+      // Normalize angle names — ensure each matches the assigned angle (handle missing "The " prefix)
+      const knownAngles = [
+        'The Specialist', 'The Methodology', 'The Results', 'The Anti-Category',
+        'The Simplicity', 'The Speed', 'The Quality Story', 'The Lifestyle/Identity',
+      ]
+      const normalized = parsed.variations.map((v, i) => {
+        let angle = v.positioning_angle
+        // If GPT dropped the "The " prefix, restore it
+        if (!angle.startsWith('The ')) {
+          const match = knownAngles.find((a) => a.replace('The ', '') === angle)
+          if (match) angle = match
+        }
+        return { ...v, positioning_angle: angle || angles[i] }
+      })
+
+      console.log('[OpenAI Batch] ✅ Batch copy generation complete')
+      normalized.forEach((v, i) => {
+        console.log(`[OpenAI Batch]   Slot ${i + 1}: ${v.positioning_angle} — "${v.hook}"`)
+      })
+
+      return normalized
+    } catch (error: any) {
+      lastError = error
+      console.error(`[OpenAI Batch] Attempt ${attempt + 1} failed:`, error.message || error)
+      if (attempt < 1) {
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+      }
+    }
+  }
+
+  throw new Error(`Batch copy generation failed: ${lastError?.message || 'Unknown error'}`)
 }

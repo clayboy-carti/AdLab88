@@ -1,21 +1,27 @@
 import type { Brand } from '@/types/database'
 import type { GeneratedCopy } from './image-prompt-builder'
+import type { MemeContext } from './meme-detector'
 
 /**
- * Build Replicate prompt for image generation
- * TWO MODES:
- * 1. Reference mode: Simple prompt for template swap (keeps layout, swaps brand)
- * 2. Original mode: Detailed framework-driven prompt for creative generation
+ * Build Replicate prompt for image generation.
+ * FOUR MODES:
+ * 1. Reference mode (meme detected): Panel-specific text placement, preserves meme format
+ * 2. Reference mode (no meme): Generic format-preserving prompt
+ * 3. Original mode: Detailed framework-driven prompt for creative generation
+ * 4. Product mockup mode: Places the reference product into a lifestyle scene
  *
  * @param copy - Generated ad copy
  * @param brand - Brand profile
- * @param mode - 'reference' (template swap) or 'original' (framework-driven)
+ * @param mode - 'reference' | 'original' | 'product_mockup'
+ * @param userContext - Optional user-provided offer/context or scene description
+ * @param memeContext - Optional meme detection result (panel structure + copy)
  */
 export function buildReplicatePrompt(
   copy: GeneratedCopy,
   brand: Brand,
-  mode: 'reference' | 'original' = 'reference',
-  userContext?: string
+  mode: 'reference' | 'original' | 'product_mockup' = 'reference',
+  userContext?: string,
+  memeContext?: MemeContext | null
 ): string {
   const brandColors =
     brand.brand_colors && brand.brand_colors.length > 0
@@ -24,14 +30,95 @@ export function buildReplicatePrompt(
 
   const industry = brand.what_we_do.toLowerCase()
 
-  // MODE 1: REFERENCE-BASED (Super simple prompt - let the model do the work)
+  // MODE 1: REFERENCE-BASED
   if (mode === 'reference') {
-    const prompt = `Use the reference image to create an ad focused on ${industry}.`
+    const colorLine =
+      brand.brand_colors && brand.brand_colors.length > 0
+        ? `\nSubtly incorporate brand colors (${brand.brand_colors.join(', ')}) where natural.`
+        : ''
 
-    console.log('[ReplicatePrompt] Mode: REFERENCE (template swap)')
+    // 1a. Meme-aware: panel-specific text placement
+    if (memeContext) {
+      const panelLines = memeContext.panels
+        .map(
+          (p) =>
+            `  • ${p.position.toUpperCase()} PANEL (${p.role}): "${p.suggestedCopy}"`
+        )
+        .join('\n')
+
+      const prompt = `Recreate this ${memeContext.templateName} as an advertisement for ${brand.company_name}.
+
+CRITICAL: Preserve the EXACT same meme format, layout, panels, and visual style from the reference image. Do NOT replace it with an infographic or generic ad template.
+
+Place the following text in each panel EXACTLY as specified — the text must match the semantic role of that panel:
+${panelLines}
+
+Keep everything else (character images, panel borders, background, font style) identical to the reference.${colorLine}`
+
+      console.log(`[ReplicatePrompt] Mode: REFERENCE — MEME (${memeContext.templateName})`)
+      memeContext.panels.forEach((p) =>
+        console.log(`  ${p.position.toUpperCase()}: "${p.suggestedCopy}"`)
+      )
+      console.log(`  Prompt length: ${prompt.length} chars`)
+
+      return prompt
+    }
+
+    // 1b. Standard reference: preserve format, swap copy
+    const offerLine = userContext ? ` The ad is promoting: "${userContext}".` : ''
+
+    const prompt = `Recreate this exact visual format and style as an advertisement for ${brand.company_name}.
+
+CRITICAL: Preserve the EXACT same layout, composition, and visual format from the reference image. If the reference is a meme, keep the meme format. If it is a two-panel image, keep the two panels. If it is a product shot, keep that structure. Do NOT replace the format with a generic infographic or marketing template.
+
+Use this copy:
+• Headline (bold, prominent): "${copy.hook}"
+• CTA: "${copy.cta}"
+${offerLine}${colorLine}
+
+Keep the visual format identical to the reference. Only swap in the new brand copy.`
+
+    console.log('[ReplicatePrompt] Mode: REFERENCE (format-preserving)')
     console.log(`  Brand: ${brand.company_name}`)
-    console.log(`  Industry: ${industry}`)
-    console.log(`  Prompt: "${prompt}"`)
+    console.log(`  Hook: ${copy.hook}`)
+    console.log(`  Prompt length: ${prompt.length} chars`)
+
+    return prompt
+  }
+
+  // MODE 3: PRODUCT MOCKUP (lifestyle scene placement)
+  if (mode === 'product_mockup') {
+    const scene = userContext || 'a clean, natural lifestyle setting that suits the product'
+    const colorHint =
+      brand.brand_colors && brand.brand_colors.length > 0
+        ? `\nSubtly incorporate the brand colors (${brand.brand_colors.join(', ')}) in the background or environment where natural.`
+        : ''
+
+    const prompt = `Create a photorealistic lifestyle photo for ${brand.company_name}.
+
+SCENE: ${scene}
+
+TASK: Generate this scene exactly as described, with the product from the reference image naturally integrated into it. The scene description is the director — let it determine the camera angle, framing, distance, and composition. If the scene describes a person wearing or using the product, show the full person/environment; do NOT zoom into the product or reframe as a close-up product shot.
+
+PRODUCT ACCURACY:
+• Reproduce the product exactly — same shape, label, colors, and branding. Do not alter the product.
+• The product should look naturally worn, held, or placed — not composited or photoshopped in.
+
+COMPOSITION:
+• Frame and compose to match the described scene (e.g. full-body, street-level, wide environment, etc.)
+• The product is visible and recognizable within the scene — but the scene context drives the shot, not the other way around.
+
+VISUAL STYLE:
+• Photorealistic — no illustrations, no stylized renders
+• Natural lighting appropriate to the described setting
+• NO text overlays, NO ad copy, NO headlines — pure visual${colorHint}
+
+Quality benchmark: editorial lifestyle photography — authentic, aspirational, social-media-ready.`.trim()
+
+    console.log('[ReplicatePrompt] Mode: PRODUCT MOCKUP')
+    console.log(`  Brand: ${brand.company_name}`)
+    console.log(`  Scene: ${scene}`)
+    console.log(`  Prompt length: ${prompt.length} chars`)
 
     return prompt
   }
@@ -54,7 +141,6 @@ BRAND DETAILS:
 
 AD COPY (Display prominently):
 • Main headline (large, bold): "${copy.hook}"
-• Body copy (clear, readable): "${copy.caption}"
 • Call-to-action (prominent button/text): "${copy.cta}"
 ${offerLine}
 
@@ -64,7 +150,7 @@ VISUAL REQUIREMENTS:
 • Include relevant ${industry} imagery or icons
 • Clean, uncluttered layout with good whitespace
 • Typography should be bold and readable
-• Ensure text hierarchy (headline > body > CTA)
+• Ensure text hierarchy (headline > CTA)
 • High-quality, polished aesthetic
 • Square format (1:1 ratio) optimized for social media
 

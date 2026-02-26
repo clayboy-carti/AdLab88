@@ -301,7 +301,6 @@ Your image must:
 
 ### [TEXT PLACEMENT]
 - Hook position
-- Caption position
 - CTA styling
 - Font type suggestion
 
@@ -326,9 +325,8 @@ Composition: Asymmetrical layout with headline in top third. Visual focal point 
 Color palette: Primary brand color #HEX background. Accent #HEX for CTA. High contrast white typography.
 
 Text to include:
-“[HOOK]”
-“[CAPTION]”
-“[CTA]”
+"[HOOK]"
+"[CTA]"
 
 Style: Minimalist, editorial, high contrast.
 Ensure strong mobile readability.

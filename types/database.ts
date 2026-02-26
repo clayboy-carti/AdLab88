@@ -1,3 +1,12 @@
+export type UserProfile = {
+  id: string
+  email: string
+  full_name: string
+  created_at: string
+}
+
+export type SubscriptionTier = 'free' | 'pro' | 'business'
+
 export type Brand = {
   id: string
   user_id: string
@@ -72,5 +81,15 @@ export type GeneratedAd = {
   framework_applied?: string
   target_platform?: string
   estimated_performance?: string
+  created_at: string
+}
+
+export type GeneratedVideo = {
+  id: string
+  user_id: string
+  source_ad_id: string | null
+  motion_prompt: string | null
+  storage_path: string
+  content_type: 'product_video'
   created_at: string
 }

@@ -131,12 +131,15 @@ export async function POST(request: Request) {
   // ── Late API integration ──────────────────────────────────────────────────
   let lateStatus: 'skipped' | 'success' | 'error' = 'skipped'
   let lateError: string | null = null
+  let lateSkipReason: 'no_api_key' | 'no_platforms' | null = null
 
   if (!process.env.LATE_API_KEY) {
     lateStatus = 'skipped'
+    lateSkipReason = 'no_api_key'
     console.log('[Schedule] LATE_API_KEY not set — skipping Late API call')
   } else if (!platforms || platforms.length === 0) {
     lateStatus = 'skipped'
+    lateSkipReason = 'no_platforms'
     console.log('[Schedule] No platforms selected — skipping Late API call')
   } else {
     try {
@@ -189,7 +192,7 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ post, lateStatus, lateError }, { status: 201 })
+  return NextResponse.json({ post, lateStatus, lateSkipReason, lateError }, { status: 201 })
 }
 
 // ── DELETE: cancel a scheduled post + remove from Late ───────────────────────

@@ -59,53 +59,65 @@ export interface GeminiGenerationResult {
  * @param retries - Number of retry attempts
  */
 export async function generateImageWithGemini(
-  referenceImageUrl: string | null,
+  referenceImageUrls: string | string[] | null,
   prompt: string,
   userId: string,
   strength = 0.5,
   retries = 1,
   imageSize: '1K' | '2K' = '1K',
-  aspectRatio = '1:1'
+  aspectRatio = '1:1',
+  temperature = 0.6
 ): Promise<GeminiGenerationResult> {
+  // Normalise to a flat array so the rest of the function is uniform
+  const refUrls: string[] = Array.isArray(referenceImageUrls)
+    ? referenceImageUrls.filter(Boolean)
+    : referenceImageUrls
+      ? [referenceImageUrls]
+      : []
+
   let lastError: Error | null = null
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const hasReference = !!referenceImageUrl
+      const hasReference = refUrls.length > 0
       console.log(
         `[Gemini] Generating image (attempt ${attempt + 1}/${retries + 1})...`
       )
       console.log(`[Gemini] Model: ${IMAGE_MODEL}`)
       console.log(
-        `[Gemini] Mode: ${hasReference ? 'image-to-image (with reference)' : 'text-to-image (original)'}`
+        `[Gemini] Mode: ${hasReference ? `image-to-image (${refUrls.length} reference${refUrls.length > 1 ? 's' : ''})` : 'text-to-image (original)'}`
       )
-      console.log(`[Gemini] Quality: ${imageSize}, Aspect ratio: ${aspectRatio}`)
+      console.log(`[Gemini] Quality: ${imageSize}, Aspect ratio: ${aspectRatio}, Temperature: ${temperature}`)
       console.log(`[Gemini] Prompt length: ${prompt.length} chars`)
 
       let contents: string | object[]
 
       if (hasReference) {
-        // Image-to-image: fetch reference, encode as base64, send with prompt
-        console.log('[Gemini] Fetching reference image...')
-        const refResponse = await fetch(referenceImageUrl!)
-        if (!refResponse.ok) {
-          throw new Error(
-            `Failed to fetch reference image: ${refResponse.statusText}`
-          )
-        }
-        const refBuffer = Buffer.from(await refResponse.arrayBuffer())
-        const refBase64 = refBuffer.toString('base64')
-        const refMimeType =
-          refResponse.headers.get('content-type') || 'image/jpeg'
-        console.log(
-          `[Gemini] Reference image fetched: ${refBuffer.length} bytes (${refMimeType})`
+        // Image-to-image: fetch all references, encode as base64, send with prompt
+        console.log(`[Gemini] Fetching ${refUrls.length} reference image(s)...`)
+        const imageParts = await Promise.all(
+          refUrls.map(async (url, i) => {
+            const refResponse = await fetch(url)
+            if (!refResponse.ok) {
+              throw new Error(
+                `Failed to fetch reference image ${i + 1}: ${refResponse.statusText}`
+              )
+            }
+            const refBuffer = Buffer.from(await refResponse.arrayBuffer())
+            const refBase64 = refBuffer.toString('base64')
+            const refMimeType = refResponse.headers.get('content-type') || 'image/jpeg'
+            console.log(
+              `[Gemini] Reference ${i + 1} fetched: ${refBuffer.length} bytes (${refMimeType})`
+            )
+            return { inlineData: { mimeType: refMimeType, data: refBase64 } }
+          })
         )
 
         contents = [
           {
             role: 'user',
             parts: [
-              { inlineData: { mimeType: refMimeType, data: refBase64 } },
+              ...imageParts,
               { text: prompt },
             ],
           },
@@ -119,6 +131,7 @@ export async function generateImageWithGemini(
         model: IMAGE_MODEL,
         contents,
         config: {
+          temperature,
           responseModalities: ['IMAGE', 'TEXT'],
           imageConfig: {
             imageSize,

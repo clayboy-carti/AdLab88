@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import AdModal from '@/components/library/AdModal'
+import VideoModal from '@/components/library/VideoModal'
 import type { Ad } from '@/components/library/AdCard'
+import type { VideoItem } from '@/components/library/VideoCard'
 
 export interface ScheduledPost {
   id: string
@@ -12,6 +14,7 @@ export interface ScheduledPost {
   status: 'scheduled' | 'published' | 'failed' | 'cancelled'
   // Ad details joined from generated_ads
   adId?: string
+  videoId?: string
   hook?: string
   cta?: string
   positioning_angle?: string
@@ -20,6 +23,10 @@ export interface ScheduledPost {
   ad_created_at?: string
   storage_path?: string | null
   signedUrl?: string | null
+  // Video-specific fields
+  motion_prompt?: string | null
+  source_ad_id?: string | null
+  video_created_at?: string
 }
 
 interface CalendarProps {
@@ -157,6 +164,18 @@ function postToAd(post: ScheduledPost): Ad | null {
   }
 }
 
+function postToVideo(post: ScheduledPost): VideoItem | null {
+  if (!post.videoId) return null
+  return {
+    id: post.videoId,
+    source_ad_id: post.source_ad_id ?? null,
+    motion_prompt: post.motion_prompt ?? null,
+    storage_path: post.storage_path ?? '',
+    created_at: post.video_created_at ?? post.date,
+    signedUrl: post.signedUrl ?? null,
+  }
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 /** Small chip used in the month grid */
@@ -184,8 +203,15 @@ function WeekPostCard({ post, onClick }: { post: ScheduledPost; onClick: () => v
       onClick={onClick}
       className="w-full text-left border border-outline bg-white hover:border-rust transition-colors group overflow-hidden"
     >
-      {/* Image */}
-      {post.signedUrl ? (
+      {/* Thumbnail / placeholder */}
+      {post.videoId ? (
+        <div className="w-full aspect-square bg-graphite/5 border-b border-outline flex items-center justify-center relative overflow-hidden">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" className="text-graphite/30">
+            <polygon points="5 3 19 12 5 21 5 3" />
+          </svg>
+          <span className="absolute top-1.5 right-1.5 text-[8px] font-mono uppercase bg-graphite/10 text-graphite/50 px-1 py-0.5">VIDEO</span>
+        </div>
+      ) : post.signedUrl ? (
         <div className="w-full aspect-square overflow-hidden bg-gray-100 border-b border-outline">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -318,6 +344,12 @@ export default function Calendar({ posts = [] }: CalendarProps) {
   }
 
   const selectedAd = selectedPost ? postToAd(selectedPost) : null
+  const selectedVideo = selectedPost ? postToVideo(selectedPost) : null
+
+  const handleVideoDelete = (videoId: string) => {
+    setLocalPosts((prev) => prev.filter((p) => p.videoId !== videoId))
+    setSelectedPost(null)
+  }
 
   // ── Shared nav bar
   const isToday = view === 'month' ? isCurrentMonthToday : isCurrentWeekToday
@@ -588,6 +620,16 @@ export default function Calendar({ posts = [] }: CalendarProps) {
           onHookUpdate={handleHookUpdate}
           onCtaUpdate={handleCtaUpdate}
           scheduledDate={selectedPost.date}
+        />
+      )}
+
+      {/* Video modal */}
+      {selectedPost && selectedVideo && (
+        <VideoModal
+          video={selectedVideo}
+          onClose={() => setSelectedPost(null)}
+          onDelete={handleVideoDelete}
+          initialCaption={selectedPost.caption ?? ''}
         />
       )}
     </>
