@@ -2,6 +2,7 @@
 
 export interface VideoItem {
   id: string
+  title?: string | null
   source_ad_id: string | null
   motion_prompt: string | null
   storage_path: string
@@ -51,13 +52,16 @@ export default function VideoCard({ video, onClick }: { video: VideoItem; onClic
 
       {/* Info */}
       <div className="p-5 flex flex-col gap-2 flex-1 w-full">
+        {video.title && (
+          <p className="font-bold text-graphite leading-snug">{video.title}</p>
+        )}
         {video.motion_prompt ? (
           <div>
             <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-1">Motion</p>
             <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">{video.motion_prompt}</p>
           </div>
         ) : (
-          <p className="text-sm text-gray-500 font-mono uppercase">Product video</p>
+          <p className="text-sm text-gray-500 font-mono uppercase">{video.title ? '' : 'Product video'}</p>
         )}
       </div>
 

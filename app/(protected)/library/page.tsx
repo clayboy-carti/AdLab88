@@ -19,12 +19,12 @@ export default async function LibraryPage() {
   const [adsResult, videosResult, foldersResult] = await Promise.all([
     supabase
       .from('generated_ads')
-      .select('id, user_id, batch_id, positioning_angle, hook, caption, cta, storage_path, framework_applied, target_platform, created_at, image_quality, aspect_ratio, folder_id')
+      .select('id, user_id, batch_id, positioning_angle, hook, caption, cta, storage_path, framework_applied, target_platform, created_at, image_quality, aspect_ratio, folder_id, title')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false }),
     supabase
       .from('generated_videos')
-      .select('id, source_ad_id, motion_prompt, storage_path, created_at, folder_id')
+      .select('id, source_ad_id, motion_prompt, storage_path, created_at, folder_id, title')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false }),
     supabase

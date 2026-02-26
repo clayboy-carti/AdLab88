@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { ad_id, motion_prompt, aspect_ratio } = body as { ad_id: string; motion_prompt?: string; aspect_ratio?: string }
+    const { ad_id, motion_prompt, aspect_ratio, title } = body as { ad_id: string; motion_prompt?: string; aspect_ratio?: string; title?: string }
 
     if (!ad_id) {
       return NextResponse.json({ error: 'ad_id is required' }, { status: 400 })
@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
         motion_prompt: motion_prompt?.trim() || null,
         storage_path: storagePath,
         content_type: 'product_video',
+        title: title?.trim() || null,
       })
       .select()
       .single()

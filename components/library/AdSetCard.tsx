@@ -59,10 +59,16 @@ export default function AdSetCard({ ads, onClick }: AdSetCardProps) {
           </span>
         </div>
 
-        {/* Title derived from the first variant's hook */}
+        {/* Title — use user-defined title if available, else fall back to first hook */}
         <div>
-          <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-1">Hook</p>
-          <p className="font-bold text-graphite leading-snug line-clamp-2">{ads[0].hook}</p>
+          {ads[0].title ? (
+            <p className="font-bold text-graphite leading-snug line-clamp-2">{ads[0].title}</p>
+          ) : (
+            <>
+              <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-1">Hook</p>
+              <p className="font-bold text-graphite leading-snug line-clamp-2">{ads[0].hook}</p>
+            </>
+          )}
         </div>
 
         <p className="text-xs text-gray-400 font-mono line-clamp-1 mt-auto">

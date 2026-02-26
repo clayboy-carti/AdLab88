@@ -105,7 +105,10 @@ export default function ProductMockupPage() {
   const [generatedAd, setGeneratedAd] = useState<GeneratedAd | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  const [imageTitle, setImageTitle] = useState('')
+
   // Video generation state
+  const [videoTitle, setVideoTitle] = useState('')
   const [motionPrompt, setMotionPrompt] = useState('')
   const [generatingVideo, setGeneratingVideo] = useState(false)
   const [generatedVideo, setGeneratedVideo] = useState<{ id: string; videoUrl: string } | null>(null)
@@ -135,6 +138,7 @@ export default function ProductMockupPage() {
           creativity: 2,
           post_type: 'product_mockup',
           image_model: imageModel,
+          title: imageTitle.trim(),
         }),
       })
 
@@ -167,6 +171,7 @@ export default function ProductMockupPage() {
           ad_id: generatedAd.id,
           motion_prompt: motionPrompt.trim() || undefined,
           aspect_ratio: aspectRatio,
+          title: videoTitle.trim(),
         }),
       })
 
@@ -347,11 +352,29 @@ export default function ProductMockupPage() {
             </div>
           </div>
 
+          {/* Post Title — required before generating */}
+          <div className="border border-outline mt-3">
+            <div className="px-4 py-1.5 border-b border-outline bg-[#e4dcc8] flex items-center justify-between">
+              <span className="font-mono text-xs uppercase tracking-widest">Post Title</span>
+              <span className="font-mono text-[10px] text-rust uppercase tracking-widest">Required</span>
+            </div>
+            <div className="p-3 bg-white">
+              <input
+                type="text"
+                value={imageTitle}
+                onChange={(e) => setImageTitle(e.target.value)}
+                placeholder="e.g. Studio Launch Shot"
+                maxLength={80}
+                className="w-full text-sm font-mono bg-transparent focus:outline-none placeholder:text-gray-300"
+              />
+            </div>
+          </div>
+
           {/* Generate button */}
           <button
             onClick={handleGenerate}
-            disabled={generating}
-            className="btn-primary w-full mt-3"
+            disabled={generating || !imageTitle.trim()}
+            className="btn-primary w-full mt-3 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {generating ? 'GENERATING MOCKUP...' : 'GENERATE MOCKUP'}
           </button>
@@ -465,6 +488,25 @@ export default function ProductMockupPage() {
                     {!generatingVideo && !generatedVideo && (
                       <div className="p-4 bg-white space-y-3">
                         <div className="border border-outline">
+                          <div className="px-3 py-1.5 border-b border-outline bg-[#f7f4ef] flex items-center justify-between">
+                            <p className="font-mono text-xs text-gray-400 uppercase tracking-widest">
+                              Video Title
+                            </p>
+                            <span className="font-mono text-[10px] text-rust uppercase tracking-widest">Required</span>
+                          </div>
+                          <div className="px-3 pt-3 pb-2">
+                            <input
+                              type="text"
+                              value={videoTitle}
+                              onChange={(e) => setVideoTitle(e.target.value)}
+                              placeholder="e.g. Studio Shot Animation"
+                              maxLength={80}
+                              className="w-full text-sm font-mono bg-transparent focus:outline-none placeholder:text-gray-300 border-none p-0"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="border border-outline">
                           <div className="px-3 py-1.5 border-b border-outline bg-[#f7f4ef]">
                             <p className="font-mono text-xs text-gray-400 uppercase tracking-widest">
                               Motion (optional)
@@ -491,7 +533,8 @@ export default function ProductMockupPage() {
 
                         <button
                           onClick={handleGenerateVideo}
-                          className="btn-primary w-full"
+                          disabled={!videoTitle.trim()}
+                          className="btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           GENERATE VIDEO
                         </button>
@@ -505,6 +548,7 @@ export default function ProductMockupPage() {
                           onClick={() => {
                             setGeneratedVideo(null)
                             setVideoError(null)
+                            setVideoTitle('')
                           }}
                           className="font-mono text-xs text-gray-500 hover:text-rust transition-colors"
                         >
@@ -521,6 +565,8 @@ export default function ProductMockupPage() {
                       setGeneratedVideo(null)
                       setVideoError(null)
                       setMotionPrompt('')
+                      setImageTitle('')
+                      setVideoTitle('')
                     }}
                     className="btn-secondary w-full"
                   >

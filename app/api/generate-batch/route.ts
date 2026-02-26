@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
     // 2. Parse request body
     const body = await request.json()
-    const { user_context, image_quality, aspect_ratio, creativity } = body
+    const { user_context, image_quality, aspect_ratio, creativity, title } = body
     const userContext: string | undefined = user_context?.trim() || undefined
     const imageQuality: '1K' | '2K' = image_quality === '2K' ? '2K' : '1K'
     const imageAspectRatio: string = aspect_ratio || '1:1'
@@ -203,6 +203,7 @@ export async function POST(request: Request) {
             image_quality: imageQuality,
             aspect_ratio: imageAspectRatio,
             batch_id: batchId,
+            title: title?.trim() || null,
           })
           .select()
           .single()

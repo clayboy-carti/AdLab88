@@ -27,6 +27,7 @@ export default function AdPage() {
   const [imageQuality, setImageQuality] = useState<'1K' | '2K'>('1K')
   const [aspectRatio, setAspectRatio] = useState('1:1')
   const [creativity, setCreativity] = useState(2)
+  const [title, setTitle] = useState('')
   const [mode, setMode] = useState<GenerationMode>('single')
   const [generating, setGenerating] = useState(false)
   const [generationStage, setGenerationStage] = useState<string>('')
@@ -39,6 +40,7 @@ export default function AdPage() {
     setGeneratedAd(null)
     setGeneratedBatch(null)
     setError(null)
+    setTitle('')
   }
 
   const handleGenerate = async () => {
@@ -63,6 +65,7 @@ export default function AdPage() {
           aspect_ratio: aspectRatio,
           creativity,
           post_type: 'ad',
+          title: title.trim(),
         }),
       })
 
@@ -105,6 +108,7 @@ export default function AdPage() {
           aspect_ratio: aspectRatio,
           creativity,
           post_type: 'ad',
+          title: title.trim(),
         }),
       })
 
@@ -309,11 +313,29 @@ export default function AdPage() {
             </div>
           </div>
 
+          {/* Post Title — required before generating */}
+          <div className="border border-outline mt-3">
+            <div className="px-4 py-1.5 border-b border-outline bg-[#e4dcc8] flex items-center justify-between">
+              <span className="font-mono text-xs uppercase tracking-widest">Post Title</span>
+              <span className="font-mono text-[10px] text-rust uppercase tracking-widest">Required</span>
+            </div>
+            <div className="p-3 bg-white">
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={mode === 'batch' ? 'e.g. Summer Sale A/B Set' : 'e.g. Summer Sale Launch'}
+                maxLength={80}
+                className="w-full text-sm font-mono bg-transparent focus:outline-none placeholder:text-gray-300"
+              />
+            </div>
+          </div>
+
           {/* Generate button */}
           <button
             onClick={mode === 'batch' ? handleBatchGenerate : handleGenerate}
-            disabled={generating}
-            className="btn-primary w-full mt-3"
+            disabled={generating || !title.trim()}
+            className="btn-primary w-full mt-3 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {generating
               ? mode === 'batch' ? 'RUNNING BATCH...' : 'GENERATING...'
@@ -420,7 +442,7 @@ export default function AdPage() {
                   </div>
 
                   <button
-                    onClick={() => { setGeneratedAd(null); setError(null) }}
+                    onClick={() => { setGeneratedAd(null); setError(null); setTitle('') }}
                     className="btn-secondary w-full"
                   >
                     GENERATE ANOTHER AD
