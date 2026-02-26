@@ -209,6 +209,24 @@ export default function ProductMockupPage() {
             [ CREATIVE INPUT MODULE ]
           </p>
 
+          {/* Post Title — required before generating */}
+          <div className="border border-outline mb-3">
+            <div className="px-4 py-1.5 border-b border-outline bg-[#e4dcc8] flex items-center justify-between">
+              <span className="font-mono text-xs uppercase tracking-widest">Post Title</span>
+              <span className="font-mono text-[10px] text-rust uppercase tracking-widest">Required</span>
+            </div>
+            <div className="p-3 bg-white">
+              <input
+                type="text"
+                value={imageTitle}
+                onChange={(e) => setImageTitle(e.target.value)}
+                placeholder="e.g. Studio Launch Shot"
+                maxLength={80}
+                className="w-full text-sm font-mono bg-transparent focus:outline-none placeholder:text-gray-300"
+              />
+            </div>
+          </div>
+
           {/* Outer container */}
           <div className="border border-outline">
 
@@ -349,24 +367,6 @@ export default function ProductMockupPage() {
                   </select>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Post Title — required before generating */}
-          <div className="border border-outline mt-3">
-            <div className="px-4 py-1.5 border-b border-outline bg-[#e4dcc8] flex items-center justify-between">
-              <span className="font-mono text-xs uppercase tracking-widest">Post Title</span>
-              <span className="font-mono text-[10px] text-rust uppercase tracking-widest">Required</span>
-            </div>
-            <div className="p-3 bg-white">
-              <input
-                type="text"
-                value={imageTitle}
-                onChange={(e) => setImageTitle(e.target.value)}
-                placeholder="e.g. Studio Launch Shot"
-                maxLength={80}
-                className="w-full text-sm font-mono bg-transparent focus:outline-none placeholder:text-gray-300"
-              />
             </div>
           </div>
 
