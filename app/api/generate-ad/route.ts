@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
     // 2. Parse request body
     const body = await request.json()
-    const { user_context, image_quality, aspect_ratio, creativity, post_type, image_model, title } = body
+    const { user_context, image_quality, aspect_ratio, creativity, post_type, image_model, title, reference_image_id } = body
     const userContext: string | undefined = user_context?.trim() || undefined
     const imageQuality: '1K' | '2K' = image_quality === '2K' ? '2K' : '1K'
     const imageAspectRatio: string = aspect_ratio || '1:1'
@@ -70,43 +70,79 @@ export async function POST(request: Request) {
 
     console.log(`[Generate] Brand loaded: ${brand.company_name}`)
 
-    // 4-5. Auto-fetch the user's most recently uploaded reference image (if any)
+    // 4-5. Resolve reference image
+    // Product mockups: use the explicitly selected reference_image_id from the request body.
+    // Ads: auto-fetch the user's most recently uploaded image (legacy behavior).
     let referenceImageUrl: string | null = null
     let usedReferenceImageId: string | null = null
 
-    const { data: referenceImages } = await supabase
-      .from('reference_images')
-      .select('id, file_name, storage_path')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
+    if (postType === 'product_mockup') {
+      const selectedRefId: string | null = reference_image_id || null
 
-    const referenceImage = referenceImages?.[0] ?? null
-    const hasReference = !!referenceImage
+      if (selectedRefId) {
+        const { data: refImg } = await supabase
+          .from('reference_images')
+          .select('id, file_name, storage_path')
+          .eq('user_id', user.id)
+          .eq('id', selectedRefId)
+          .single()
 
-    console.log(
-      `[Generate] Mode: ${hasReference ? `Reference-based (${referenceImage!.file_name})` : 'Original framework-driven creation'}`
-    )
+        if (refImg) {
+          const { data: signedUrlData, error: urlError } = await supabase.storage
+            .from('reference-images')
+            .createSignedUrl(refImg.storage_path, 3600)
 
-    if (hasReference) {
-      const { data: signedUrlData, error: urlError } = await supabase.storage
-        .from('reference-images')
-        .createSignedUrl(referenceImage!.storage_path, 3600)
+          if (urlError || !signedUrlData?.signedUrl) {
+            console.error('[Generate] Failed to create signed URL:', urlError)
+            return NextResponse.json(
+              { error: 'Failed to access reference image' },
+              { status: 500 }
+            )
+          }
 
-      if (urlError || !signedUrlData?.signedUrl) {
-        console.error('[Generate] Failed to create signed URL:', urlError)
-        return NextResponse.json(
-          { error: 'Failed to access reference image' },
-          { status: 500 }
-        )
+          referenceImageUrl = signedUrlData.signedUrl
+          usedReferenceImageId = refImg.id
+          console.log(`[Generate] Product mockup: using selected reference (${refImg.file_name})`)
+        }
+      } else {
+        console.log('[Generate] Product mockup: no reference selected — generating without reference')
       }
-
-      referenceImageUrl = signedUrlData.signedUrl
-      usedReferenceImageId = referenceImage!.id
-      console.log('[Generate] Reference image signed URL created')
     } else {
-      console.log('[Generate] No reference images uploaded - will generate original ad')
+      // Ads: auto-fetch the most recently uploaded reference image
+      const { data: referenceImages } = await supabase
+        .from('reference_images')
+        .select('id, file_name, storage_path')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+
+      const referenceImage = referenceImages?.[0] ?? null
+
+      if (referenceImage) {
+        const { data: signedUrlData, error: urlError } = await supabase.storage
+          .from('reference-images')
+          .createSignedUrl(referenceImage.storage_path, 3600)
+
+        if (urlError || !signedUrlData?.signedUrl) {
+          console.error('[Generate] Failed to create signed URL:', urlError)
+          return NextResponse.json(
+            { error: 'Failed to access reference image' },
+            { status: 500 }
+          )
+        }
+
+        referenceImageUrl = signedUrlData.signedUrl
+        usedReferenceImageId = referenceImage.id
+        console.log(`[Generate] Ad: auto-using most recent reference (${referenceImage.file_name})`)
+      } else {
+        console.log('[Generate] No reference images uploaded — will generate original ad')
+      }
     }
+
+    const hasReference = !!referenceImageUrl
+    console.log(
+      `[Generate] Mode: ${hasReference ? `Reference-based (ID: ${usedReferenceImageId})` : 'Original framework-driven creation'}`
+    )
 
     // 6. Generate copy — skip OpenAI for product mockups (visual is the focus)
     let generatedCopy: GeneratedAd
