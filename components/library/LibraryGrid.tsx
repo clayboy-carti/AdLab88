@@ -153,16 +153,6 @@ export default function LibraryGrid({
     setSelectedAd((prev) => (prev?.id === adId ? { ...prev, caption: newCaption } : prev))
   }
 
-  const handleHookUpdate = (adId: string, newHook: string) => {
-    setAds((prev) => prev.map((a) => (a.id === adId ? { ...a, hook: newHook } : a)))
-    setSelectedAd((prev) => (prev?.id === adId ? { ...prev, hook: newHook } : prev))
-  }
-
-  const handleCtaUpdate = (adId: string, newCta: string) => {
-    setAds((prev) => prev.map((a) => (a.id === adId ? { ...a, cta: newCta } : a)))
-    setSelectedAd((prev) => (prev?.id === adId ? { ...prev, cta: newCta } : prev))
-  }
-
   const handleAdTitleUpdate = (adId: string, newTitle: string) => {
     setAds((prev) => prev.map((a) => (a.id === adId ? { ...a, title: newTitle } : a)))
     setSelectedAd((prev) => (prev?.id === adId ? { ...prev, title: newTitle } : prev))
@@ -669,8 +659,6 @@ export default function LibraryGrid({
           ad={selectedAd}
           onClose={() => setSelectedAd(null)}
           onCaptionUpdate={handleCaptionUpdate}
-          onHookUpdate={handleHookUpdate}
-          onCtaUpdate={handleCtaUpdate}
           onTitleUpdate={handleAdTitleUpdate}
           onDelete={handleDelete}
         />

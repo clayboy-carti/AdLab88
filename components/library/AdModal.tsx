@@ -8,14 +8,12 @@ interface AdModalProps {
   ad: Ad
   onClose: () => void
   onCaptionUpdate: (adId: string, newCaption: string) => void
-  onHookUpdate?: (adId: string, newHook: string) => void
-  onCtaUpdate?: (adId: string, newCta: string) => void
   onTitleUpdate?: (adId: string, newTitle: string) => void
   onDelete?: (adId: string) => void
   scheduledDate?: string | null
 }
 
-type EditableField = 'title' | 'hook' | 'cta' | 'caption'
+type EditableField = 'title' | 'caption'
 
 // ─── Accounts cache (module-level, persists across modal opens) ──────────────
 const ACCOUNTS_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
@@ -190,11 +188,9 @@ function PlatformIcon({ platform }: { platform: string }) {
 
 // ─── Main Modal ──────────────────────────────────────────────────────────────
 
-export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, onCtaUpdate, onTitleUpdate, onDelete, scheduledDate }: AdModalProps) {
+export default function AdModal({ ad, onClose, onCaptionUpdate, onTitleUpdate, onDelete, scheduledDate }: AdModalProps) {
   // Editable field values
   const [title, setTitle] = useState(ad.title ?? '')
-  const [hook, setHook] = useState(ad.hook)
-  const [cta, setCta] = useState(ad.cta)
   const [caption, setCaption] = useState(ad.caption)
 
   // Late connected accounts + selected account IDs
@@ -301,8 +297,6 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
   const handleCancel = () => {
     // Revert the in-progress field to the original ad value
     if (editingField === 'title') setTitle(ad.title ?? '')
-    if (editingField === 'hook') setHook(ad.hook)
-    if (editingField === 'cta') setCta(ad.cta)
     if (editingField === 'caption') setCaption(ad.caption)
     setSaveError(null)
     setEditingField(null)
@@ -311,7 +305,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
   // ── Save
   const handleSave = async () => {
     if (!editingField) return
-    const valueMap: Record<EditableField, string> = { title, hook, cta, caption }
+    const valueMap: Record<EditableField, string> = { title, caption }
     const value = valueMap[editingField]
 
     setSaving(true)
@@ -329,8 +323,6 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
       // Notify parent
       if (editingField === 'title') onTitleUpdate?.(ad.id, value)
       else if (editingField === 'caption') onCaptionUpdate(ad.id, value)
-      else if (editingField === 'hook') onHookUpdate?.(ad.id, value)
-      else if (editingField === 'cta') onCtaUpdate?.(ad.id, value)
       setEditingField(null)
     } catch (err: any) {
       setSaveError(err.message)
@@ -786,40 +778,6 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
             error={editingField === 'title' ? saveError : null}
             onCopy={() => handleCopy('title', title)}
             onEdit={() => handleEdit('title')}
-            onSave={handleSave}
-            onCancel={handleCancel}
-          />
-
-          {/* Hook */}
-          <EditableSection
-            label="Hook"
-            value={hook}
-            onChange={setHook}
-            displayClassName="text-xl font-bold text-graphite leading-snug"
-            rows={2}
-            isEditing={editingField === 'hook'}
-            isSaving={saving && editingField === 'hook'}
-            isCopied={copiedField === 'hook'}
-            error={editingField === 'hook' ? saveError : null}
-            onCopy={() => handleCopy('hook', hook)}
-            onEdit={() => handleEdit('hook')}
-            onSave={handleSave}
-            onCancel={handleCancel}
-          />
-
-          {/* CTA */}
-          <EditableSection
-            label="CTA"
-            value={cta}
-            onChange={setCta}
-            displayClassName="text-sm font-bold text-rust"
-            rows={2}
-            isEditing={editingField === 'cta'}
-            isSaving={saving && editingField === 'cta'}
-            isCopied={copiedField === 'cta'}
-            error={editingField === 'cta' ? saveError : null}
-            onCopy={() => handleCopy('cta', cta)}
-            onEdit={() => handleEdit('cta')}
             onSave={handleSave}
             onCancel={handleCancel}
           />
