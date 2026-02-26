@@ -8,6 +8,7 @@ interface VideoModalProps {
   video: VideoItem
   onClose: () => void
   onDelete?: (videoId: string) => void
+  onTitleUpdate?: (videoId: string, newTitle: string) => void
   initialCaption?: string
 }
 
@@ -107,9 +108,16 @@ function PlatformIcon({ platform }: { platform: string }) {
 
 // ─── Main Modal ──────────────────────────────────────────────────────────────
 
-export default function VideoModal({ video, onClose, onDelete, initialCaption }: VideoModalProps) {
+export default function VideoModal({ video, onClose, onDelete, onTitleUpdate, initialCaption }: VideoModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
+
+  // Title
+  const [titleValue, setTitleValue] = useState(video.title ?? '')
+  const [titleEditing, setTitleEditing] = useState(false)
+  const [titleSaving, setTitleSaving] = useState(false)
+  const [titleCopied, setTitleCopied] = useState(false)
+  const [titleError, setTitleError] = useState<string | null>(null)
 
   // Post caption for social scheduling (not persisted, only used when scheduling)
   const [postCaption, setPostCaption] = useState(initialCaption ?? '')
@@ -196,6 +204,40 @@ export default function VideoModal({ video, onClose, onDelete, initialCaption }:
 
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === overlayRef.current) onClose()
+  }
+
+  // ── Title
+  const handleCopyTitle = async () => {
+    if (!titleValue) return
+    try {
+      await navigator.clipboard.writeText(titleValue)
+      setTitleCopied(true)
+      setTimeout(() => setTitleCopied(false), 2000)
+    } catch { /* silent */ }
+  }
+
+  const handleSaveTitle = async () => {
+    const trimmed = titleValue.trim()
+    if (!trimmed) { setTitleError('Title cannot be empty'); return }
+    setTitleSaving(true)
+    setTitleError(null)
+    try {
+      const res = await fetch('/api/update-video', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ videoId: video.id, title: trimmed }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Save failed')
+      }
+      setTitleEditing(false)
+      onTitleUpdate?.(video.id, trimmed)
+    } catch (err: any) {
+      setTitleError(err.message)
+    } finally {
+      setTitleSaving(false)
+    }
   }
 
   // ── Copy motion prompt
@@ -706,6 +748,55 @@ export default function VideoModal({ video, onClose, onDelete, initialCaption }:
 
         {/* Body */}
         <div className="p-6 flex flex-col gap-4">
+
+          {/* Title — editable */}
+          <div className="border border-outline p-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs uppercase font-mono text-gray-400 tracking-widest">Title</p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleCopyTitle}
+                  disabled={!titleValue}
+                  className="flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {titleCopied ? <><CheckIcon /><span>Copied</span></> : <><CopyIcon /><span>Copy</span></>}
+                </button>
+                {!titleEditing && (
+                  <button
+                    onClick={() => { setTitleEditing(true); setTitleError(null) }}
+                    className="flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 transition-colors"
+                  >
+                    <EditIcon /><span>Edit</span>
+                  </button>
+                )}
+              </div>
+            </div>
+            {titleEditing ? (
+              <div className="flex flex-col gap-3">
+                <input
+                  autoFocus
+                  type="text"
+                  value={titleValue}
+                  onChange={(e) => setTitleValue(e.target.value)}
+                  maxLength={80}
+                  className="w-full border border-outline p-3 text-sm font-mono bg-white focus:outline-none focus:border-rust"
+                />
+                {titleError && <p className="text-xs text-red-600 font-mono">{titleError}</p>}
+                <div className="flex gap-2">
+                  <button onClick={handleSaveTitle} disabled={titleSaving} className="btn-primary text-sm px-4 py-2">
+                    {titleSaving ? 'SAVING...' : 'SAVE'}
+                  </button>
+                  <button onClick={() => { setTitleEditing(false); setTitleValue(video.title ?? ''); setTitleError(null) }} disabled={titleSaving} className="btn-secondary text-sm px-4 py-2">
+                    CANCEL
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-base font-bold text-graphite leading-snug">
+                {titleValue || <span className="text-gray-300 font-normal text-sm">No title set</span>}
+              </p>
+            )}
+          </div>
 
           {/* Motion Prompt (read-only + copy) */}
           {video.motion_prompt && (

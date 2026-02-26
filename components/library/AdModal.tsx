@@ -10,11 +10,12 @@ interface AdModalProps {
   onCaptionUpdate: (adId: string, newCaption: string) => void
   onHookUpdate?: (adId: string, newHook: string) => void
   onCtaUpdate?: (adId: string, newCta: string) => void
+  onTitleUpdate?: (adId: string, newTitle: string) => void
   onDelete?: (adId: string) => void
   scheduledDate?: string | null
 }
 
-type EditableField = 'hook' | 'cta' | 'caption'
+type EditableField = 'title' | 'hook' | 'cta' | 'caption'
 
 // ─── Accounts cache (module-level, persists across modal opens) ──────────────
 const ACCOUNTS_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
@@ -189,8 +190,9 @@ function PlatformIcon({ platform }: { platform: string }) {
 
 // ─── Main Modal ──────────────────────────────────────────────────────────────
 
-export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, onCtaUpdate, onDelete, scheduledDate }: AdModalProps) {
+export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, onCtaUpdate, onTitleUpdate, onDelete, scheduledDate }: AdModalProps) {
   // Editable field values
+  const [title, setTitle] = useState(ad.title ?? '')
   const [hook, setHook] = useState(ad.hook)
   const [cta, setCta] = useState(ad.cta)
   const [caption, setCaption] = useState(ad.caption)
@@ -298,6 +300,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
 
   const handleCancel = () => {
     // Revert the in-progress field to the original ad value
+    if (editingField === 'title') setTitle(ad.title ?? '')
     if (editingField === 'hook') setHook(ad.hook)
     if (editingField === 'cta') setCta(ad.cta)
     if (editingField === 'caption') setCaption(ad.caption)
@@ -308,7 +311,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
   // ── Save
   const handleSave = async () => {
     if (!editingField) return
-    const valueMap: Record<EditableField, string> = { hook, cta, caption }
+    const valueMap: Record<EditableField, string> = { title, hook, cta, caption }
     const value = valueMap[editingField]
 
     setSaving(true)
@@ -324,7 +327,8 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
         throw new Error(data.error || 'Save failed')
       }
       // Notify parent
-      if (editingField === 'caption') onCaptionUpdate(ad.id, value)
+      if (editingField === 'title') onTitleUpdate?.(ad.id, value)
+      else if (editingField === 'caption') onCaptionUpdate(ad.id, value)
       else if (editingField === 'hook') onHookUpdate?.(ad.id, value)
       else if (editingField === 'cta') onCtaUpdate?.(ad.id, value)
       setEditingField(null)
@@ -768,6 +772,23 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onHookUpdate, on
 
         {/* Body */}
         <div className="p-6 flex flex-col gap-4">
+
+          {/* Title */}
+          <EditableSection
+            label="Title"
+            value={title}
+            onChange={setTitle}
+            displayClassName="text-base font-bold text-graphite leading-snug"
+            rows={1}
+            isEditing={editingField === 'title'}
+            isSaving={saving && editingField === 'title'}
+            isCopied={copiedField === 'title'}
+            error={editingField === 'title' ? saveError : null}
+            onCopy={() => handleCopy('title', title)}
+            onEdit={() => handleEdit('title')}
+            onSave={handleSave}
+            onCancel={handleCancel}
+          />
 
           {/* Hook */}
           <EditableSection

@@ -150,6 +150,16 @@ export default function LibraryGrid({
     setSelectedAd((prev) => (prev?.id === adId ? { ...prev, cta: newCta } : prev))
   }
 
+  const handleAdTitleUpdate = (adId: string, newTitle: string) => {
+    setAds((prev) => prev.map((a) => (a.id === adId ? { ...a, title: newTitle } : a)))
+    setSelectedAd((prev) => (prev?.id === adId ? { ...prev, title: newTitle } : prev))
+  }
+
+  const handleVideoTitleUpdate = (videoId: string, newTitle: string) => {
+    setVideos((prev) => prev.map((v) => (v.id === videoId ? { ...v, title: newTitle } : v)))
+    setSelectedVideo((prev) => (prev?.id === videoId ? { ...prev, title: newTitle } : prev))
+  }
+
   const handleDelete = (adId: string) => {
     setAds((prev) => prev.filter((a) => a.id !== adId))
     setSelectedAd(null)
@@ -526,6 +536,7 @@ export default function LibraryGrid({
           onCaptionUpdate={handleCaptionUpdate}
           onHookUpdate={handleHookUpdate}
           onCtaUpdate={handleCtaUpdate}
+          onTitleUpdate={handleAdTitleUpdate}
           onDelete={handleDelete}
         />
       )}
@@ -536,6 +547,7 @@ export default function LibraryGrid({
           video={selectedVideo}
           onClose={() => setSelectedVideo(null)}
           onDelete={handleVideoDelete}
+          onTitleUpdate={handleVideoTitleUpdate}
         />
       )}
     </div>
