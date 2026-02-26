@@ -35,7 +35,7 @@ export default function AdCard({ ad, onClick }: { ad: Ad; onClick: () => void })
         {ad.signedUrl ? (
           <img
             src={ad.signedUrl}
-            alt={ad.hook}
+            alt={ad.title ?? ''}
             className="w-full h-full object-cover group-hover:opacity-95 transition-opacity"
             loading="lazy"
           />
@@ -51,11 +51,6 @@ export default function AdCard({ ad, onClick }: { ad: Ad; onClick: () => void })
         {ad.title && (
           <p className="font-bold text-graphite leading-snug">{ad.title}</p>
         )}
-
-        <div>
-          <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-1">Hook</p>
-          <p className={`text-graphite leading-snug ${ad.title ? 'text-sm text-gray-600' : 'font-bold'}`}>{ad.hook}</p>
-        </div>
 
         <div>
           <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-1">Caption</p>
