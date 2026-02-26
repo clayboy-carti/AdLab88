@@ -120,7 +120,7 @@ export default function ProductMockupPage() {
   const handleRefSelect = (id: string, url: string) => {
     setSelectedRefId(id)
     setSelectedRefUrl(url)
-    setShowPhoto(false)
+    // keep panel open — locked open as long as a ref is selected
   }
 
   const handleGenerate = async () => {
@@ -254,7 +254,7 @@ export default function ProductMockupPage() {
             </div>
 
             {/* Photo drawer */}
-            {showPhoto && (
+            {(showPhoto || selectedRefId) && (
               <div className="border-t border-outline px-4 py-3">
                 <PhotoPicker onSelect={handleRefSelect} />
               </div>
