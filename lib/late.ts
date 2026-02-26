@@ -41,6 +41,11 @@ export async function fetchLateAccounts(): Promise<LateAccount[]> {
   return Array.isArray(data) ? data : (data.accounts ?? data.data ?? [])
 }
 
+export interface LateMediaItem {
+  type: 'image' | 'video'
+  url: string
+}
+
 export async function createLatePost(params: {
   content: string
   scheduledFor: string    // ISO 8601 e.g. "2026-02-25T12:00:00Z"
@@ -48,6 +53,7 @@ export async function createLatePost(params: {
   platforms: LatePlatform[]
   imageUrl?: string       // Supabase signed URL — Late auto-proxies Supabase URLs
   videoUrl?: string       // Supabase signed URL for video media
+  mediaItems?: LateMediaItem[]  // carousel: multiple items; takes priority over imageUrl/videoUrl
 }): Promise<LatePost> {
   const body: Record<string, unknown> = {
     content: params.content,
@@ -57,7 +63,10 @@ export async function createLatePost(params: {
   }
 
   // mediaItems is required for Instagram; field name is mediaItems (not mediaUrls)
-  if (params.videoUrl) {
+  // carousel passes mediaItems directly; single-post falls back to imageUrl/videoUrl
+  if (params.mediaItems && params.mediaItems.length > 0) {
+    body.mediaItems = params.mediaItems
+  } else if (params.videoUrl) {
     body.mediaItems = [{ type: 'video', url: params.videoUrl }]
   } else if (params.imageUrl) {
     body.mediaItems = [{ type: 'image', url: params.imageUrl }]

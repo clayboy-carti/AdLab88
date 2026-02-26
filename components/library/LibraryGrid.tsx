@@ -7,6 +7,7 @@ import AdSetModal from './AdSetModal'
 import AdModal from './AdModal'
 import VideoCard, { type VideoItem } from './VideoCard'
 import VideoModal from './VideoModal'
+import CarouselModal from './CarouselModal'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -14,6 +15,13 @@ export interface Folder {
   id: string
   name: string
   created_at: string
+}
+
+export interface CarouselSelItem {
+  id: string
+  type: 'ad' | 'video'
+  signedUrl: string | null
+  title?: string | null
 }
 
 // ─── Feed grouping ────────────────────────────────────────────────────────────
@@ -106,6 +114,11 @@ export default function LibraryGrid({
   const [selectedAd, setSelectedAd] = useState<Ad | null>(null)
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null)
 
+  // ── Carousel mode ──
+  const [carouselMode, setCarouselMode] = useState(false)
+  const [carouselItems, setCarouselItems] = useState<CarouselSelItem[]>([])
+  const [showCarouselModal, setShowCarouselModal] = useState(false)
+
   // ── Filtered assets ──
   const filteredAds = activeFolderId
     ? ads.filter((a) => a.folder_id === activeFolderId)
@@ -170,6 +183,21 @@ export default function LibraryGrid({
   }
 
   const handleVariantClick = (ad: Ad) => setSelectedAd(ad)
+
+  const toggleCarouselItem = (item: CarouselSelItem) => {
+    setCarouselItems((prev) => {
+      const exists = prev.find((i) => i.id === item.id)
+      if (exists) return prev.filter((i) => i.id !== item.id)
+      if (prev.length >= 10) return prev  // Instagram max
+      return [...prev, item]
+    })
+  }
+
+  const exitCarouselMode = () => {
+    setCarouselMode(false)
+    setCarouselItems([])
+    setShowCarouselModal(false)
+  }
 
   const handleVideoDelete = (videoId: string) => {
     setVideos((prev) => prev.filter((v) => v.id !== videoId))
@@ -426,6 +454,26 @@ export default function LibraryGrid({
               </button>
             </span>
           )}
+
+          {activeFolderId && !carouselMode && (
+            <button
+              onClick={() => { setCarouselMode(true); setCarouselItems([]) }}
+              className="ml-auto flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:border-rust hover:text-rust transition-colors"
+              title="Select images and videos to build a carousel post"
+            >
+              <CarouselIcon />
+              Create Carousel
+            </button>
+          )}
+
+          {carouselMode && (
+            <button
+              onClick={exitCarouselMode}
+              className="ml-auto text-xs font-mono uppercase text-gray-400 hover:text-graphite transition-colors px-3 py-1.5"
+            >
+              Cancel
+            </button>
+          )}
         </div>
 
         {/* Empty state for folder */}
@@ -441,82 +489,169 @@ export default function LibraryGrid({
 
           {filter === 'all' && unifiedFeed.map((item) => {
             if (item.kind === 'video') {
+              const selIdx = carouselItems.findIndex((i) => i.id === item.video.id)
               return (
-                <div
-                  key={item.video.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, { adIds: [], videoIds: [item.video.id] })}
-                  className="cursor-grab active:cursor-grabbing"
-                >
-                  <VideoCard video={item.video} onClick={() => setSelectedVideo(item.video)} />
+                <div key={item.video.id} className="relative">
+                  <div
+                    draggable={!carouselMode}
+                    onDragStart={!carouselMode ? (e) => handleDragStart(e, { adIds: [], videoIds: [item.video.id] }) : undefined}
+                    className={!carouselMode ? 'cursor-grab active:cursor-grabbing' : undefined}
+                  >
+                    <VideoCard video={item.video} onClick={!carouselMode ? () => setSelectedVideo(item.video) : () => {}} />
+                  </div>
+                  {carouselMode && (
+                    <CarouselOverlay
+                      selIdx={selIdx}
+                      onToggle={() => toggleCarouselItem({ id: item.video.id, type: 'video', signedUrl: item.video.signedUrl, title: item.video.title })}
+                      atMax={carouselItems.length >= 10}
+                    />
+                  )}
                 </div>
               )
             }
             const feedItem = item.item
             if (feedItem.type === 'set') {
               return (
-                <div
-                  key={feedItem.batchId}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, { adIds: feedItem.ads.map((a) => a.id), videoIds: [] })}
-                  className="cursor-grab active:cursor-grabbing"
-                >
-                  <AdSetCard
-                    ads={feedItem.ads}
-                    onClick={() => setSelectedSet({ batchId: feedItem.batchId, ads: feedItem.ads })}
-                  />
+                <div key={feedItem.batchId} className="relative">
+                  <div
+                    draggable={!carouselMode}
+                    onDragStart={!carouselMode ? (e) => handleDragStart(e, { adIds: feedItem.ads.map((a) => a.id), videoIds: [] }) : undefined}
+                    className={!carouselMode ? 'cursor-grab active:cursor-grabbing' : undefined}
+                  >
+                    <AdSetCard
+                      ads={feedItem.ads}
+                      onClick={() => !carouselMode && setSelectedSet({ batchId: feedItem.batchId, ads: feedItem.ads })}
+                    />
+                  </div>
+                  {carouselMode && (
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
+                      <span className="text-[10px] font-mono uppercase text-white bg-black/60 px-2 py-1">Open to pick individually</span>
+                    </div>
+                  )}
                 </div>
               )
             }
+            const selIdx = carouselItems.findIndex((i) => i.id === feedItem.ad.id)
             return (
-              <div
-                key={feedItem.ad.id}
-                draggable
-                onDragStart={(e) => handleDragStart(e, { adIds: [feedItem.ad.id], videoIds: [] })}
-                className="cursor-grab active:cursor-grabbing"
-              >
-                <AdCard ad={feedItem.ad} onClick={() => setSelectedAd(feedItem.ad)} />
+              <div key={feedItem.ad.id} className="relative">
+                <div
+                  draggable={!carouselMode}
+                  onDragStart={!carouselMode ? (e) => handleDragStart(e, { adIds: [feedItem.ad.id], videoIds: [] }) : undefined}
+                  className={!carouselMode ? 'cursor-grab active:cursor-grabbing' : undefined}
+                >
+                  <AdCard ad={feedItem.ad} onClick={!carouselMode ? () => setSelectedAd(feedItem.ad) : () => {}} />
+                </div>
+                {carouselMode && (
+                  <CarouselOverlay
+                    selIdx={selIdx}
+                    onToggle={() => toggleCarouselItem({ id: feedItem.ad.id, type: 'ad', signedUrl: feedItem.ad.signedUrl, title: feedItem.ad.title })}
+                    atMax={carouselItems.length >= 10}
+                  />
+                )}
               </div>
             )
           })}
 
-          {filter === 'images' && adFeed.map((item) =>
-            item.type === 'set' ? (
-              <div
-                key={item.batchId}
-                draggable
-                onDragStart={(e) => handleDragStart(e, { adIds: item.ads.map((a) => a.id), videoIds: [] })}
-                className="cursor-grab active:cursor-grabbing"
-              >
-                <AdSetCard
-                  ads={item.ads}
-                  onClick={() => setSelectedSet({ batchId: item.batchId, ads: item.ads })}
-                />
-              </div>
-            ) : (
-              <div
-                key={item.ad.id}
-                draggable
-                onDragStart={(e) => handleDragStart(e, { adIds: [item.ad.id], videoIds: [] })}
-                className="cursor-grab active:cursor-grabbing"
-              >
-                <AdCard ad={item.ad} onClick={() => setSelectedAd(item.ad)} />
+          {filter === 'images' && adFeed.map((item) => {
+            if (item.type === 'set') {
+              return (
+                <div key={item.batchId} className="relative">
+                  <div
+                    draggable={!carouselMode}
+                    onDragStart={!carouselMode ? (e) => handleDragStart(e, { adIds: item.ads.map((a) => a.id), videoIds: [] }) : undefined}
+                    className={!carouselMode ? 'cursor-grab active:cursor-grabbing' : undefined}
+                  >
+                    <AdSetCard
+                      ads={item.ads}
+                      onClick={() => !carouselMode && setSelectedSet({ batchId: item.batchId, ads: item.ads })}
+                    />
+                  </div>
+                  {carouselMode && (
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
+                      <span className="text-[10px] font-mono uppercase text-white bg-black/60 px-2 py-1">Open to pick individually</span>
+                    </div>
+                  )}
+                </div>
+              )
+            }
+            const selIdx = carouselItems.findIndex((i) => i.id === item.ad.id)
+            return (
+              <div key={item.ad.id} className="relative">
+                <div
+                  draggable={!carouselMode}
+                  onDragStart={!carouselMode ? (e) => handleDragStart(e, { adIds: [item.ad.id], videoIds: [] }) : undefined}
+                  className={!carouselMode ? 'cursor-grab active:cursor-grabbing' : undefined}
+                >
+                  <AdCard ad={item.ad} onClick={!carouselMode ? () => setSelectedAd(item.ad) : () => {}} />
+                </div>
+                {carouselMode && (
+                  <CarouselOverlay
+                    selIdx={selIdx}
+                    onToggle={() => toggleCarouselItem({ id: item.ad.id, type: 'ad', signedUrl: item.ad.signedUrl, title: item.ad.title })}
+                    atMax={carouselItems.length >= 10}
+                  />
+                )}
               </div>
             )
-          )}
+          })}
 
-          {filter === 'videos' && filteredVideos.map((video) => (
-            <div
-              key={video.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, { adIds: [], videoIds: [video.id] })}
-              className="cursor-grab active:cursor-grabbing"
-            >
-              <VideoCard video={video} onClick={() => setSelectedVideo(video)} />
-            </div>
-          ))}
+          {filter === 'videos' && filteredVideos.map((video) => {
+            const selIdx = carouselItems.findIndex((i) => i.id === video.id)
+            return (
+              <div key={video.id} className="relative">
+                <div
+                  draggable={!carouselMode}
+                  onDragStart={!carouselMode ? (e) => handleDragStart(e, { adIds: [], videoIds: [video.id] }) : undefined}
+                  className={!carouselMode ? 'cursor-grab active:cursor-grabbing' : undefined}
+                >
+                  <VideoCard video={video} onClick={!carouselMode ? () => setSelectedVideo(video) : () => {}} />
+                </div>
+                {carouselMode && (
+                  <CarouselOverlay
+                    selIdx={selIdx}
+                    onToggle={() => toggleCarouselItem({ id: video.id, type: 'video', signedUrl: video.signedUrl, title: video.title })}
+                    atMax={carouselItems.length >= 10}
+                  />
+                )}
+              </div>
+            )
+          })}
 
         </div>
+
+        {/* ── Carousel selection sticky bar ── */}
+        {carouselMode && (
+          <div className="sticky bottom-0 left-0 right-0 z-40 bg-graphite border-t-2 border-rust shadow-lg px-6 py-4 flex items-center gap-4 mt-6">
+            <span className="text-xs font-mono text-white uppercase">
+              {carouselItems.length === 0
+                ? 'Click items to select them'
+                : `${carouselItems.length}/10 item${carouselItems.length !== 1 ? 's' : ''} selected`}
+            </span>
+            {carouselItems.length > 0 && (
+              <button
+                onClick={() => setCarouselItems([])}
+                className="text-xs font-mono text-gray-400 hover:text-white transition-colors uppercase"
+              >
+                Clear
+              </button>
+            )}
+            <div className="ml-auto flex items-center gap-3">
+              <button
+                onClick={exitCarouselMode}
+                className="text-xs font-mono uppercase text-gray-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setShowCarouselModal(true)}
+                disabled={carouselItems.length < 2}
+                className="text-xs font-mono uppercase bg-rust text-white px-4 py-2 hover:bg-rust/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Build Carousel ({carouselItems.length}) →
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Level 1: Set variant picker ── */}
@@ -550,6 +685,64 @@ export default function LibraryGrid({
           onTitleUpdate={handleVideoTitleUpdate}
         />
       )}
+
+      {/* ── Carousel builder modal ── */}
+      {showCarouselModal && (
+        <CarouselModal
+          items={carouselItems}
+          onItemsChange={setCarouselItems}
+          onClose={() => setShowCarouselModal(false)}
+          onScheduled={exitCarouselMode}
+        />
+      )}
+    </div>
+  )
+}
+
+// ─── Carousel overlay ─────────────────────────────────────────────────────────
+
+function CarouselOverlay({
+  selIdx,
+  onToggle,
+  atMax,
+}: {
+  selIdx: number
+  onToggle: () => void
+  atMax: boolean
+}) {
+  const selected = selIdx !== -1
+  return (
+    <div
+      onClick={onToggle}
+      title={!selected && atMax ? 'Maximum 10 items per carousel' : undefined}
+      className={[
+        'absolute inset-0 cursor-pointer transition-all',
+        selected
+          ? 'bg-rust/20 ring-2 ring-inset ring-rust'
+          : atMax
+          ? 'bg-black/10 cursor-not-allowed'
+          : 'bg-transparent hover:bg-rust/10',
+      ].join(' ')}
+    >
+      {/* Order badge */}
+      {selected && (
+        <span className="absolute top-2 left-2 bg-rust text-white text-[10px] font-mono font-bold w-5 h-5 flex items-center justify-center rounded-full shadow">
+          {selIdx + 1}
+        </span>
+      )}
+      {/* Checkbox */}
+      <span
+        className={[
+          'absolute top-2 right-2 w-5 h-5 rounded border-2 flex items-center justify-center shadow transition-all',
+          selected ? 'bg-rust border-rust' : 'bg-white border-gray-300',
+        ].join(' ')}
+      >
+        {selected && (
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <polyline points="1,5 4,8 9,2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </span>
     </div>
   )
 }
@@ -580,6 +773,16 @@ function FolderIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+    </svg>
+  )
+}
+
+function CarouselIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+      <rect x="3" y="5" width="12" height="14" />
+      <path d="M17 7h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2" />
+      <path d="M1 7H3" />
     </svg>
   )
 }
