@@ -52,11 +52,6 @@ export default function AdCard({ ad, onClick }: { ad: Ad; onClick: () => void })
           <p className="font-bold text-graphite leading-snug">{ad.title}</p>
         )}
 
-        <div>
-          <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-1">Caption</p>
-          <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">{ad.caption}</p>
-        </div>
-
         {/* Meta row */}
         <div className="flex flex-wrap gap-2 pt-3 border-t border-outline mt-auto">
           <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 uppercase">
