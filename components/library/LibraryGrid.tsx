@@ -240,6 +240,10 @@ export default function LibraryGrid({
     setCreatingFolder(false)
     setNewFolderName('')
     if (!name) return
+    if (folders.some((f) => f.name.toLowerCase() === name.toLowerCase())) {
+      alert(`A campaign named "${name}" already exists.`)
+      return
+    }
     const res = await fetch('/api/folders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -261,6 +265,10 @@ export default function LibraryGrid({
     const name = renameValue.trim()
     setRenamingFolderId(null)
     if (!name) return
+    if (folders.some((f) => f.id !== folderId && f.name.toLowerCase() === name.toLowerCase())) {
+      alert(`A campaign named "${name}" already exists.`)
+      return
+    }
     const res = await fetch(`/api/folders/${folderId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
