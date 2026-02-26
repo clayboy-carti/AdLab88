@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import PhotoPicker from '@/components/create/PhotoPicker'
 
@@ -108,6 +108,25 @@ const PHOTO_SHOOT_SHOTS = [
   },
 ]
 
+const GEMINI_ASPECT_RATIOS = [
+  { value: '1:1', label: '1:1' },
+  { value: '3:4', label: '3:4' },
+  { value: '4:3', label: '4:3' },
+  { value: '9:16', label: '9:16' },
+  { value: '16:9', label: '16:9' },
+]
+
+const SEEDREAM_ASPECT_RATIOS = [
+  { value: '1:1', label: '1:1' },
+  { value: '3:4', label: '3:4' },
+  { value: '4:3', label: '4:3' },
+  { value: '9:16', label: '9:16' },
+  { value: '16:9', label: '16:9' },
+  { value: '3:2', label: '3:2' },
+  { value: '2:3', label: '2:3' },
+  { value: '21:9', label: '21:9' },
+]
+
 interface GeneratedAd {
   id: string
   positioning_angle: string
@@ -134,6 +153,17 @@ export default function ProductMockupPage() {
   const [imageModel, setImageModel] = useState<'gemini' | 'seedream'>('gemini')
   const [imageQuality, setImageQuality] = useState<'1K' | '2K'>('1K')
   const [aspectRatio, setAspectRatio] = useState('1:1')
+
+  const aspectRatioOptions = imageModel === 'seedream' ? SEEDREAM_ASPECT_RATIOS : GEMINI_ASPECT_RATIOS
+
+  // Reset to 1:1 when switching to a model that doesn't support the current ratio
+  useEffect(() => {
+    const valid = (imageModel === 'seedream' ? SEEDREAM_ASPECT_RATIOS : GEMINI_ASPECT_RATIOS)
+    if (!valid.find((r) => r.value === aspectRatio)) {
+      setAspectRatio('1:1')
+    }
+  }, [imageModel])
+
   const [generating, setGenerating] = useState(false)
   const [generationStage, setGenerationStage] = useState<string>('')
   const [generatedAd, setGeneratedAd] = useState<GeneratedAd | null>(null)
@@ -444,11 +474,9 @@ export default function ProductMockupPage() {
                   onChange={(e) => setAspectRatio(e.target.value)}
                   className="font-mono text-xs text-gray-500 bg-transparent border-none focus:outline-none cursor-pointer"
                 >
-                  <option value="1:1">1:1</option>
-                  <option value="9:16">9:16</option>
-                  <option value="16:9">16:9</option>
-                  <option value="4:5">4:5</option>
-                  <option value="4:3">4:3</option>
+                  {aspectRatioOptions.map((r) => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
                 </select>
               </div>
 

@@ -283,7 +283,7 @@ export default function AdPage() {
                     <option value="1:1">1:1 — Square</option>
                     <option value="9:16">9:16 — Story / Reel</option>
                     <option value="16:9">16:9 — Landscape</option>
-                    <option value="4:5">4:5 — Feed Portrait (Instagram)</option>
+                    <option value="3:4">3:4 — Feed Portrait</option>
                     <option value="4:3">4:3 — Standard</option>
                   </select>
                 </div>
