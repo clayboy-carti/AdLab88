@@ -81,6 +81,33 @@ const SCENE_PRESETS = [
   },
 ]
 
+const PHOTO_SHOOT_SHOTS = [
+  {
+    label: 'Front Shot',
+    directive: 'Camera positioned directly in front, eye-level, 50mm lens, f/8 aperture for deep focus, approximately 3 feet from subject. Lighting identical to scene preset.',
+  },
+  {
+    label: 'Three-Quarter',
+    directive: 'Camera at 45-degree angle from front, slightly elevated, 50mm lens, f/5.6 aperture, approximately 2 feet from subject. Same lighting direction and quality.',
+  },
+  {
+    label: 'Overhead / Flat Lay',
+    directive: 'Camera positioned directly above subject looking straight down, 35mm lens, f/11 deep focus, approximately 18 inches from subject. Lighting adapted for top-down perspective.',
+  },
+  {
+    label: 'Close-Up Detail',
+    directive: 'Macro close-up shot, 100mm lens, f/2.8 aperture for shallow depth of field with soft bokeh background, approximately 6 inches from subject. Same lighting source direction softened at close range.',
+  },
+  {
+    label: 'Environmental Wide',
+    directive: 'Wide-angle shot showing full scene context, 24mm lens, f/11 for deep focus, approximately 7 feet from subject. Complete scene environment visible with consistent lighting.',
+  },
+  {
+    label: 'Low Angle Hero',
+    directive: 'Camera positioned at ground level pointing upward toward subject, 35mm lens, f/4 aperture for moderate depth of field, approximately 2 feet from subject. Same scene lighting with slight dramatic upward perspective.',
+  },
+]
+
 interface GeneratedAd {
   id: string
   positioning_angle: string
@@ -92,6 +119,13 @@ interface GeneratedAd {
   target_platform: string
   generatedImageUrl: string
   created_at: string
+}
+
+type ShootSlot = {
+  shot: typeof PHOTO_SHOOT_SHOTS[number]
+  ad: { id: string; generatedImageUrl: string } | null
+  error: string | null
+  loading: boolean
 }
 
 export default function ProductMockupPage() {
@@ -115,6 +149,14 @@ export default function ProductMockupPage() {
   const [generatingVideo, setGeneratingVideo] = useState(false)
   const [generatedVideo, setGeneratedVideo] = useState<{ id: string; videoUrl: string } | null>(null)
   const [videoError, setVideoError] = useState<string | null>(null)
+
+  // Photo shoot state
+  const [photoShootMode, setPhotoShootMode] = useState(false)
+  const [photoShootGenerating, setPhotoShootGenerating] = useState(false)
+  const [shootResults, setShootResults] = useState<ShootSlot[]>([])
+  const [shootFolderName, setShootFolderName] = useState<string | null>(null)
+  const [selectedShootAdId, setSelectedShootAdId] = useState<string | null>(null)
+  const [selectedShootLabel, setSelectedShootLabel] = useState<string | null>(null)
 
   const handleGenerate = async () => {
     setGenerating(true)
@@ -160,8 +202,85 @@ export default function ProductMockupPage() {
     }
   }
 
-  const handleGenerateVideo = async () => {
-    if (!generatedAd) return
+  const handlePhotoShoot = async () => {
+    setPhotoShootGenerating(true)
+    setError(null)
+    setShootResults(PHOTO_SHOOT_SHOTS.map((shot) => ({ shot, ad: null, error: null, loading: true })))
+    setSelectedShootAdId(null)
+    setSelectedShootLabel(null)
+    setGeneratedVideo(null)
+    setVideoError(null)
+
+    // 1. Create campaign folder
+    let folderId: string
+    const folderName = `${imageTitle.trim()} — Photo Shoot`
+    try {
+      const folderRes = await fetch('/api/folders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: folderName }),
+      })
+      const folderData = await folderRes.json()
+      if (!folderRes.ok) throw new Error(folderData.error || 'Failed to create campaign folder')
+      folderId = folderData.folder.id
+      setShootFolderName(folderName)
+    } catch (err: any) {
+      setPhotoShootGenerating(false)
+      setShootResults([])
+      setError(err.message || 'Failed to create campaign folder')
+      return
+    }
+
+    // 2. Fire 6 parallel generation requests
+    const basePayload = {
+      image_quality: imageQuality,
+      aspect_ratio: aspectRatio,
+      creativity: 2,
+      post_type: 'product_mockup',
+      image_model: imageModel,
+      reference_image_ids: selectedRefs.length > 0 ? selectedRefs.map((r) => r.id) : undefined,
+      folder_id: folderId,
+    }
+
+    const promises = PHOTO_SHOOT_SHOTS.map(async (shot, idx) => {
+      try {
+        const context = sceneText.trim()
+          ? `${sceneText.trim()}\n\nCAMERA ANGLE: ${shot.directive}`
+          : `CAMERA ANGLE: ${shot.directive}`
+
+        const res = await fetch('/api/generate-ad', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...basePayload,
+            user_context: context,
+            title: `${imageTitle.trim()} — ${shot.label}`,
+          }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Generation failed')
+
+        setShootResults((prev) => {
+          const next = [...prev]
+          next[idx] = { shot, ad: { id: data.ad.id, generatedImageUrl: data.ad.generatedImageUrl }, error: null, loading: false }
+          return next
+        })
+      } catch (err: any) {
+        setShootResults((prev) => {
+          const next = [...prev]
+          next[idx] = { shot, ad: null, error: err.message || 'Failed', loading: false }
+          return next
+        })
+      }
+    })
+
+    await Promise.allSettled(promises)
+    setPhotoShootGenerating(false)
+  }
+
+  const handleGenerateVideo = async (adId?: string) => {
+    const targetAdId = adId ?? generatedAd?.id
+    if (!targetAdId) return
     setGeneratingVideo(true)
     setVideoError(null)
     setGeneratedVideo(null)
@@ -171,7 +290,7 @@ export default function ProductMockupPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ad_id: generatedAd.id,
+          ad_id: targetAdId,
           motion_prompt: motionPrompt.trim() || undefined,
           aspect_ratio: aspectRatio,
           title: videoTitle.trim(),
@@ -188,6 +307,9 @@ export default function ProductMockupPage() {
       setGeneratingVideo(false)
     }
   }
+
+  const shootDone = shootResults.length > 0 && shootResults.every((s) => !s.loading)
+  const shootComplete = shootResults.filter((s) => !s.loading).length
 
   return (
     <div className="w-full p-4 lg:p-8">
@@ -357,13 +479,43 @@ export default function ProductMockupPage() {
             </div>
           </div>
 
+          {/* Mode toggle */}
+          <div className="flex mt-3 border border-outline overflow-hidden">
+            <button
+              onClick={() => {
+                setPhotoShootMode(false)
+                setShootResults([])
+                setSelectedShootAdId(null)
+                setSelectedShootLabel(null)
+              }}
+              className={`flex-1 py-2 font-mono text-xs uppercase tracking-widest transition-colors ${
+                !photoShootMode ? 'bg-rust text-white' : 'text-gray-400 hover:bg-gray-50'
+              }`}
+            >
+              Single Mockup
+            </button>
+            <button
+              onClick={() => {
+                setPhotoShootMode(true)
+                setGeneratedAd(null)
+              }}
+              className={`flex-1 py-2 font-mono text-xs uppercase tracking-widest border-l border-outline transition-colors ${
+                photoShootMode ? 'bg-rust text-white' : 'text-gray-400 hover:bg-gray-50'
+              }`}
+            >
+              Photo Shoot · 6×
+            </button>
+          </div>
+
           {/* Generate button */}
           <button
-            onClick={handleGenerate}
-            disabled={generating || !imageTitle.trim()}
+            onClick={photoShootMode ? handlePhotoShoot : handleGenerate}
+            disabled={generating || photoShootGenerating || !imageTitle.trim()}
             className="btn-primary w-full mt-3 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {generating ? 'GENERATING MOCKUP...' : 'GENERATE MOCKUP'}
+            {photoShootMode
+              ? (photoShootGenerating ? 'GENERATING PHOTO SHOOT...' : 'GENERATE PHOTO SHOOT — 6 IMAGES')
+              : (generating ? 'GENERATING MOCKUP...' : 'GENERATE MOCKUP')}
           </button>
 
           {error && (
@@ -387,206 +539,444 @@ export default function ProductMockupPage() {
 
           <div className="border border-outline flex flex-col">
             <div className="bg-[#e4dcc8] border-b border-outline px-4 py-2">
-              <span className="font-mono text-xs uppercase tracking-widest">Generated Mockup</span>
+              <span className="font-mono text-xs uppercase tracking-widest">
+                {photoShootMode ? 'Photo Shoot' : 'Generated Mockup'}
+              </span>
             </div>
 
-            <div className="flex-1 min-h-[480px] relative bg-white">
-
-              {/* Loading state */}
-              {generating && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-8"
-                  style={{
-                    backgroundImage: 'radial-gradient(circle, #d4cbb8 1px, transparent 1px)',
-                    backgroundSize: '20px 20px',
-                  }}
-                >
-                  <div className="bg-white border border-outline p-6 text-center w-full max-w-xs">
-                    <div className="animate-spin h-6 w-6 border-2 border-rust border-t-transparent mx-auto mb-4" />
-                    <p className="font-mono text-xs text-gray-600 mb-4">{generationStage}</p>
-                    <div className="space-y-1.5 text-left">
-                      <p className="font-mono text-xs text-gray-500">✓ Loading brand profile</p>
-                      <p className="font-mono text-xs text-rust animate-pulse">→ Building scene prompt...</p>
-                      <p className="font-mono text-xs text-gray-300">→ Placing product in scene...</p>
-                      <p className="font-mono text-xs text-gray-300">→ Saving to library...</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Result */}
-              {!generating && generatedAd && (
-                <div className="p-4 space-y-3">
-                  {generatedAd.generatedImageUrl && (
-                    <div className="border border-outline overflow-hidden">
-                      <img
-                        src={generatedAd.generatedImageUrl}
-                        alt="Product mockup"
-                        className="w-full h-auto"
-                      />
-                    </div>
-                  )}
-
-                  <div className="border border-outline p-4 bg-white">
-                    <p className="font-mono text-xs text-gray-400 uppercase tracking-widest mb-2">Scene</p>
-                    <p className="text-sm text-gray-700 leading-relaxed">
-                      {sceneText || 'Lifestyle product placement'}
+            {/* ── PHOTO SHOOT RESULTS ── */}
+            {photoShootMode && (
+              <div className="flex-1 bg-white">
+                {/* Empty state */}
+                {shootResults.length === 0 && !photoShootGenerating && (
+                  <div
+                    className="min-h-[480px] flex flex-col items-center justify-center"
+                    style={{
+                      backgroundImage: 'radial-gradient(circle, #d4cbb8 1px, transparent 1px)',
+                      backgroundSize: '20px 20px',
+                    }}
+                  >
+                    <p className="font-mono text-xs text-gray-500 text-center leading-relaxed">
+                      Awaiting input.<br />
+                      <span className="text-gray-400">
+                        Set your scene, click GENERATE PHOTO SHOOT<br />to produce 6 angles simultaneously.
+                      </span>
                     </p>
                   </div>
+                )}
 
-                  <div className="border border-green-300 bg-green-50 p-3">
-                    <p className="font-mono text-xs uppercase text-green-700 mb-1">Saved to Library</p>
-                    <a href="/library" className="font-mono text-xs text-green-600 underline">View Library →</a>
-                  </div>
+                {/* Grid */}
+                {shootResults.length > 0 && (
+                  <div className="p-4 space-y-4">
 
-                  {/* ── ANIMATE THIS ── */}
-                  <div className="border border-outline">
-                    <div className="bg-[#e4dcc8] border-b border-outline px-4 py-2 flex items-center justify-between">
-                      <span className="font-mono text-xs uppercase tracking-widest">Animate This</span>
-                      <span className="font-mono text-xs text-gray-500 border border-outline px-2 py-0.5">
-                        [ GROK VIDEO · 5s ]
-                      </span>
+                    {/* Progress / folder banner */}
+                    {photoShootGenerating ? (
+                      <div className="border border-outline bg-[#f7f4ef] px-4 py-2 flex items-center gap-3">
+                        <div className="animate-spin h-3.5 w-3.5 border-2 border-rust border-t-transparent shrink-0" />
+                        <span className="font-mono text-xs text-gray-600 uppercase tracking-wider">
+                          Generating photo shoot... {shootComplete} / 6 complete
+                        </span>
+                      </div>
+                    ) : shootDone && (
+                      <div className="border border-green-300 bg-green-50 px-4 py-2 flex items-center justify-between">
+                        <div>
+                          <span className="font-mono text-xs text-green-700 uppercase tracking-wider">
+                            Photo Shoot Complete
+                          </span>
+                          {shootFolderName && (
+                            <span className="font-mono text-xs text-green-600 ml-2">
+                              — saved to &quot;{shootFolderName}&quot;
+                            </span>
+                          )}
+                        </div>
+                        <a href="/library" className="font-mono text-xs text-green-600 underline">
+                          View Library →
+                        </a>
+                      </div>
+                    )}
+
+                    {/* 3×2 grid */}
+                    <div className="grid grid-cols-3 gap-2">
+                      {shootResults.map((slot, idx) => (
+                        <div key={idx} className="flex flex-col gap-1">
+                          {/* Slot */}
+                          {slot.loading ? (
+                            <div
+                              className="aspect-square border border-outline flex flex-col items-center justify-center gap-2"
+                              style={{
+                                backgroundImage: 'radial-gradient(circle, #d4cbb8 1px, transparent 1px)',
+                                backgroundSize: '14px 14px',
+                              }}
+                            >
+                              <div className="animate-spin h-4 w-4 border-2 border-rust border-t-transparent" />
+                            </div>
+                          ) : slot.error ? (
+                            <div className="aspect-square border border-red-200 bg-red-50 flex items-center justify-center p-2">
+                              <p className="font-mono text-[10px] text-red-500 text-center leading-snug">{slot.error}</p>
+                            </div>
+                          ) : slot.ad ? (
+                            <button
+                              onClick={() => {
+                                if (selectedShootAdId === slot.ad!.id) {
+                                  setSelectedShootAdId(null)
+                                  setSelectedShootLabel(null)
+                                  setGeneratedVideo(null)
+                                  setVideoError(null)
+                                } else {
+                                  setSelectedShootAdId(slot.ad!.id)
+                                  setSelectedShootLabel(slot.shot.label)
+                                  setGeneratedVideo(null)
+                                  setVideoError(null)
+                                  setVideoTitle(`${imageTitle.trim()} — ${slot.shot.label}`)
+                                }
+                              }}
+                              className={`aspect-square border overflow-hidden transition-all ${
+                                selectedShootAdId === slot.ad.id
+                                  ? 'border-rust ring-2 ring-rust ring-offset-1'
+                                  : 'border-outline hover:border-rust'
+                              }`}
+                            >
+                              <img
+                                src={slot.ad.generatedImageUrl}
+                                alt={slot.shot.label}
+                                className="w-full h-full object-cover"
+                              />
+                            </button>
+                          ) : null}
+                          {/* Shot label */}
+                          <p className="font-mono text-[10px] text-gray-500 uppercase tracking-wider text-center truncate">
+                            {slot.shot.label}
+                          </p>
+                        </div>
+                      ))}
                     </div>
 
-                    {/* Video player — shown once video is ready */}
-                    {generatedVideo && (
-                      <div className="border-b border-outline">
-                        <video
-                          src={generatedVideo.videoUrl}
-                          controls
-                          autoPlay
-                          loop
+                    {/* Animate selected shot */}
+                    {selectedShootAdId && (
+                      <div className="border border-outline">
+                        <div className="bg-[#e4dcc8] border-b border-outline px-4 py-2 flex items-center justify-between">
+                          <span className="font-mono text-xs uppercase tracking-widest">
+                            Animate — {selectedShootLabel}
+                          </span>
+                          <span className="font-mono text-xs text-gray-500 border border-outline px-2 py-0.5">
+                            [ GROK VIDEO · 5s ]
+                          </span>
+                        </div>
+
+                        {generatedVideo && (
+                          <div className="border-b border-outline">
+                            <video
+                              src={generatedVideo.videoUrl}
+                              controls
+                              autoPlay
+                              loop
+                              className="w-full h-auto"
+                            />
+                          </div>
+                        )}
+
+                        {generatingVideo && (
+                          <div className="p-6 flex flex-col items-center gap-3 bg-white">
+                            <div className="animate-spin h-5 w-5 border-2 border-rust border-t-transparent" />
+                            <p className="font-mono text-xs text-gray-500">Animating with Grok Video...</p>
+                            <p className="font-mono text-xs text-gray-400 text-center">
+                              This takes 60–120 seconds. Hang tight.
+                            </p>
+                          </div>
+                        )}
+
+                        {!generatingVideo && !generatedVideo && (
+                          <div className="p-4 bg-white space-y-3">
+                            <div className="border border-outline">
+                              <div className="px-3 py-1.5 border-b border-outline bg-[#f7f4ef] flex items-center justify-between">
+                                <p className="font-mono text-xs text-gray-400 uppercase tracking-widest">
+                                  Video Title
+                                </p>
+                                <span className="font-mono text-[10px] text-rust uppercase tracking-widest">Required</span>
+                              </div>
+                              <div className="px-3 pt-3 pb-2">
+                                <input
+                                  type="text"
+                                  value={videoTitle}
+                                  onChange={(e) => setVideoTitle(e.target.value)}
+                                  placeholder="e.g. Studio Shot Animation"
+                                  maxLength={80}
+                                  className="w-full text-sm font-mono bg-transparent focus:outline-none placeholder:text-gray-300 border-none p-0"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="border border-outline">
+                              <div className="px-3 py-1.5 border-b border-outline bg-[#f7f4ef]">
+                                <p className="font-mono text-xs text-gray-400 uppercase tracking-widest">
+                                  Motion (optional)
+                                </p>
+                              </div>
+                              <div className="px-3 pt-3 pb-2">
+                                <textarea
+                                  value={motionPrompt}
+                                  onChange={(e) => setMotionPrompt(e.target.value)}
+                                  placeholder="e.g. slow 360° product rotation · steam rising from the surface · camera slowly pulls back"
+                                  rows={2}
+                                  className="w-full text-sm font-mono bg-transparent resize-none focus:outline-none placeholder:text-gray-300 border-none p-0"
+                                />
+                              </div>
+                            </div>
+
+                            {videoError && (
+                              <div className="border border-red-300 bg-red-50 p-3">
+                                <p className="font-mono text-xs text-red-600">{videoError}</p>
+                              </div>
+                            )}
+
+                            <button
+                              onClick={() => handleGenerateVideo(selectedShootAdId)}
+                              disabled={!videoTitle.trim()}
+                              className="btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              GENERATE VIDEO
+                            </button>
+                          </div>
+                        )}
+
+                        {generatedVideo && !generatingVideo && (
+                          <div className="p-3 bg-white border-t border-outline">
+                            <button
+                              onClick={() => {
+                                setGeneratedVideo(null)
+                                setVideoError(null)
+                                setVideoTitle('')
+                              }}
+                              className="font-mono text-xs text-gray-500 hover:text-rust transition-colors"
+                            >
+                              ← Generate another video
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Reset */}
+                    {shootDone && (
+                      <button
+                        onClick={() => {
+                          setShootResults([])
+                          setShootFolderName(null)
+                          setSelectedShootAdId(null)
+                          setSelectedShootLabel(null)
+                          setGeneratedVideo(null)
+                          setVideoError(null)
+                          setVideoTitle('')
+                          setMotionPrompt('')
+                          setImageTitle('')
+                          setSelectedRefs([])
+                        }}
+                        className="btn-secondary w-full"
+                      >
+                        GENERATE ANOTHER PHOTO SHOOT
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── SINGLE MOCKUP RESULT ── */}
+            {!photoShootMode && (
+              <div className="flex-1 min-h-[480px] relative bg-white">
+
+                {/* Loading state */}
+                {generating && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-8"
+                    style={{
+                      backgroundImage: 'radial-gradient(circle, #d4cbb8 1px, transparent 1px)',
+                      backgroundSize: '20px 20px',
+                    }}
+                  >
+                    <div className="bg-white border border-outline p-6 text-center w-full max-w-xs">
+                      <div className="animate-spin h-6 w-6 border-2 border-rust border-t-transparent mx-auto mb-4" />
+                      <p className="font-mono text-xs text-gray-600 mb-4">{generationStage}</p>
+                      <div className="space-y-1.5 text-left">
+                        <p className="font-mono text-xs text-gray-500">✓ Loading brand profile</p>
+                        <p className="font-mono text-xs text-rust animate-pulse">→ Building scene prompt...</p>
+                        <p className="font-mono text-xs text-gray-300">→ Placing product in scene...</p>
+                        <p className="font-mono text-xs text-gray-300">→ Saving to library...</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Result */}
+                {!generating && generatedAd && (
+                  <div className="p-4 space-y-3">
+                    {generatedAd.generatedImageUrl && (
+                      <div className="border border-outline overflow-hidden">
+                        <img
+                          src={generatedAd.generatedImageUrl}
+                          alt="Product mockup"
                           className="w-full h-auto"
                         />
                       </div>
                     )}
 
-                    {/* Video generating state */}
-                    {generatingVideo && (
-                      <div className="p-6 flex flex-col items-center gap-3 bg-white">
-                        <div className="animate-spin h-5 w-5 border-2 border-rust border-t-transparent" />
-                        <p className="font-mono text-xs text-gray-500">Animating with Grok Video...</p>
-                        <p className="font-mono text-xs text-gray-400 text-center">
-                          This takes 60–120 seconds. Hang tight.
-                        </p>
-                      </div>
-                    )}
+                    <div className="border border-outline p-4 bg-white">
+                      <p className="font-mono text-xs text-gray-400 uppercase tracking-widest mb-2">Scene</p>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        {sceneText || 'Lifestyle product placement'}
+                      </p>
+                    </div>
 
-                    {/* Motion prompt + trigger — hidden while generating or after video is ready */}
-                    {!generatingVideo && !generatedVideo && (
-                      <div className="p-4 bg-white space-y-3">
-                        <div className="border border-outline">
-                          <div className="px-3 py-1.5 border-b border-outline bg-[#f7f4ef] flex items-center justify-between">
-                            <p className="font-mono text-xs text-gray-400 uppercase tracking-widest">
-                              Video Title
-                            </p>
-                            <span className="font-mono text-[10px] text-rust uppercase tracking-widest">Required</span>
-                          </div>
-                          <div className="px-3 pt-3 pb-2">
-                            <input
-                              type="text"
-                              value={videoTitle}
-                              onChange={(e) => setVideoTitle(e.target.value)}
-                              placeholder="e.g. Studio Shot Animation"
-                              maxLength={80}
-                              className="w-full text-sm font-mono bg-transparent focus:outline-none placeholder:text-gray-300 border-none p-0"
-                            />
-                          </div>
+                    <div className="border border-green-300 bg-green-50 p-3">
+                      <p className="font-mono text-xs uppercase text-green-700 mb-1">Saved to Library</p>
+                      <a href="/library" className="font-mono text-xs text-green-600 underline">View Library →</a>
+                    </div>
+
+                    {/* ── ANIMATE THIS ── */}
+                    <div className="border border-outline">
+                      <div className="bg-[#e4dcc8] border-b border-outline px-4 py-2 flex items-center justify-between">
+                        <span className="font-mono text-xs uppercase tracking-widest">Animate This</span>
+                        <span className="font-mono text-xs text-gray-500 border border-outline px-2 py-0.5">
+                          [ GROK VIDEO · 5s ]
+                        </span>
+                      </div>
+
+                      {generatedVideo && (
+                        <div className="border-b border-outline">
+                          <video
+                            src={generatedVideo.videoUrl}
+                            controls
+                            autoPlay
+                            loop
+                            className="w-full h-auto"
+                          />
                         </div>
+                      )}
 
-                        <div className="border border-outline">
-                          <div className="px-3 py-1.5 border-b border-outline bg-[#f7f4ef]">
-                            <p className="font-mono text-xs text-gray-400 uppercase tracking-widest">
-                              Motion (optional)
-                            </p>
-                          </div>
-                          <div className="px-3 pt-3 pb-2">
-                            <textarea
-                              value={motionPrompt}
-                              onChange={(e) => setMotionPrompt(e.target.value)}
-                              placeholder={
-                                'e.g. slow 360° product rotation · steam rising from the surface · camera slowly pulls back · subtle water ripples'
-                              }
-                              rows={2}
-                              className="w-full text-sm font-mono bg-transparent resize-none focus:outline-none placeholder:text-gray-300 border-none p-0"
-                            />
-                          </div>
+                      {generatingVideo && (
+                        <div className="p-6 flex flex-col items-center gap-3 bg-white">
+                          <div className="animate-spin h-5 w-5 border-2 border-rust border-t-transparent" />
+                          <p className="font-mono text-xs text-gray-500">Animating with Grok Video...</p>
+                          <p className="font-mono text-xs text-gray-400 text-center">
+                            This takes 60–120 seconds. Hang tight.
+                          </p>
                         </div>
+                      )}
 
-                        {videoError && (
-                          <div className="border border-red-300 bg-red-50 p-3">
-                            <p className="font-mono text-xs text-red-600">{videoError}</p>
+                      {!generatingVideo && !generatedVideo && (
+                        <div className="p-4 bg-white space-y-3">
+                          <div className="border border-outline">
+                            <div className="px-3 py-1.5 border-b border-outline bg-[#f7f4ef] flex items-center justify-between">
+                              <p className="font-mono text-xs text-gray-400 uppercase tracking-widest">
+                                Video Title
+                              </p>
+                              <span className="font-mono text-[10px] text-rust uppercase tracking-widest">Required</span>
+                            </div>
+                            <div className="px-3 pt-3 pb-2">
+                              <input
+                                type="text"
+                                value={videoTitle}
+                                onChange={(e) => setVideoTitle(e.target.value)}
+                                placeholder="e.g. Studio Shot Animation"
+                                maxLength={80}
+                                className="w-full text-sm font-mono bg-transparent focus:outline-none placeholder:text-gray-300 border-none p-0"
+                              />
+                            </div>
                           </div>
-                        )}
 
-                        <button
-                          onClick={handleGenerateVideo}
-                          disabled={!videoTitle.trim()}
-                          className="btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          GENERATE VIDEO
-                        </button>
-                      </div>
-                    )}
+                          <div className="border border-outline">
+                            <div className="px-3 py-1.5 border-b border-outline bg-[#f7f4ef]">
+                              <p className="font-mono text-xs text-gray-400 uppercase tracking-widest">
+                                Motion (optional)
+                              </p>
+                            </div>
+                            <div className="px-3 pt-3 pb-2">
+                              <textarea
+                                value={motionPrompt}
+                                onChange={(e) => setMotionPrompt(e.target.value)}
+                                placeholder={
+                                  'e.g. slow 360° product rotation · steam rising from the surface · camera slowly pulls back · subtle water ripples'
+                                }
+                                rows={2}
+                                className="w-full text-sm font-mono bg-transparent resize-none focus:outline-none placeholder:text-gray-300 border-none p-0"
+                              />
+                            </div>
+                          </div>
 
-                    {/* Re-generate option once video is done */}
-                    {generatedVideo && !generatingVideo && (
-                      <div className="p-3 bg-white border-t border-outline">
-                        <button
-                          onClick={() => {
-                            setGeneratedVideo(null)
-                            setVideoError(null)
-                            setVideoTitle('')
-                          }}
-                          className="font-mono text-xs text-gray-500 hover:text-rust transition-colors"
-                        >
-                          ← Generate another video
-                        </button>
-                      </div>
-                    )}
+                          {videoError && (
+                            <div className="border border-red-300 bg-red-50 p-3">
+                              <p className="font-mono text-xs text-red-600">{videoError}</p>
+                            </div>
+                          )}
+
+                          <button
+                            onClick={() => handleGenerateVideo()}
+                            disabled={!videoTitle.trim()}
+                            className="btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            GENERATE VIDEO
+                          </button>
+                        </div>
+                      )}
+
+                      {generatedVideo && !generatingVideo && (
+                        <div className="p-3 bg-white border-t border-outline">
+                          <button
+                            onClick={() => {
+                              setGeneratedVideo(null)
+                              setVideoError(null)
+                              setVideoTitle('')
+                            }}
+                            className="font-mono text-xs text-gray-500 hover:text-rust transition-colors"
+                          >
+                            ← Generate another video
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setGeneratedAd(null)
+                        setError(null)
+                        setGeneratedVideo(null)
+                        setVideoError(null)
+                        setMotionPrompt('')
+                        setImageTitle('')
+                        setVideoTitle('')
+                        setSelectedRefs([])
+                        setShowPhoto(false)
+                      }}
+                      className="btn-secondary w-full"
+                    >
+                      GENERATE ANOTHER MOCKUP
+                    </button>
                   </div>
+                )}
 
-                  <button
-                    onClick={() => {
-                      setGeneratedAd(null)
-                      setError(null)
-                      setGeneratedVideo(null)
-                      setVideoError(null)
-                      setMotionPrompt('')
-                      setImageTitle('')
-                      setVideoTitle('')
-                      setSelectedRefs([])
-                      setShowPhoto(false)
+                {/* Empty state */}
+                {!generating && !generatedAd && !error && (
+                  <div
+                    className="absolute inset-0 flex flex-col items-center justify-center"
+                    style={{
+                      backgroundImage: 'radial-gradient(circle, #d4cbb8 1px, transparent 1px)',
+                      backgroundSize: '20px 20px',
                     }}
-                    className="btn-secondary w-full"
                   >
-                    GENERATE ANOTHER MOCKUP
-                  </button>
-                </div>
-              )}
-
-              {/* Empty state */}
-              {!generating && !generatedAd && !error && (
-                <div
-                  className="absolute inset-0 flex flex-col items-center justify-center"
-                  style={{
-                    backgroundImage: 'radial-gradient(circle, #d4cbb8 1px, transparent 1px)',
-                    backgroundSize: '20px 20px',
-                  }}
-                >
-                  <p className="font-mono text-xs text-gray-500 text-center leading-relaxed">
-                    Awaiting input.<br />
-                    <span className="text-gray-400">
-                      Upload a product photo, describe the scene,<br />and click GENERATE MOCKUP.
-                    </span>
-                  </p>
-                </div>
-              )}
-            </div>
+                    <p className="font-mono text-xs text-gray-500 text-center leading-relaxed">
+                      Awaiting input.<br />
+                      <span className="text-gray-400">
+                        Upload a product photo, describe the scene,<br />and click GENERATE MOCKUP.
+                      </span>
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Status bar */}
             <div className="border-t border-outline px-4 py-2 bg-[#e4dcc8]">
               <span className="font-mono text-xs text-gray-500 tracking-wider">
-                FORMAT: {aspectRatio}&nbsp;&nbsp;|&nbsp;&nbsp;QUALITY: {imageQuality}&nbsp;&nbsp;|&nbsp;&nbsp;MODEL: {imageModel === 'seedream' ? 'SEEDREAM 4' : 'GEMINI'}&nbsp;&nbsp;|&nbsp;&nbsp;TYPE: PRODUCT MOCKUP
+                FORMAT: {aspectRatio}&nbsp;&nbsp;|&nbsp;&nbsp;QUALITY: {imageQuality}&nbsp;&nbsp;|&nbsp;&nbsp;MODEL: {imageModel === 'seedream' ? 'SEEDREAM 4' : 'GEMINI'}&nbsp;&nbsp;|&nbsp;&nbsp;TYPE: {photoShootMode ? 'PHOTO SHOOT' : 'PRODUCT MOCKUP'}
               </span>
             </div>
           </div>
