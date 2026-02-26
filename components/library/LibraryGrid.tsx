@@ -261,7 +261,7 @@ export default function LibraryGrid({
     <div className="flex gap-8 items-start">
 
       {/* ── Campaign / Folder sidebar ── */}
-      <aside className="hidden md:flex flex-col w-44 flex-shrink-0 sticky top-8 gap-1">
+      <aside className="hidden md:flex flex-col w-40 flex-shrink-0 sticky top-8 gap-1">
         <p className="text-[10px] font-mono uppercase text-gray-400 tracking-widest mb-2">Campaigns</p>
 
         {/* All Assets drop zone */}
