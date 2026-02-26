@@ -9,11 +9,11 @@ interface ImageWithUrl extends ReferenceImage {
 }
 
 interface Props {
-  selectedId: string | null
-  onSelect: (id: string | null) => void
+  /** Called when the user picks an image — parent should close the panel */
+  onSelect: (id: string, signedUrl: string) => void
 }
 
-export default function PhotoPicker({ selectedId, onSelect }: Props) {
+export default function PhotoPicker({ onSelect }: Props) {
   const [uploading, setUploading] = useState(false)
   const [images, setImages] = useState<ImageWithUrl[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -36,7 +36,7 @@ export default function PhotoPicker({ selectedId, onSelect }: Props) {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
-    if (data) {
+    if (data && data.length > 0) {
       const paths = data.map((img) => img.storage_path)
       const { data: urlData } = await supabase.storage
         .from('reference-images')
@@ -52,6 +52,8 @@ export default function PhotoPicker({ selectedId, onSelect }: Props) {
           signedUrl: urlMap.get(img.storage_path) ?? '',
         }))
       )
+    } else {
+      setImages([])
     }
   }
 
@@ -74,11 +76,17 @@ export default function PhotoPicker({ selectedId, onSelect }: Props) {
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'Upload failed')
 
-      await loadImages()
-      e.target.value = ''
+      // Get signed URL for the newly uploaded image, then auto-select + close
+      const { data: signedUrlData } = await supabase.storage
+        .from('reference-images')
+        .createSignedUrl(result.image.storage_path, 3600)
 
-      // Auto-select the newly uploaded photo
-      if (result.image?.id) onSelect(result.image.id)
+      e.target.value = ''
+      await loadImages()
+
+      if (result.image?.id && signedUrlData?.signedUrl) {
+        onSelect(result.image.id, signedUrlData.signedUrl)
+      }
     } catch (err: any) {
       setError(err.message || 'Upload failed')
     } finally {
@@ -86,8 +94,9 @@ export default function PhotoPicker({ selectedId, onSelect }: Props) {
     }
   }
 
-  const handleDelete = async (imageId: string, storagePath: string) => {
-    if (!confirm('Delete this photo from your library?')) return
+  const handleDelete = async (e: React.MouseEvent, imageId: string, storagePath: string) => {
+    e.stopPropagation()
+    if (!confirm('Remove this photo from your library?')) return
 
     try {
       const {
@@ -97,10 +106,6 @@ export default function PhotoPicker({ selectedId, onSelect }: Props) {
 
       await supabase.storage.from('reference-images').remove([storagePath])
       await supabase.from('reference_images').delete().eq('id', imageId)
-
-      // Clear selection if the deleted image was selected
-      if (selectedId === imageId) onSelect(null)
-
       await loadImages()
     } catch {
       setError('Failed to delete photo')
@@ -109,7 +114,7 @@ export default function PhotoPicker({ selectedId, onSelect }: Props) {
 
   return (
     <div className="space-y-3">
-      {/* Header row */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <span className="font-mono text-[10px] uppercase tracking-widest text-gray-400">
           {images.length === 0 ? 'No photos saved' : `${images.length} / 5 in library`}
@@ -131,7 +136,7 @@ export default function PhotoPicker({ selectedId, onSelect }: Props) {
               : 'text-gray-500 border-outline hover:text-rust hover:border-rust cursor-pointer'
           }`}
         >
-          {uploading ? 'Uploading...' : '+ Upload New'}
+          {uploading ? 'Uploading...' : '+ Upload from Device'}
         </label>
       </div>
 
@@ -141,82 +146,42 @@ export default function PhotoPicker({ selectedId, onSelect }: Props) {
       {images.length === 0 && !uploading && (
         <div className="border border-dashed border-outline py-5 text-center">
           <p className="font-mono text-xs text-gray-400">
-            Upload a product photo to use as a reference.
+            No saved photos yet — upload one above to get started.
           </p>
         </div>
       )}
 
-      {/* Library grid — click to select / deselect */}
+      {/* Library grid */}
       {images.length > 0 && (
         <>
           <p className="font-mono text-[10px] uppercase tracking-widest text-gray-400">
-            Click a photo to select it
+            Click a photo to use it as your reference
           </p>
           <div className="grid grid-cols-5 gap-2">
-            {images.map((img) => {
-              const isSelected = img.id === selectedId
-              return (
-                <div
-                  key={img.id}
-                  onClick={() => onSelect(isSelected ? null : img.id)}
-                  className={`relative aspect-square border-2 cursor-pointer group transition-colors ${
-                    isSelected ? 'border-rust' : 'border-outline hover:border-gray-400'
-                  }`}
-                >
-                  <img
-                    src={img.signedUrl}
-                    alt={img.file_name}
-                    className="w-full h-full object-cover"
-                  />
-
-                  {/* Selection overlay */}
-                  {isSelected && (
-                    <div className="absolute inset-0 bg-rust/10 pointer-events-none" />
-                  )}
-
-                  {/* Selection badge */}
-                  {isSelected && (
-                    <div className="absolute bottom-0 right-0 bg-rust text-white px-1 py-0.5 font-mono text-[8px] leading-none uppercase">
-                      ✓
-                    </div>
-                  )}
-
-                  {/* Delete button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDelete(img.id, img.storage_path)
-                    }}
-                    className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white p-0.5"
-                    title="Remove from library"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Selection status */}
-          {selectedId ? (
-            <div className="flex items-center justify-between pt-0.5">
-              <span className="font-mono text-[10px] uppercase tracking-widest text-rust">
-                1 photo selected
-              </span>
-              <button
-                onClick={() => onSelect(null)}
-                className="font-mono text-[10px] uppercase tracking-widest text-gray-400 hover:text-rust transition-colors"
+            {images.map((img) => (
+              <div
+                key={img.id}
+                onClick={() => onSelect(img.id, img.signedUrl)}
+                className="relative aspect-square border border-outline cursor-pointer group hover:border-rust transition-colors"
               >
-                Clear
-              </button>
-            </div>
-          ) : (
-            <p className="font-mono text-[10px] uppercase tracking-widest text-gray-400 pt-0.5">
-              No photo selected — generation will run without a reference
-            </p>
-          )}
+                <img
+                  src={img.signedUrl}
+                  alt={img.file_name}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none" />
+                <button
+                  onClick={(e) => handleDelete(e, img.id, img.storage_path)}
+                  className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white p-0.5"
+                  title="Remove from library"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
         </>
       )}
     </div>
