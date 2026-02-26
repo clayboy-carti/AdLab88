@@ -106,6 +106,7 @@ export default function ProductMockupPage() {
   const [error, setError] = useState<string | null>(null)
 
   const [imageTitle, setImageTitle] = useState('')
+  const [showPhoto, setShowPhoto] = useState(false)
 
   // Video generation state
   const [videoTitle, setVideoTitle] = useState('')
@@ -205,168 +206,129 @@ export default function ProductMockupPage() {
 
         {/* ── LEFT COLUMN ── */}
         <div>
-          <p className="font-mono text-xs uppercase tracking-widest text-gray-500 mb-2">
-            [ CREATIVE INPUT MODULE ]
-          </p>
 
-          {/* Post Title — required before generating */}
-          <div className="border border-outline mb-3">
-            <div className="px-4 py-1.5 border-b border-outline bg-[#e4dcc8] flex items-center justify-between">
-              <span className="font-mono text-xs uppercase tracking-widest">Post Title</span>
-              <span className="font-mono text-[10px] text-rust uppercase tracking-widest">Required</span>
-            </div>
-            <div className="p-3 bg-white">
+          {/* ── Compact compose card ── */}
+          <div className="border border-outline bg-white flex flex-col">
+
+            {/* Title row */}
+            <div className="flex items-center gap-3 px-4 py-2.5 border-b border-outline">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-gray-400 shrink-0">Title</span>
               <input
                 type="text"
                 value={imageTitle}
                 onChange={(e) => setImageTitle(e.target.value)}
                 placeholder="e.g. Studio Launch Shot"
                 maxLength={80}
-                className="w-full text-sm font-mono bg-transparent focus:outline-none placeholder:text-gray-300"
+                className="flex-1 text-sm font-mono bg-transparent focus:outline-none placeholder:text-gray-300 min-w-0"
               />
-            </div>
-          </div>
-
-          {/* Outer container */}
-          <div className="border border-outline">
-
-            <div className="bg-[#e4dcc8] border-b border-outline px-4 py-2">
-              <span className="font-mono text-xs uppercase tracking-widest">Input Sources</span>
+              {!imageTitle.trim() && (
+                <span className="font-mono text-[10px] text-rust uppercase tracking-widest shrink-0">Required</span>
+              )}
             </div>
 
-            {/* Reference Image — required for mockups */}
-            <div className="border-b border-outline">
-              <div className="px-4 py-1.5 border-b border-outline bg-white">
-                <span className="font-mono text-xs text-gray-400 tracking-wider">— PRODUCT PHOTO —</span>
+            {/* Scene textarea */}
+            <div className="px-4 pt-3 pb-2">
+              <textarea
+                value={sceneText}
+                onChange={(e) => {
+                  setSceneText(e.target.value)
+                  setSelectedPreset('')
+                }}
+                placeholder="Describe the scene… e.g. marble countertop · golden hour outdoor · white studio void"
+                rows={5}
+                maxLength={300}
+                className="w-full text-sm font-mono bg-transparent resize-none focus:outline-none placeholder:text-gray-300"
+              />
+              <div className="text-right mt-1">
+                <span className="font-mono text-[10px] text-gray-300">{sceneText.length} / 300</span>
               </div>
-              <div className="p-4 bg-white">
+            </div>
+
+            {/* Photo drawer */}
+            {showPhoto && (
+              <div className="border-t border-outline px-4 py-3">
                 <ReferenceImageUpload />
-                <p className="font-mono text-xs text-gray-400 mt-2 leading-relaxed">
-                  Upload a clean photo of your product. The selected model will use it as the source.
-                </p>
               </div>
-            </div>
+            )}
 
-            {/* Scene Description */}
-            <div className="border-b border-outline">
-              <div className="px-4 py-1.5 border-b border-outline bg-white">
-                <span className="font-mono text-xs text-gray-400 tracking-wider">— SCENE DESCRIPTION —</span>
-              </div>
-              <div className="p-4 bg-white space-y-3">
-                {/* Scene Preset Dropdown */}
-                <div className="border border-outline">
-                  <div className="px-3 py-1.5 border-b border-outline bg-[#f7f4ef]">
-                    <p className="font-mono text-xs text-gray-400 uppercase tracking-widest">Scene Preset</p>
-                  </div>
-                  <div className="px-3 py-2">
-                    <select
-                      value={selectedPreset}
-                      onChange={(e) => {
-                        const val = e.target.value
-                        setSelectedPreset(val)
-                        if (val) {
-                          const preset = SCENE_PRESETS.find((p) => p.name === val)
-                          if (preset) setSceneText(preset.description)
-                        }
-                      }}
-                      className="w-full font-mono text-xs bg-transparent focus:outline-none border-none p-0 text-gray-700"
-                    >
-                      <option value="">— Select a scene preset —</option>
-                      {SCENE_PRESETS.map((preset) => (
-                        <option key={preset.name} value={preset.name}>
-                          {preset.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+            {/* Toolbar */}
+            <div className="border-t border-outline flex items-stretch divide-x divide-outline">
 
-                {/* Custom / editable scene text */}
-                <div className="border border-outline">
-                  <div className="px-3 pt-3 pb-1">
-                    <p className="font-mono text-xs text-gray-400 uppercase tracking-widest mb-2">Scene Details</p>
-                    <textarea
-                      value={sceneText}
-                      onChange={(e) => {
-                        setSceneText(e.target.value)
-                        setSelectedPreset('')
-                      }}
-                      placeholder="e.g. morning coffee on a marble countertop · hands holding the product outdoors · minimalist white studio"
-                      rows={3}
-                      className="w-full text-sm font-mono bg-transparent resize-none focus:outline-none placeholder:text-gray-300 border-none p-0"
-                    />
-                  </div>
-                  <div className="px-3 pb-2 text-right">
-                    <span className="font-mono text-xs text-gray-400">{sceneText.length} / 300</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+              {/* Photo toggle */}
+              <button
+                onClick={() => setShowPhoto((v) => !v)}
+                title="Product photo"
+                className={`flex items-center gap-1.5 px-3 py-2.5 font-mono text-xs uppercase tracking-wide transition-colors hover:bg-gray-50 ${showPhoto ? 'text-rust' : 'text-gray-500'}`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
+                </svg>
+                <span>Photo</span>
+              </button>
 
-            {/* Image Settings */}
-            <div className="bg-white">
-              <div className="px-4 py-1.5 border-b border-outline">
-                <span className="font-mono text-xs text-gray-400 tracking-wider">— IMAGE SETTINGS —</span>
-              </div>
-
-              {/* Model row */}
-              <div className="flex items-center border-b border-outline">
-                <div className="w-32 shrink-0 px-4 py-2.5 border-r border-outline">
-                  <span className="font-mono text-xs uppercase text-gray-500">Model</span>
-                </div>
-                <div className="px-4 py-1.5 flex-1">
-                  <select
-                    value={imageModel}
-                    onChange={(e) => setImageModel(e.target.value as 'gemini' | 'seedream')}
-                    className="w-full font-mono text-xs bg-transparent focus:outline-none border-none p-0 text-gray-700"
-                  >
-                    <option value="gemini">Gemini Image Pro</option>
-                    <option value="seedream">Seedream 4 (Replicate)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Quality row */}
-              <div className="flex items-center border-b border-outline">
-                <div className="w-32 shrink-0 px-4 py-2.5 border-r border-outline">
-                  <span className="font-mono text-xs uppercase text-gray-500">Quality</span>
-                </div>
-                <div className="px-4 py-2 flex gap-2">
-                  {(['1K', '2K'] as const).map((q) => (
-                    <button
-                      key={q}
-                      onClick={() => setImageQuality(q)}
-                      className={`font-mono text-xs uppercase px-3 py-1 border transition-colors ${
-                        imageQuality === q
-                          ? 'border-rust text-rust'
-                          : 'border-outline text-gray-400 hover:border-gray-400'
-                      }`}
-                    >
-                      [ {q} ]
-                    </button>
+              {/* Scene preset */}
+              <div className="flex items-center px-3 py-2.5 flex-1 min-w-0">
+                <select
+                  value={selectedPreset}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    setSelectedPreset(val)
+                    if (val) {
+                      const preset = SCENE_PRESETS.find((p) => p.name === val)
+                      if (preset) setSceneText(preset.description)
+                    }
+                  }}
+                  className="w-full font-mono text-xs text-gray-500 bg-transparent border-none focus:outline-none cursor-pointer uppercase truncate"
+                >
+                  <option value="">PRESET</option>
+                  {SCENE_PRESETS.map((preset) => (
+                    <option key={preset.name} value={preset.name}>{preset.name}</option>
                   ))}
-                </div>
+                </select>
               </div>
 
-              {/* Aspect Ratio row */}
-              <div className="flex items-center">
-                <div className="w-32 shrink-0 px-4 py-2.5 border-r border-outline">
-                  <span className="font-mono text-xs uppercase text-gray-500">Aspect Ratio</span>
-                </div>
-                <div className="px-4 py-1.5 flex-1">
-                  <select
-                    value={aspectRatio}
-                    onChange={(e) => setAspectRatio(e.target.value)}
-                    className="w-full font-mono text-xs bg-transparent focus:outline-none border-none p-0 text-gray-700"
-                  >
-                    <option value="1:1">1:1 — Square</option>
-                    <option value="9:16">9:16 — Story / Reel</option>
-                    <option value="16:9">16:9 — Landscape</option>
-                    <option value="3:4">3:4 — Feed Portrait</option>
-                    <option value="4:3">4:3 — Standard</option>
-                  </select>
-                </div>
+              {/* Aspect ratio */}
+              <div className="flex items-center px-3 py-2.5">
+                <select
+                  value={aspectRatio}
+                  onChange={(e) => setAspectRatio(e.target.value)}
+                  className="font-mono text-xs text-gray-500 bg-transparent border-none focus:outline-none cursor-pointer"
+                >
+                  <option value="1:1">1:1</option>
+                  <option value="9:16">9:16</option>
+                  <option value="16:9">16:9</option>
+                  <option value="3:4">3:4</option>
+                  <option value="4:3">4:3</option>
+                </select>
               </div>
+
+              {/* Quality */}
+              <div className="flex items-stretch">
+                {(['1K', '2K'] as const).map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => setImageQuality(q)}
+                    className={`px-3 font-mono text-xs uppercase transition-colors ${
+                      imageQuality === q ? 'bg-rust text-white' : 'text-gray-400 hover:bg-gray-50'
+                    }`}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+
+              {/* Model */}
+              <div className="flex items-center px-3 py-2.5">
+                <select
+                  value={imageModel}
+                  onChange={(e) => setImageModel(e.target.value as 'gemini' | 'seedream')}
+                  className="font-mono text-xs text-gray-500 bg-transparent border-none focus:outline-none cursor-pointer uppercase"
+                >
+                  <option value="gemini">GEMINI</option>
+                  <option value="seedream">SEEDREAM</option>
+                </select>
+              </div>
+
             </div>
           </div>
 
