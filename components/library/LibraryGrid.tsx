@@ -234,6 +234,16 @@ export default function LibraryGrid({
     }
   }
 
+  const handleRemoveFromCampaign = async (adIds: string[], videoIds: string[]) => {
+    await fetch('/api/folders/move', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folderId: null, adIds, videoIds }),
+    })
+    if (adIds.length > 0) setAds((prev) => prev.map((a) => adIds.includes(a.id) ? { ...a, folder_id: null } : a))
+    if (videoIds.length > 0) setVideos((prev) => prev.map((v) => videoIds.includes(v.id) ? { ...v, folder_id: null } : v))
+  }
+
   // ── Folder CRUD ──
   const handleCreateFolder = async () => {
     const name = newFolderName.trim()
@@ -489,7 +499,7 @@ export default function LibraryGrid({
             if (item.kind === 'video') {
               const selIdx = carouselItems.findIndex((i) => i.id === item.video.id)
               return (
-                <div key={item.video.id} className="relative">
+                <div key={item.video.id} className="relative group">
                   <div
                     draggable={!carouselMode}
                     onDragStart={!carouselMode ? (e) => handleDragStart(e, { adIds: [], videoIds: [item.video.id] }) : undefined}
@@ -497,6 +507,14 @@ export default function LibraryGrid({
                   >
                     <VideoCard video={item.video} onClick={!carouselMode ? () => setSelectedVideo(item.video) : () => {}} />
                   </div>
+                  {activeFolderId && !carouselMode && (
+                    <button
+                      onClick={() => handleRemoveFromCampaign([], [item.video.id])}
+                      className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-gray-300 rounded-sm px-2 py-0.5 text-[10px] font-mono uppercase text-gray-500 hover:text-rust hover:border-rust"
+                    >
+                      Remove
+                    </button>
+                  )}
                   {carouselMode && (
                     <CarouselOverlay
                       selIdx={selIdx}
@@ -510,7 +528,7 @@ export default function LibraryGrid({
             const feedItem = item.item
             if (feedItem.type === 'set') {
               return (
-                <div key={feedItem.batchId} className="relative">
+                <div key={feedItem.batchId} className="relative group">
                   <div
                     draggable={!carouselMode}
                     onDragStart={!carouselMode ? (e) => handleDragStart(e, { adIds: feedItem.ads.map((a) => a.id), videoIds: [] }) : undefined}
@@ -521,6 +539,14 @@ export default function LibraryGrid({
                       onClick={() => !carouselMode && setSelectedSet({ batchId: feedItem.batchId, ads: feedItem.ads })}
                     />
                   </div>
+                  {activeFolderId && !carouselMode && (
+                    <button
+                      onClick={() => handleRemoveFromCampaign(feedItem.ads.map((a) => a.id), [])}
+                      className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-gray-300 rounded-sm px-2 py-0.5 text-[10px] font-mono uppercase text-gray-500 hover:text-rust hover:border-rust"
+                    >
+                      Remove
+                    </button>
+                  )}
                   {carouselMode && (
                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
                       <span className="text-[10px] font-mono uppercase text-white bg-black/60 px-2 py-1">Open to pick individually</span>
@@ -531,7 +557,7 @@ export default function LibraryGrid({
             }
             const selIdx = carouselItems.findIndex((i) => i.id === feedItem.ad.id)
             return (
-              <div key={feedItem.ad.id} className="relative">
+              <div key={feedItem.ad.id} className="relative group">
                 <div
                   draggable={!carouselMode}
                   onDragStart={!carouselMode ? (e) => handleDragStart(e, { adIds: [feedItem.ad.id], videoIds: [] }) : undefined}
@@ -539,6 +565,14 @@ export default function LibraryGrid({
                 >
                   <AdCard ad={feedItem.ad} onClick={!carouselMode ? () => setSelectedAd(feedItem.ad) : () => {}} />
                 </div>
+                {activeFolderId && !carouselMode && (
+                  <button
+                    onClick={() => handleRemoveFromCampaign([feedItem.ad.id], [])}
+                    className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-gray-300 rounded-sm px-2 py-0.5 text-[10px] font-mono uppercase text-gray-500 hover:text-rust hover:border-rust"
+                  >
+                    Remove
+                  </button>
+                )}
                 {carouselMode && (
                   <CarouselOverlay
                     selIdx={selIdx}
@@ -553,7 +587,7 @@ export default function LibraryGrid({
           {filter === 'images' && adFeed.map((item) => {
             if (item.type === 'set') {
               return (
-                <div key={item.batchId} className="relative">
+                <div key={item.batchId} className="relative group">
                   <div
                     draggable={!carouselMode}
                     onDragStart={!carouselMode ? (e) => handleDragStart(e, { adIds: item.ads.map((a) => a.id), videoIds: [] }) : undefined}
@@ -564,6 +598,14 @@ export default function LibraryGrid({
                       onClick={() => !carouselMode && setSelectedSet({ batchId: item.batchId, ads: item.ads })}
                     />
                   </div>
+                  {activeFolderId && !carouselMode && (
+                    <button
+                      onClick={() => handleRemoveFromCampaign(item.ads.map((a) => a.id), [])}
+                      className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-gray-300 rounded-sm px-2 py-0.5 text-[10px] font-mono uppercase text-gray-500 hover:text-rust hover:border-rust"
+                    >
+                      Remove
+                    </button>
+                  )}
                   {carouselMode && (
                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
                       <span className="text-[10px] font-mono uppercase text-white bg-black/60 px-2 py-1">Open to pick individually</span>
@@ -574,7 +616,7 @@ export default function LibraryGrid({
             }
             const selIdx = carouselItems.findIndex((i) => i.id === item.ad.id)
             return (
-              <div key={item.ad.id} className="relative">
+              <div key={item.ad.id} className="relative group">
                 <div
                   draggable={!carouselMode}
                   onDragStart={!carouselMode ? (e) => handleDragStart(e, { adIds: [item.ad.id], videoIds: [] }) : undefined}
@@ -582,6 +624,14 @@ export default function LibraryGrid({
                 >
                   <AdCard ad={item.ad} onClick={!carouselMode ? () => setSelectedAd(item.ad) : () => {}} />
                 </div>
+                {activeFolderId && !carouselMode && (
+                  <button
+                    onClick={() => handleRemoveFromCampaign([item.ad.id], [])}
+                    className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-gray-300 rounded-sm px-2 py-0.5 text-[10px] font-mono uppercase text-gray-500 hover:text-rust hover:border-rust"
+                  >
+                    Remove
+                  </button>
+                )}
                 {carouselMode && (
                   <CarouselOverlay
                     selIdx={selIdx}
@@ -596,7 +646,7 @@ export default function LibraryGrid({
           {filter === 'videos' && filteredVideos.map((video) => {
             const selIdx = carouselItems.findIndex((i) => i.id === video.id)
             return (
-              <div key={video.id} className="relative">
+              <div key={video.id} className="relative group">
                 <div
                   draggable={!carouselMode}
                   onDragStart={!carouselMode ? (e) => handleDragStart(e, { adIds: [], videoIds: [video.id] }) : undefined}
@@ -604,6 +654,14 @@ export default function LibraryGrid({
                 >
                   <VideoCard video={video} onClick={!carouselMode ? () => setSelectedVideo(video) : () => {}} />
                 </div>
+                {activeFolderId && !carouselMode && (
+                  <button
+                    onClick={() => handleRemoveFromCampaign([], [video.id])}
+                    className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-gray-300 rounded-sm px-2 py-0.5 text-[10px] font-mono uppercase text-gray-500 hover:text-rust hover:border-rust"
+                  >
+                    Remove
+                  </button>
+                )}
                 {carouselMode && (
                   <CarouselOverlay
                     selIdx={selIdx}
