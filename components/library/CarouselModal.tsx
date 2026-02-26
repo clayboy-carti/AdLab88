@@ -245,7 +245,7 @@ export default function CarouselModal({ items, onItemsChange, onClose, onSchedul
         </div>
 
         {/* ── Three-column section ── */}
-        <div className="flex border-b border-outline flex-shrink-0 min-h-[280px]">
+        <div className="flex border-b border-outline flex-shrink-0 min-h-[320px]">
 
           {/* Left: Thumbnail strip + reorder */}
           <div className="flex-1 border-r border-outline flex flex-col">
@@ -258,7 +258,7 @@ export default function CarouselModal({ items, onItemsChange, onClose, onSchedul
                 {items.map((item, idx) => (
                   <div key={item.id} className="flex flex-col items-center gap-1.5 flex-shrink-0">
                     {/* Thumbnail */}
-                    <div className="relative w-24 h-24 border border-outline bg-gray-100 overflow-hidden flex-shrink-0">
+                    <div className="relative w-44 h-44 border border-outline bg-gray-100 overflow-hidden flex-shrink-0">
                       {item.signedUrl ? (
                         item.type === 'video' ? (
                           <video src={item.signedUrl} className="w-full h-full object-cover" muted />
