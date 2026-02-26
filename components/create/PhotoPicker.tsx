@@ -9,20 +9,22 @@ interface ImageWithUrl extends ReferenceImage {
 }
 
 interface Props {
+  isOpen: boolean
+  onClose: () => void
   /** Called when the user picks an image to use as reference */
   onSelect: (id: string, signedUrl: string) => void
 }
 
-export default function PhotoPicker({ onSelect }: Props) {
+export default function PhotoPicker({ isOpen, onClose, onSelect }: Props) {
   const [uploading, setUploading] = useState(false)
   const [images, setImages] = useState<ImageWithUrl[]>([])
   const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
-    loadImages()
+    if (isOpen) loadImages()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [isOpen])
 
   const loadImages = async () => {
     const {
@@ -76,7 +78,6 @@ export default function PhotoPicker({ onSelect }: Props) {
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'Upload failed')
 
-      // Get signed URL for the newly uploaded image, then auto-select + close
       const { data: signedUrlData } = await supabase.storage
         .from('reference-images')
         .createSignedUrl(result.image.storage_path, 3600)
@@ -86,6 +87,7 @@ export default function PhotoPicker({ onSelect }: Props) {
 
       if (result.image?.id && signedUrlData?.signedUrl) {
         onSelect(result.image.id, signedUrlData.signedUrl)
+        onClose()
       }
     } catch (err: any) {
       setError(err.message || 'Upload failed')
@@ -94,68 +96,100 @@ export default function PhotoPicker({ onSelect }: Props) {
     }
   }
 
+  const handleSelect = (id: string, signedUrl: string) => {
+    onSelect(id, signedUrl)
+    onClose()
+  }
+
+  if (!isOpen) return null
+
   return (
-    <div className="space-y-3">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-[10px] uppercase tracking-widest text-gray-400">
-          {images.length === 0 ? 'No photos saved' : `${images.length} / 5 in library`}
-        </span>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="bg-white border border-outline w-full max-w-lg mx-4 flex flex-col max-h-[80vh]">
 
-        <input
-          type="file"
-          accept="image/jpeg,image/png"
-          onChange={handleUpload}
-          disabled={uploading || images.length >= 5}
-          className="hidden"
-          id="photo-picker-upload"
-        />
-        <label
-          htmlFor="photo-picker-upload"
-          className={`font-mono text-[10px] uppercase tracking-widest px-2.5 py-1.5 border transition-colors ${
-            images.length >= 5 || uploading
-              ? 'text-gray-300 border-outline cursor-not-allowed'
-              : 'text-gray-500 border-outline hover:text-rust hover:border-rust cursor-pointer'
-          }`}
-        >
-          {uploading ? 'Uploading...' : '+ Upload from Device'}
-        </label>
-      </div>
-
-      {error && <p className="font-mono text-xs text-red-500">{error}</p>}
-
-      {/* Empty state */}
-      {images.length === 0 && !uploading && (
-        <div className="border border-dashed border-outline py-5 text-center">
-          <p className="font-mono text-xs text-gray-400">
-            No saved photos yet — upload one above to get started.
-          </p>
+        {/* Modal header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-outline shrink-0">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-gray-600">
+            Reference Image Library
+          </span>
+          <button
+            onClick={onClose}
+            className="font-mono text-lg text-gray-400 hover:text-rust leading-none transition-colors"
+            title="Close"
+          >
+            ×
+          </button>
         </div>
-      )}
 
-      {/* Library grid */}
-      {images.length > 0 && (
-        <>
-          <p className="font-mono text-[10px] uppercase tracking-widest text-gray-400">
-            Click a photo to use it as your reference
-          </p>
-          <div className="grid grid-cols-5 gap-2">
-            {images.map((img) => (
-              <div
-                key={img.id}
-                onClick={() => onSelect(img.id, img.signedUrl)}
-                className="relative aspect-square border border-outline cursor-pointer hover:border-rust transition-colors"
-              >
-                <img
-                  src={img.signedUrl}
-                  alt={img.file_name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ))}
+        {/* Scrollable body */}
+        <div className="overflow-y-auto p-4 space-y-3">
+
+          {/* Upload row */}
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-gray-400">
+              {images.length === 0 ? 'No photos saved' : `${images.length} / 5 in library`}
+            </span>
+
+            <input
+              type="file"
+              accept="image/jpeg,image/png"
+              onChange={handleUpload}
+              disabled={uploading || images.length >= 5}
+              className="hidden"
+              id="photo-picker-upload"
+            />
+            <label
+              htmlFor="photo-picker-upload"
+              className={`font-mono text-[10px] uppercase tracking-widest px-2.5 py-1.5 border transition-colors ${
+                images.length >= 5 || uploading
+                  ? 'text-gray-300 border-outline cursor-not-allowed'
+                  : 'text-gray-500 border-outline hover:text-rust hover:border-rust cursor-pointer'
+              }`}
+            >
+              {uploading ? 'Uploading...' : '+ Upload from Device'}
+            </label>
           </div>
-        </>
-      )}
+
+          {error && <p className="font-mono text-xs text-red-500">{error}</p>}
+
+          {/* Empty state */}
+          {images.length === 0 && !uploading && (
+            <div className="border border-dashed border-outline py-8 text-center">
+              <p className="font-mono text-xs text-gray-400">
+                No saved photos yet — upload one above to get started.
+              </p>
+            </div>
+          )}
+
+          {/* Library grid */}
+          {images.length > 0 && (
+            <>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-gray-400">
+                Click a photo to use it as your reference
+              </p>
+              <div className="grid grid-cols-4 gap-2">
+                {images.map((img) => (
+                  <div
+                    key={img.id}
+                    onClick={() => handleSelect(img.id, img.signedUrl)}
+                    className="relative aspect-square border border-outline cursor-pointer hover:border-rust transition-colors"
+                    title={img.file_name}
+                  >
+                    <img
+                      src={img.signedUrl}
+                      alt={img.file_name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

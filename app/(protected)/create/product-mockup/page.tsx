@@ -117,12 +117,6 @@ export default function ProductMockupPage() {
   const [generatedVideo, setGeneratedVideo] = useState<{ id: string; videoUrl: string } | null>(null)
   const [videoError, setVideoError] = useState<string | null>(null)
 
-  const handleRefSelect = (id: string, url: string) => {
-    setSelectedRefId(id)
-    setSelectedRefUrl(url)
-    // keep panel open — locked open as long as a ref is selected
-  }
-
   const handleGenerate = async () => {
     setGenerating(true)
     setError(null)
@@ -253,44 +247,45 @@ export default function ProductMockupPage() {
               </div>
             </div>
 
-            {/* Photo drawer */}
-            {(showPhoto || selectedRefId) && (
+            {/* Active reference panel — only shown when a reference is selected */}
+            {selectedRefId && selectedRefUrl && (
               <div className="border-t border-outline px-4 py-3">
-                <PhotoPicker onSelect={handleRefSelect} />
+                <p className="font-mono text-[10px] uppercase tracking-widest text-gray-400 mb-2">
+                  Active Reference
+                </p>
+                <div className="flex items-center gap-2 border border-outline p-2 bg-[#f7f4ef] w-fit">
+                  <img
+                    src={selectedRefUrl}
+                    alt="Reference"
+                    className="w-10 h-10 object-cover border border-outline"
+                  />
+                  <button
+                    onClick={() => {
+                      setSelectedRefId(null)
+                      setSelectedRefUrl(null)
+                    }}
+                    className="font-mono text-sm text-gray-400 hover:text-rust leading-none transition-colors"
+                    title="Remove reference"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
             )}
 
             {/* Toolbar */}
             <div className="border-t border-outline flex items-stretch divide-x divide-outline">
 
-              {/* Photo toggle */}
+              {/* Photo — opens library modal */}
               <button
-                onClick={() => setShowPhoto((v) => !v)}
-                title="Product photo"
-                className={`flex items-center gap-1.5 px-3 py-2.5 font-mono text-xs uppercase tracking-wide transition-colors hover:bg-gray-50 ${selectedRefId || showPhoto ? 'text-rust' : 'text-gray-500'}`}
+                onClick={() => setShowPhoto(true)}
+                title="Open reference image library"
+                className={`flex items-center gap-1.5 px-3 py-2.5 font-mono text-xs uppercase tracking-wide transition-colors hover:bg-gray-50 ${selectedRefId ? 'text-rust' : 'text-gray-500'}`}
               >
-                {selectedRefUrl ? (
-                  <img src={selectedRefUrl} alt="" className="w-4 h-4 object-cover border border-rust" />
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
-                    <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
-                  </svg>
-                )}
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
+                </svg>
                 <span>Photo</span>
-                {selectedRefId && (
-                  <span
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setSelectedRefId(null)
-                      setSelectedRefUrl(null)
-                      setShowPhoto(false)
-                    }}
-                    className="ml-0.5 text-gray-400 hover:text-rust leading-none"
-                    title="Remove reference"
-                  >
-                    ×
-                  </span>
-                )}
               </button>
 
               {/* Scene preset */}
@@ -596,6 +591,16 @@ export default function ProductMockupPage() {
         </div>
 
       </div>
+
+      {/* Reference image library modal */}
+      <PhotoPicker
+        isOpen={showPhoto}
+        onClose={() => setShowPhoto(false)}
+        onSelect={(id, url) => {
+          setSelectedRefId(id)
+          setSelectedRefUrl(url)
+        }}
+      />
     </div>
   )
 }
