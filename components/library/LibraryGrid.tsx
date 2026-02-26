@@ -312,14 +312,14 @@ export default function LibraryGrid({
             ) : (
               <button
                 onClick={() => setActiveFolderId(folder.id)}
-                className={`w-full text-left px-3 py-2 text-xs font-mono uppercase transition-colors rounded-sm pr-14 ${
+                className={`w-full text-left px-3 py-2 text-xs font-mono uppercase transition-all rounded-sm pr-14 border ${
                   activeFolderId === folder.id
-                    ? 'bg-graphite text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-rust border-rust text-white'
+                    : 'border-rust/40 text-rust/80 hover:border-rust hover:text-rust hover:bg-rust/5'
                 }`}
               >
                 <span className="block truncate">{folder.name}</span>
-                <span className={`${activeFolderId === folder.id ? 'text-gray-300' : 'text-gray-400'}`}>
+                <span className={`${activeFolderId === folder.id ? 'text-white/60' : 'text-rust/50'}`}>
                   ({folderCounts.get(folder.id) ?? 0})
                 </span>
               </button>
@@ -331,14 +331,14 @@ export default function LibraryGrid({
                 <button
                   onClick={() => startRename(folder)}
                   title="Rename"
-                  className="p-1 text-gray-400 hover:text-graphite transition-colors"
+                  className={`p-1 transition-colors ${activeFolderId === folder.id ? 'text-white/60 hover:text-white' : 'text-gray-400 hover:text-rust'}`}
                 >
                   <PencilIcon />
                 </button>
                 <button
                   onClick={() => handleDeleteFolder(folder.id)}
                   title="Delete campaign"
-                  className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                  className={`p-1 transition-colors ${activeFolderId === folder.id ? 'text-white/60 hover:text-white' : 'text-gray-400 hover:text-red-500'}`}
                 >
                   <TrashIcon />
                 </button>
