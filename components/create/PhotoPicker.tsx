@@ -9,7 +9,7 @@ interface ImageWithUrl extends ReferenceImage {
 }
 
 interface Props {
-  /** Called when the user picks an image — parent should close the panel */
+  /** Called when the user picks an image to use as reference */
   onSelect: (id: string, signedUrl: string) => void
 }
 
@@ -94,24 +94,6 @@ export default function PhotoPicker({ onSelect }: Props) {
     }
   }
 
-  const handleDelete = async (e: React.MouseEvent, imageId: string, storagePath: string) => {
-    e.stopPropagation()
-    if (!confirm('Remove this photo from your library?')) return
-
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) return
-
-      await supabase.storage.from('reference-images').remove([storagePath])
-      await supabase.from('reference_images').delete().eq('id', imageId)
-      await loadImages()
-    } catch {
-      setError('Failed to delete photo')
-    }
-  }
-
   return (
     <div className="space-y-3">
       {/* Header */}
@@ -162,23 +144,13 @@ export default function PhotoPicker({ onSelect }: Props) {
               <div
                 key={img.id}
                 onClick={() => onSelect(img.id, img.signedUrl)}
-                className="relative aspect-square border border-outline cursor-pointer group hover:border-rust transition-colors"
+                className="relative aspect-square border border-outline cursor-pointer hover:border-rust transition-colors"
               >
                 <img
                   src={img.signedUrl}
                   alt={img.file_name}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none" />
-                <button
-                  onClick={(e) => handleDelete(e, img.id, img.storage_path)}
-                  className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white p-0.5"
-                  title="Remove from library"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
               </div>
             ))}
           </div>
