@@ -84,27 +84,27 @@ const SCENE_PRESETS = [
 const PHOTO_SHOOT_SHOTS = [
   {
     label: 'Front Shot',
-    directive: 'Camera positioned directly in front, eye-level, 50mm lens, f/8 aperture for deep focus, approximately 3 feet from subject. Lighting identical to scene preset.',
+    directive: 'Straight-on, eye-level framing. 50mm lens perspective, f/8 deep focus, centered composition.',
   },
   {
     label: 'Three-Quarter',
-    directive: 'Camera at 45-degree angle from front, slightly elevated, 50mm lens, f/5.6 aperture, approximately 2 feet from subject. Same lighting direction and quality.',
+    directive: '45-degree angle from front, slightly elevated. 50mm lens, f/5.6 aperture, slight depth separation between subject and background.',
   },
   {
     label: 'Overhead / Flat Lay',
-    directive: 'Camera positioned directly above subject looking straight down, 35mm lens, f/11 deep focus, approximately 18 inches from subject. Lighting adapted for top-down perspective.',
+    directive: 'Directly overhead, looking straight down. 35mm lens, f/11 deep focus, flat lay composition.',
   },
   {
     label: 'Close-Up Detail',
-    directive: 'Macro close-up shot, 100mm lens, f/2.8 aperture for shallow depth of field with soft bokeh background, approximately 6 inches from subject. Same lighting source direction softened at close range.',
+    directive: 'Tight macro close-up of the product. 100mm lens, f/2.8 shallow depth of field, soft bokeh background.',
   },
   {
     label: 'Environmental Wide',
-    directive: 'Wide-angle shot showing full scene context, 24mm lens, f/11 for deep focus, approximately 7 feet from subject. Complete scene environment visible with consistent lighting.',
+    directive: 'Wide-angle view that shows the full scene and surrounding environment. 24mm lens, f/11 deep focus, expansive composition.',
   },
   {
     label: 'Low Angle Hero',
-    directive: 'Camera positioned at ground level pointing upward toward subject, 35mm lens, f/4 aperture for moderate depth of field, approximately 2 feet from subject. Same scene lighting with slight dramatic upward perspective.',
+    directive: 'Camera at ground level pointing upward toward the subject. 35mm lens, f/4, dramatic upward perspective against the scene environment.',
   },
 ]
 

@@ -88,25 +88,45 @@ Keep the visual format identical to the reference. Only swap in the new brand co
 
   // MODE 3: PRODUCT MOCKUP (lifestyle scene placement)
   if (mode === 'product_mockup') {
-    const scene = userContext || 'a clean, natural lifestyle setting that suits the product'
+    // Split out an embedded CAMERA ANGLE directive if present (injected by photo shoot batch mode).
+    // Format: "<scene text>\n\nCAMERA ANGLE: <directive>"  OR  "CAMERA ANGLE: <directive>" (no scene)
+    let sceneDescription = userContext || ''
+    let cameraAngle = ''
+
+    const cameraMarker = '\n\nCAMERA ANGLE:'
+    if (sceneDescription.includes(cameraMarker)) {
+      const splitIdx = sceneDescription.indexOf(cameraMarker)
+      cameraAngle = sceneDescription.slice(splitIdx + cameraMarker.length).trim()
+      sceneDescription = sceneDescription.slice(0, splitIdx).trim()
+    } else if (sceneDescription.startsWith('CAMERA ANGLE:')) {
+      cameraAngle = sceneDescription.replace('CAMERA ANGLE:', '').trim()
+      sceneDescription = ''
+    }
+
+    const scene = sceneDescription || 'a clean, natural lifestyle setting that suits the product'
+
     const colorHint =
       brand.brand_colors && brand.brand_colors.length > 0
         ? `\nSubtly incorporate the brand colors (${brand.brand_colors.join(', ')}) in the background or environment where natural.`
         : ''
 
+    const cameraSection = cameraAngle
+      ? `\nCAMERA ANGLE: ${cameraAngle}\n`
+      : ''
+
     const prompt = `Create a photorealistic lifestyle photo for ${brand.company_name}.
 
 SCENE: ${scene}
 
-TASK: Generate this scene exactly as described, with the product from the reference image naturally integrated into it. The scene description is the director — let it determine the camera angle, framing, distance, and composition. If the scene describes a person wearing or using the product, show the full person/environment; do NOT zoom into the product or reframe as a close-up product shot.
-
+TASK: Generate this scene exactly as described, with the product from the reference image naturally placed into it. The scene description defines the environment, mood, and setting — build a completely new world around the product. If the scene describes a person wearing or using the product, show the full person/environment; do NOT zoom into the product or reframe as a close-up product shot.
+${cameraSection}
 PRODUCT ACCURACY:
 • Reproduce the product exactly — same shape, label, colors, and branding. Do not alter the product.
 • The product should look naturally worn, held, or placed — not composited or photoshopped in.
 
 COMPOSITION:
-• Frame and compose to match the described scene (e.g. full-body, street-level, wide environment, etc.)
-• The product is visible and recognizable within the scene — but the scene context drives the shot, not the other way around.
+• Frame and compose to match the described scene and camera angle.
+• The product is visible and recognizable within the scene — but the scene environment drives the shot, not the other way around.
 
 VISUAL STYLE:
 • Photorealistic — no illustrations, no stylized renders
@@ -118,6 +138,7 @@ Quality benchmark: editorial lifestyle photography — authentic, aspirational, 
     console.log('[ReplicatePrompt] Mode: PRODUCT MOCKUP')
     console.log(`  Brand: ${brand.company_name}`)
     console.log(`  Scene: ${scene}`)
+    if (cameraAngle) console.log(`  Camera angle: ${cameraAngle}`)
     console.log(`  Prompt length: ${prompt.length} chars`)
 
     return prompt
