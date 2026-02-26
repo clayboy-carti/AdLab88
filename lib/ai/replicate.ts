@@ -187,22 +187,29 @@ export async function generateImageWithReplicate(
  * @param retries - Number of retry attempts (default 1)
  */
 export async function generateImageWithSeedream(
-  referenceImageUrl: string | null,
+  referenceImageUrls: string | string[] | null,
   prompt: string,
   userId: string,
   imageSize: '1K' | '2K' = '1K',
   aspectRatio = '1:1',
   retries = 1
 ): Promise<ReplicateGenerationResult> {
+  // Normalise to a flat array
+  const refUrls: string[] = Array.isArray(referenceImageUrls)
+    ? referenceImageUrls.filter(Boolean)
+    : referenceImageUrls
+      ? [referenceImageUrls]
+      : []
+
   let lastError: Error | null = null
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const hasReference = !!referenceImageUrl
+      const hasReference = refUrls.length > 0
       console.log(`[Seedream] Generating image (attempt ${attempt + 1}/${retries + 1})...`)
       console.log(`[Seedream] Model: bytedance/seedream-4`)
       console.log(
-        `[Seedream] Mode: ${hasReference ? 'image-to-image (with reference)' : 'text-to-image'}`
+        `[Seedream] Mode: ${hasReference ? `image-to-image (${refUrls.length} reference${refUrls.length > 1 ? 's' : ''})` : 'text-to-image'}`
       )
       console.log(`[Seedream] Quality: ${imageSize}, Aspect ratio: ${aspectRatio}`)
       console.log(`[Seedream] Prompt length: ${prompt.length} chars`)
@@ -216,8 +223,8 @@ export async function generateImageWithSeedream(
       }
 
       if (hasReference) {
-        input.image_input = [referenceImageUrl]
-        console.log(`[Seedream] Reference image: ${referenceImageUrl!.substring(0, 100)}...`)
+        input.image_input = refUrls
+        console.log(`[Seedream] Reference images (${refUrls.length}): ${refUrls.map(u => u.substring(0, 60)).join(', ')}...`)
       }
 
       console.log('[Seedream] Full input payload:', JSON.stringify(input, null, 2))

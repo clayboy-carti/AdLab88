@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
     // 2. Parse request body
     const body = await request.json()
-    const { user_context, image_quality, aspect_ratio, creativity, post_type, image_model, title, reference_image_id } = body
+    const { user_context, image_quality, aspect_ratio, creativity, post_type, image_model, title, reference_image_id, reference_image_ids } = body
     const userContext: string | undefined = user_context?.trim() || undefined
     const imageQuality: '1K' | '2K' = image_quality === '2K' ? '2K' : '1K'
     const imageAspectRatio: string = aspect_ratio || '1:1'
@@ -70,39 +70,45 @@ export async function POST(request: Request) {
 
     console.log(`[Generate] Brand loaded: ${brand.company_name}`)
 
-    // 4-5. Resolve reference image
-    // Product mockups: use the explicitly selected reference_image_id from the request body.
+    // 4-5. Resolve reference image(s)
+    // Product mockups: use the explicitly selected reference_image_ids from the request body.
     // Ads: auto-fetch the user's most recently uploaded image (legacy behavior).
-    let referenceImageUrl: string | null = null
+    let referenceImageUrls: string[] = []
     let usedReferenceImageId: string | null = null
 
     if (postType === 'product_mockup') {
-      const selectedRefId: string | null = reference_image_id || null
+      // Accept either reference_image_ids (array) or legacy reference_image_id (single)
+      const selectedIds: string[] = Array.isArray(reference_image_ids)
+        ? reference_image_ids.filter(Boolean)
+        : reference_image_id
+          ? [reference_image_id]
+          : []
 
-      if (selectedRefId) {
-        const { data: refImg } = await supabase
+      if (selectedIds.length > 0) {
+        const { data: refImgs } = await supabase
           .from('reference_images')
           .select('id, file_name, storage_path')
           .eq('user_id', user.id)
-          .eq('id', selectedRefId)
-          .single()
+          .in('id', selectedIds)
 
-        if (refImg) {
+        if (refImgs && refImgs.length > 0) {
+          const paths = refImgs.map((img) => img.storage_path)
           const { data: signedUrlData, error: urlError } = await supabase.storage
             .from('reference-images')
-            .createSignedUrl(refImg.storage_path, 3600)
+            .createSignedUrls(paths, 3600)
 
-          if (urlError || !signedUrlData?.signedUrl) {
-            console.error('[Generate] Failed to create signed URL:', urlError)
+          if (urlError || !signedUrlData) {
+            console.error('[Generate] Failed to create signed URLs:', urlError)
             return NextResponse.json(
-              { error: 'Failed to access reference image' },
+              { error: 'Failed to access reference images' },
               { status: 500 }
             )
           }
 
-          referenceImageUrl = signedUrlData.signedUrl
-          usedReferenceImageId = refImg.id
-          console.log(`[Generate] Product mockup: using selected reference (${refImg.file_name})`)
+          const urlMap = new Map(signedUrlData.map((item) => [item.path, item.signedUrl]))
+          referenceImageUrls = refImgs.map((img) => urlMap.get(img.storage_path) ?? '').filter(Boolean)
+          usedReferenceImageId = refImgs[0].id // store first as primary for DB record
+          console.log(`[Generate] Product mockup: using ${referenceImageUrls.length} reference image(s) (${refImgs.map(i => i.file_name).join(', ')})`)
         }
       } else {
         console.log('[Generate] Product mockup: no reference selected — generating without reference')
@@ -131,7 +137,7 @@ export async function POST(request: Request) {
           )
         }
 
-        referenceImageUrl = signedUrlData.signedUrl
+        referenceImageUrls = [signedUrlData.signedUrl]
         usedReferenceImageId = referenceImage.id
         console.log(`[Generate] Ad: auto-using most recent reference (${referenceImage.file_name})`)
       } else {
@@ -139,9 +145,9 @@ export async function POST(request: Request) {
       }
     }
 
-    const hasReference = !!referenceImageUrl
+    const hasReference = referenceImageUrls.length > 0
     console.log(
-      `[Generate] Mode: ${hasReference ? `Reference-based (ID: ${usedReferenceImageId})` : 'Original framework-driven creation'}`
+      `[Generate] Mode: ${hasReference ? `Reference-based (ID: ${usedReferenceImageId}, ${referenceImageUrls.length} image(s))` : 'Original framework-driven creation'}`
     )
 
     // 6. Generate copy — skip OpenAI for product mockups (visual is the focus)
@@ -175,7 +181,7 @@ export async function POST(request: Request) {
     if (hasReference && postType === 'ad') {
       console.log('[Generate] === PHASE 2a: Detecting meme template ===')
       memeContext = await detectMemeTemplate(
-        referenceImageUrl!,
+        referenceImageUrls[0],
         brand as Brand,
         generatedCopy,
         userContext
@@ -218,7 +224,7 @@ export async function POST(request: Request) {
     if (imageModelChoice === 'seedream') {
       console.log('[Generate] === PHASE 3: Generating image with Seedream 4 (Replicate) ===')
       generatedImage = await generateImageWithSeedream(
-        referenceImageUrl,
+        referenceImageUrls.length > 0 ? referenceImageUrls : null,
         imagePrompt,
         user.id,
         imageQuality,
@@ -228,7 +234,7 @@ export async function POST(request: Request) {
     } else {
       console.log('[Generate] === PHASE 3: Generating image with Gemini 2.0 Flash ===')
       generatedImage = await generateImageWithGemini(
-        referenceImageUrl, // null if no reference (text-to-image mode)
+        referenceImageUrls.length > 0 ? referenceImageUrls : null,
         imagePrompt,
         user.id,
         hasReference ? 0.35 : 0.0,

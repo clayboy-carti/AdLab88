@@ -107,8 +107,7 @@ export default function ProductMockupPage() {
 
   const [imageTitle, setImageTitle] = useState('')
   const [showPhoto, setShowPhoto] = useState(false)
-  const [selectedRefId, setSelectedRefId] = useState<string | null>(null)
-  const [selectedRefUrl, setSelectedRefUrl] = useState<string | null>(null)
+  const [selectedRefs, setSelectedRefs] = useState<{ id: string; url: string }[]>([])
 
   // Video generation state
   const [videoTitle, setVideoTitle] = useState('')
@@ -142,7 +141,7 @@ export default function ProductMockupPage() {
           post_type: 'product_mockup',
           image_model: imageModel,
           title: imageTitle.trim(),
-          reference_image_id: selectedRefId || undefined,
+          reference_image_ids: selectedRefs.length > 0 ? selectedRefs.map((r) => r.id) : undefined,
         }),
       })
 
@@ -247,28 +246,32 @@ export default function ProductMockupPage() {
               </div>
             </div>
 
-            {/* Active reference panel — only shown when a reference is selected */}
-            {selectedRefId && selectedRefUrl && (
+            {/* Active reference panel — only shown when references are selected */}
+            {selectedRefs.length > 0 && (
               <div className="border-t border-outline px-4 py-3">
                 <p className="font-mono text-[10px] uppercase tracking-widest text-gray-400 mb-2">
-                  Active Reference
+                  Active References
                 </p>
-                <div className="flex items-center gap-2 border border-outline p-2 bg-[#f7f4ef] w-fit">
-                  <img
-                    src={selectedRefUrl}
-                    alt="Reference"
-                    className="w-10 h-10 object-cover border border-outline"
-                  />
-                  <button
-                    onClick={() => {
-                      setSelectedRefId(null)
-                      setSelectedRefUrl(null)
-                    }}
-                    className="font-mono text-sm text-gray-400 hover:text-rust leading-none transition-colors"
-                    title="Remove reference"
-                  >
-                    ×
-                  </button>
+                <div className="flex flex-wrap gap-2">
+                  {selectedRefs.map((ref) => (
+                    <div
+                      key={ref.id}
+                      className="flex items-center gap-1.5 border border-outline p-1.5 bg-[#f7f4ef]"
+                    >
+                      <img
+                        src={ref.url}
+                        alt="Reference"
+                        className="w-10 h-10 object-cover border border-outline"
+                      />
+                      <button
+                        onClick={() => setSelectedRefs((prev) => prev.filter((r) => r.id !== ref.id))}
+                        className="font-mono text-sm text-gray-400 hover:text-rust leading-none transition-colors"
+                        title="Remove this reference"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -280,7 +283,7 @@ export default function ProductMockupPage() {
               <button
                 onClick={() => setShowPhoto(true)}
                 title="Open reference image library"
-                className={`flex items-center gap-1.5 px-3 py-2.5 font-mono text-xs uppercase tracking-wide transition-colors hover:bg-gray-50 ${selectedRefId ? 'text-rust' : 'text-gray-500'}`}
+                className={`flex items-center gap-1.5 px-3 py-2.5 font-mono text-xs uppercase tracking-wide transition-colors hover:bg-gray-50 ${selectedRefs.length > 0 ? 'text-rust' : 'text-gray-500'}`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
                   <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
@@ -551,8 +554,7 @@ export default function ProductMockupPage() {
                       setMotionPrompt('')
                       setImageTitle('')
                       setVideoTitle('')
-                      setSelectedRefId(null)
-                      setSelectedRefUrl(null)
+                      setSelectedRefs([])
                       setShowPhoto(false)
                     }}
                     className="btn-secondary w-full"
@@ -597,8 +599,11 @@ export default function ProductMockupPage() {
         isOpen={showPhoto}
         onClose={() => setShowPhoto(false)}
         onSelect={(id, url) => {
-          setSelectedRefId(id)
-          setSelectedRefUrl(url)
+          setSelectedRefs((prev) => {
+            // Avoid duplicates
+            if (prev.some((r) => r.id === id)) return prev
+            return [...prev, { id, url }]
+          })
         }}
       />
     </div>
