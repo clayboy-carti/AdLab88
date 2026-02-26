@@ -150,6 +150,9 @@ export default function ProductMockupPage() {
   const [generatedVideo, setGeneratedVideo] = useState<{ id: string; videoUrl: string } | null>(null)
   const [videoError, setVideoError] = useState<string | null>(null)
 
+  // Image preview modal
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
   // Photo shoot state
   const [photoShootMode, setPhotoShootMode] = useState(false)
   const [photoShootGenerating, setPhotoShootGenerating] = useState(false)
@@ -615,33 +618,44 @@ export default function ProductMockupPage() {
                               <p className="font-mono text-[10px] text-red-500 text-center leading-snug">{slot.error}</p>
                             </div>
                           ) : slot.ad ? (
-                            <button
-                              onClick={() => {
-                                if (selectedShootAdId === slot.ad!.id) {
-                                  setSelectedShootAdId(null)
-                                  setSelectedShootLabel(null)
-                                  setGeneratedVideo(null)
-                                  setVideoError(null)
-                                } else {
-                                  setSelectedShootAdId(slot.ad!.id)
-                                  setSelectedShootLabel(slot.shot.label)
-                                  setGeneratedVideo(null)
-                                  setVideoError(null)
-                                  setVideoTitle(`${imageTitle.trim()} — ${slot.shot.label}`)
-                                }
-                              }}
-                              className={`aspect-square border overflow-hidden transition-all ${
-                                selectedShootAdId === slot.ad.id
-                                  ? 'border-rust ring-2 ring-rust ring-offset-1'
-                                  : 'border-outline hover:border-rust'
-                              }`}
-                            >
-                              <img
-                                src={slot.ad.generatedImageUrl}
-                                alt={slot.shot.label}
-                                className="w-full h-full object-cover"
-                              />
-                            </button>
+                            <div className="relative group">
+                              <button
+                                onClick={() => {
+                                  if (selectedShootAdId === slot.ad!.id) {
+                                    setSelectedShootAdId(null)
+                                    setSelectedShootLabel(null)
+                                    setGeneratedVideo(null)
+                                    setVideoError(null)
+                                  } else {
+                                    setSelectedShootAdId(slot.ad!.id)
+                                    setSelectedShootLabel(slot.shot.label)
+                                    setGeneratedVideo(null)
+                                    setVideoError(null)
+                                    setVideoTitle(`${imageTitle.trim()} — ${slot.shot.label}`)
+                                  }
+                                }}
+                                className={`aspect-square border overflow-hidden transition-all w-full block ${
+                                  selectedShootAdId === slot.ad.id
+                                    ? 'border-rust ring-2 ring-rust ring-offset-1'
+                                    : 'border-outline hover:border-rust'
+                                }`}
+                              >
+                                <img
+                                  src={slot.ad.generatedImageUrl}
+                                  alt={slot.shot.label}
+                                  className="w-full h-full object-cover"
+                                />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setPreviewUrl(slot.ad!.generatedImageUrl) }}
+                                className="absolute top-1.5 right-1.5 bg-white/90 border border-outline p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white z-10"
+                                title="Preview image"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+                                  <polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" />
+                                </svg>
+                              </button>
+                            </div>
                           ) : null}
                           {/* Shot label */}
                           <p className="font-mono text-[10px] text-gray-500 uppercase tracking-wider text-center truncate">
@@ -810,12 +824,21 @@ export default function ProductMockupPage() {
                 {!generating && generatedAd && (
                   <div className="p-4 space-y-3">
                     {generatedAd.generatedImageUrl && (
-                      <div className="border border-outline overflow-hidden">
+                      <div className="border border-outline overflow-hidden relative group">
                         <img
                           src={generatedAd.generatedImageUrl}
                           alt="Product mockup"
                           className="w-full h-auto"
                         />
+                        <button
+                          onClick={() => setPreviewUrl(generatedAd.generatedImageUrl)}
+                          className="absolute top-2 right-2 bg-white/90 border border-outline p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+                          title="Preview image"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+                            <polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" />
+                          </svg>
+                        </button>
                       </div>
                     )}
 
@@ -983,6 +1006,37 @@ export default function ProductMockupPage() {
         </div>
 
       </div>
+
+      {/* Image preview modal */}
+      {previewUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/70"
+          onClick={() => setPreviewUrl(null)}
+        >
+          <div
+            className="relative max-w-4xl w-full max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-[#e4dcc8] border border-outline px-4 py-2 flex items-center justify-between">
+              <span className="font-mono text-xs uppercase tracking-widest">Preview</span>
+              <button
+                onClick={() => setPreviewUrl(null)}
+                className="font-mono text-sm text-gray-500 hover:text-rust transition-colors leading-none"
+                title="Close preview"
+              >
+                ×
+              </button>
+            </div>
+            <div className="border-x border-b border-outline bg-white overflow-auto flex items-center justify-center">
+              <img
+                src={previewUrl}
+                alt="Preview"
+                className="max-w-full max-h-[80vh] object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Reference image library modal */}
       <PhotoPicker
