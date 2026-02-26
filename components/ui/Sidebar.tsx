@@ -52,7 +52,7 @@ export default function Sidebar() {
   ]
 
   return (
-    <aside className="w-16 lg:w-[280px] h-screen bg-forest text-paper fixed left-0 top-0 flex flex-col z-40 transition-all duration-200">
+    <aside className="w-16 lg:w-[240px] h-screen bg-forest text-paper fixed left-0 top-0 flex flex-col z-40 transition-all duration-200">
       {/* Logo */}
       <div className="h-[72px] flex items-center justify-center lg:justify-start lg:px-6 border-b border-paper/20 flex-shrink-0">
         <span className="text-sm uppercase font-mono font-bold lg:hidden">AL</span>
