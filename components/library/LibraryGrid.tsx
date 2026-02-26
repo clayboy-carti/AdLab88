@@ -312,14 +312,14 @@ export default function LibraryGrid({
             ) : (
               <button
                 onClick={() => setActiveFolderId(folder.id)}
-                className={`w-full text-left px-3 py-2 text-xs font-mono uppercase transition-all rounded-sm pr-14 border ${
+                className={`w-full text-left px-3 py-2.5 text-[11px] font-bold font-mono uppercase tracking-wider transition-all rounded border-2 pr-14 shadow-sm ${
                   activeFolderId === folder.id
-                    ? 'bg-rust border-rust text-white'
-                    : 'border-rust/40 text-rust/80 hover:border-rust hover:text-rust hover:bg-rust/5'
+                    ? 'bg-rust border-rust text-white shadow-rust/30'
+                    : 'bg-rust/8 border-rust/60 text-rust hover:bg-rust/15 hover:border-rust'
                 }`}
               >
                 <span className="block truncate">{folder.name}</span>
-                <span className={`${activeFolderId === folder.id ? 'text-white/60' : 'text-rust/50'}`}>
+                <span className={`text-[10px] font-normal ${activeFolderId === folder.id ? 'text-white/60' : 'text-rust/60'}`}>
                   ({folderCounts.get(folder.id) ?? 0})
                 </span>
               </button>
