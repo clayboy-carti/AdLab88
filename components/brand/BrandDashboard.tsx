@@ -136,7 +136,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
           <p className="text-sm text-graphite/60 mt-2 font-sans">{brand.what_we_do}</p>
         </div>
         <div className="flex items-center gap-4 pt-2 shrink-0">
-          <span className="text-xs font-mono text-gray-400">
+          <span className="text-xs font-mono text-graphite/40">
             Last Updated: {formatDate(brand.updated_at)}
           </span>
           {!isEditing && (
@@ -159,7 +159,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
           >
             {/* Core Identity — spans 2 rows */}
             <div className="card row-span-2 flex flex-col gap-5">
-              <p className="text-xs font-mono uppercase tracking-widest text-gray-400">
+              <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">
                 Core Identity
               </p>
               <div>
@@ -224,7 +224,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
 
             {/* Voice & Messaging */}
             <div className="card flex flex-col gap-5">
-              <p className="text-xs font-mono uppercase tracking-widest text-gray-400">
+              <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">
                 Voice &amp; Messaging
               </p>
               <div>
@@ -242,7 +242,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                     className="config-input text-xs mt-1"
                     placeholder="bold, direct, ..."
                   />
-                  <p className="text-xs text-gray-400 mt-1 font-mono">comma-separated</p>
+                  <p className="text-xs text-graphite/40 mt-1 font-mono">comma-separated</p>
                 </div>
                 <div>
                   <FieldLabel>Words to Avoid</FieldLabel>
@@ -251,14 +251,14 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                     className="config-input text-xs mt-1"
                     placeholder="cheap, basic, ..."
                   />
-                  <p className="text-xs text-gray-400 mt-1 font-mono">comma-separated</p>
+                  <p className="text-xs text-graphite/40 mt-1 font-mono">comma-separated</p>
                 </div>
               </div>
             </div>
 
             {/* Brand Snapshot */}
             <div className="card flex flex-col gap-5">
-              <p className="text-xs font-mono uppercase tracking-widest text-gray-400">
+              <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">
                 Brand Snapshot
               </p>
               <div>
@@ -268,13 +268,13 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                   className="config-input text-xs mt-1"
                   placeholder="innovative, bold, ..."
                 />
-                <p className="text-xs text-gray-400 mt-1 font-mono">comma-separated</p>
+                <p className="text-xs text-graphite/40 mt-1 font-mono">comma-separated</p>
               </div>
             </div>
 
             {/* Visual Identity — spans 2 cols */}
             <div className="card col-span-2 flex flex-col gap-5">
-              <p className="text-xs font-mono uppercase tracking-widest text-gray-400">
+              <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">
                 Visual Identity
               </p>
               <div className="grid grid-cols-2 gap-6">
@@ -295,7 +295,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                     className="config-input text-xs"
                     placeholder="#1F3A32, #B55233"
                   />
-                  <p className="text-xs text-gray-400 mt-1 font-mono">comma-separated hex codes</p>
+                  <p className="text-xs text-graphite/40 mt-1 font-mono">comma-separated hex codes</p>
                 </div>
                 <div>
                   <FieldLabel>Typography Notes</FieldLabel>
@@ -337,7 +337,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
         >
           {/* Core Identity — spans 2 rows */}
           <div className="card row-span-2 flex flex-col gap-5">
-            <p className="text-xs font-mono uppercase tracking-widest text-gray-400">
+            <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">
               Core Identity
             </p>
             <div>
@@ -350,7 +350,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
             </div>
             <hr className="border-forest/15" />
             <div>
-              <p className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-2">
+              <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
                 What We Do
               </p>
               <p className="text-sm font-sans text-graphite leading-relaxed">{brand.what_we_do}</p>
@@ -358,7 +358,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
             <hr className="border-forest/15" />
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-2">
+                <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
                   Target Audience
                 </p>
                 <p className="text-sm font-sans text-graphite leading-relaxed">
@@ -367,7 +367,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
               </div>
               {brand.unique_differentiator && (
                 <div>
-                  <p className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-2">
+                  <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
                     Differentiator
                   </p>
                   <p className="text-sm font-sans text-graphite leading-relaxed">
@@ -380,7 +380,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
 
           {/* Voice & Messaging */}
           <div className="card flex flex-col gap-5">
-            <p className="text-xs font-mono uppercase tracking-widest text-gray-400">
+            <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">
               Voice &amp; Messaging
             </p>
             {brand.voice_summary && (
@@ -391,7 +391,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
             <div className="grid grid-cols-2 gap-4">
               {brand.words_to_use && brand.words_to_use.length > 0 && (
                 <div>
-                  <p className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-2">
+                  <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
                     Words to Use
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -408,7 +408,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
               )}
               {brand.words_to_avoid && brand.words_to_avoid.length > 0 && (
                 <div>
-                  <p className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-2">
+                  <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
                     Words to Avoid
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -428,7 +428,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
 
           {/* Brand Snapshot */}
           <div className="card flex flex-col gap-3">
-            <p className="text-xs font-mono uppercase tracking-widest text-gray-400">
+            <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">
               Brand Snapshot
             </p>
             {brand.personality_traits && brand.personality_traits.length > 0 && (
@@ -447,12 +447,12 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
 
           {/* Visual Identity — spans 2 cols */}
           <div className="card col-span-2 flex flex-col gap-5">
-            <p className="text-xs font-mono uppercase tracking-widest text-gray-400">
+            <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">
               Visual Identity
             </p>
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <p className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-3">
+                <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-3">
                   Brand Colors
                 </p>
                 {brand.brand_colors && brand.brand_colors.length > 0 ? (
@@ -463,16 +463,16 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                           style={{ backgroundColor: color }}
                           className="w-12 h-12 rounded border border-outline/10"
                         />
-                        <span className="text-xs font-mono text-gray-400">{color}</span>
+                        <span className="text-xs font-mono text-graphite/40">{color}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs font-sans text-gray-400 italic">No colors defined</p>
+                  <p className="text-xs font-sans text-graphite/40 italic">No colors defined</p>
                 )}
               </div>
               <div>
-                <p className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-3">
+                <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-3">
                   Typography
                 </p>
                 <p className="text-3xl font-bold font-sans text-graphite/10 leading-none select-none">
@@ -483,7 +483,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                 </p>
                 {brand.typography_notes && (
                   <>
-                    <p className="text-xs font-mono uppercase tracking-widest text-gray-400 mt-4 mb-1">
+                    <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mt-4 mb-1">
                       Font Stack
                     </p>
                     <p className="text-xs font-sans text-graphite">{brand.typography_notes}</p>
@@ -502,6 +502,6 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-xs font-mono uppercase tracking-widest text-gray-400">{children}</p>
+    <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">{children}</p>
   )
 }
