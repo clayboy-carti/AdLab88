@@ -585,7 +585,7 @@ export default function ProductMockupPage() {
                 <ImagePlus size={14} strokeWidth={1.8} />
                 Photo{selectedRefs.length > 0 ? ` (${selectedRefs.length})` : ''}
               </button>
-              <div className="flex-1 relative">
+              <div className="relative">
                 <select
                   value={selectedPreset}
                   onChange={(e) => {
@@ -596,7 +596,7 @@ export default function ProductMockupPage() {
                       if (preset) setSceneText(preset.description)
                     }
                   }}
-                  className="w-full appearance-none rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 pr-8 text-xs font-mono text-graphite/50 focus:outline-none focus:border-forest/50 cursor-pointer"
+                  className="appearance-none rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 pr-8 text-xs font-mono text-graphite/50 focus:outline-none focus:border-forest/50 cursor-pointer"
                 >
                   <option value="">Select Preset…</option>
                   {SCENE_PRESETS.map((p) => (
@@ -666,13 +666,13 @@ export default function ProductMockupPage() {
                   ))}
                 </div>
               </div>
-              <div className="flex flex-col gap-1.5 flex-1">
+              <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Model</label>
                 <div className="relative">
                   <select
                     value={imageModel}
                     onChange={(e) => setImageModel(e.target.value as 'gemini' | 'seedream')}
-                    className="w-full appearance-none rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-1.5 pr-8 text-sm font-mono text-graphite focus:outline-none focus:border-forest/50 cursor-pointer"
+                    className="appearance-none rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-1.5 pr-8 text-sm font-mono text-graphite focus:outline-none focus:border-forest/50 cursor-pointer"
                   >
                     <option value="gemini">Gemini</option>
                     <option value="seedream">Seedream 4</option>
