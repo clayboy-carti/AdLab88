@@ -647,7 +647,7 @@ export default function ProductMockupPage() {
             </div>
 
             {/* Resolution + Model row */}
-            <div className="flex gap-4 items-end">
+            <div className="flex gap-6 items-start">
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Resolution</label>
                 <div className="flex gap-1.5">
@@ -672,7 +672,7 @@ export default function ProductMockupPage() {
                   <select
                     value={imageModel}
                     onChange={(e) => setImageModel(e.target.value as 'gemini' | 'seedream')}
-                    className="w-full appearance-none rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 pr-8 text-sm font-mono text-graphite focus:outline-none focus:border-forest/50 cursor-pointer"
+                    className="w-full appearance-none rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-1.5 pr-8 text-sm font-mono text-graphite focus:outline-none focus:border-forest/50 cursor-pointer"
                   >
                     <option value="gemini">Gemini</option>
                     <option value="seedream">Seedream 4</option>
