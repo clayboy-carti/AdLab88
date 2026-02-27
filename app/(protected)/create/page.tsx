@@ -15,7 +15,7 @@ const CONTENT_TYPES = [
     title: 'Product Mockup',
     description:
       'Upload a product photo. Describe a scene. Gemini places your product there with photorealistic quality — ready for social or your site.',
-    badge: 'Single',
+    badge: 'Single · Batch ×6',
   },
 ]
 
