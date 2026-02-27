@@ -512,33 +512,34 @@ export default function Calendar({ posts = [] }: CalendarProps) {
                     const monthAbbr = MONTH_NAMES[parseInt(post.date.slice(5, 7)) - 1].slice(0, 3)
                     const isUnscheduling = unschedulingId === post.id
                     return (
-                      <div key={post.id} className="rounded-xl border border-forest/15 overflow-hidden bg-paper/30 w-[200px] flex-shrink-0">
+                      <div key={post.id} className="rounded-xl border border-rust/40 overflow-hidden bg-white w-[200px] flex-shrink-0 flex flex-col shadow-sm">
+                        <div className="h-1 bg-rust/70 w-full" />
                         <button
                           onClick={() => setSelectedPost(post)}
-                          className="flex items-center gap-3 w-full text-left p-3 hover:bg-forest/5 transition-colors"
+                          className="flex flex-col gap-2 w-full text-left p-3 hover:bg-rust/5 transition-colors flex-1"
                         >
-                          <div className="flex flex-col items-center flex-shrink-0 w-9">
-                            <span className="text-xl font-bold text-graphite leading-none">{day}</span>
-                            <span className="text-[9px] font-mono uppercase text-graphite/45 mt-0.5">{monthAbbr}</span>
+                          <div className="flex items-center justify-between gap-1">
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-lg font-bold text-graphite leading-none">{day}</span>
+                              <span className="text-[9px] font-mono uppercase text-graphite/45">{monthAbbr}</span>
+                            </div>
+                            <span className="text-[9px] font-mono uppercase text-rust/70 tracking-wide">{post.platform}</span>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-[9px] font-mono uppercase text-graphite/40 tracking-wide block">{post.platform}</span>
-                            {post.hook && (
-                              <p className="text-xs font-medium text-graphite truncate mt-0.5">{post.hook}</p>
-                            )}
-                          </div>
+                          {post.hook && (
+                            <p className="text-xs font-medium text-graphite leading-snug line-clamp-4">{post.hook}</p>
+                          )}
                         </button>
-                        <div className="flex border-t border-forest/10">
+                        <div className="flex border-t border-rust/20">
                           <button
                             onClick={() => setSelectedPost(post)}
-                            className="flex-1 py-1.5 text-[10px] font-mono uppercase text-graphite/45 hover:bg-forest/5 transition-colors text-center"
+                            className="flex-1 py-1.5 text-[10px] font-mono uppercase text-graphite/45 hover:bg-rust/5 hover:text-rust transition-colors text-center"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleUnschedule(post.id)}
                             disabled={isUnscheduling}
-                            className="flex-1 py-1.5 text-[10px] font-mono uppercase text-graphite/45 hover:bg-red-50 hover:text-red-500 border-l border-forest/10 disabled:opacity-40 transition-colors text-center"
+                            className="flex-1 py-1.5 text-[10px] font-mono uppercase text-graphite/45 hover:bg-red-50 hover:text-red-500 border-l border-rust/20 disabled:opacity-40 transition-colors text-center"
                           >
                             {isUnscheduling ? '...' : 'Remove'}
                           </button>
