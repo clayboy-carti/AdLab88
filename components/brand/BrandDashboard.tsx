@@ -12,6 +12,15 @@ import {
 } from '@/lib/validations/brand'
 import type { Brand } from '@/types/database'
 
+type Section = 'core' | 'voice' | 'snapshot' | 'visual'
+
+const SECTION_FIELDS: Record<Section, (keyof BrandFormData)[]> = {
+  core: ['company_name', 'what_we_do', 'target_audience', 'unique_differentiator', 'sample_copy'],
+  voice: ['voice_summary', 'words_to_use', 'words_to_avoid'],
+  snapshot: ['personality_traits'],
+  visual: ['brand_colors', 'typography_notes'],
+}
+
 function toBrandFormData(b: Brand): BrandFormData {
   return {
     company_name: b.company_name,
@@ -38,17 +47,18 @@ function formatDate(dateStr: string) {
 
 export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
   const [brand, setBrand] = useState(initial)
-  const [isEditing, setIsEditing] = useState(false)
+  const [editingSection, setEditingSection] = useState<Section | null>(null)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const supabase = createClient()
 
   const {
     register,
-    handleSubmit,
     watch,
     formState: { errors },
     reset,
+    getValues,
+    trigger,
   } = useForm<BrandFormData>({
     resolver: zodResolver(brandSchema),
     defaultValues: toBrandFormData(brand),
@@ -57,7 +67,22 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
   const colorsRaw = watch('brand_colors')
   const liveColors = parseColors(colorsRaw) ?? []
 
-  const onSave = handleSubmit(async (data) => {
+  const startEdit = (section: Section) => {
+    setSaveError(null)
+    setEditingSection(section)
+  }
+
+  const cancelEdit = () => {
+    reset(toBrandFormData(brand))
+    setSaveError(null)
+    setEditingSection(null)
+  }
+
+  const saveSection = async (section: Section) => {
+    const valid = await trigger(SECTION_FIELDS[section])
+    if (!valid) return
+
+    const data = getValues()
     setSaving(true)
     setSaveError(null)
     try {
@@ -111,19 +136,16 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
         words_to_avoid: parsed.words_to_avoid ?? prev.words_to_avoid,
         brand_colors: parsed.brand_colors ?? prev.brand_colors,
       }))
-      setIsEditing(false)
+      setEditingSection(null)
     } catch (err: any) {
       setSaveError(err.message || 'Failed to save')
     } finally {
       setSaving(false)
     }
-  })
-
-  const handleCancel = () => {
-    reset(toBrandFormData(brand))
-    setSaveError(null)
-    setIsEditing(false)
   }
+
+  const isEditing = (s: Section) => editingSection === s
+  const canEdit = editingSection === null
 
   return (
     <>
@@ -135,303 +157,242 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
           </h1>
           <p className="text-sm text-graphite/60 mt-2 font-sans">{brand.what_we_do}</p>
         </div>
-        <div className="flex items-center gap-4 pt-2 shrink-0">
-          <span className="text-xs font-mono text-graphite/40">
-            Last Updated: {formatDate(brand.updated_at)}
-          </span>
-          {!isEditing && (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="border border-forest text-forest font-mono text-xs uppercase tracking-widest px-4 py-2 hover:bg-forest hover:text-white transition-colors"
-            >
-              Edit
-            </button>
-          )}
-        </div>
+        <span className="text-xs font-mono text-graphite/40 pt-2">
+          Last Updated: {formatDate(brand.updated_at)}
+        </span>
       </div>
 
-      {isEditing ? (
-        /* ── EDIT MODE ──────────────────────────────────────────── */
-        <form onSubmit={onSave} className="flex flex-col gap-6">
-          <div
-            className="grid grid-cols-3 gap-4 items-start"
-            style={{ gridTemplateRows: 'auto auto' }}
-          >
-            {/* Core Identity — spans 2 rows */}
-            <div className="card row-span-2 flex flex-col gap-5">
-              <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">
-                Core Identity
-              </p>
-              <div>
-                <FieldLabel>Company Name</FieldLabel>
+      {saveError && (
+        <p className="text-xs text-rust font-mono mb-4">{saveError}</p>
+      )}
+
+      {/* ── GRID — layout never changes ────────────────────────────── */}
+      <div
+        className="grid grid-cols-3 gap-4 items-start"
+        style={{ gridTemplateRows: 'auto auto' }}
+      >
+        {/* ── Core Identity — row-span-2 ── */}
+        <div className="card row-span-2 flex flex-col gap-5">
+          <CardHeader
+            label="Core Identity"
+            editing={isEditing('core')}
+            canEdit={canEdit}
+            saving={saving}
+            onEdit={() => startEdit('core')}
+            onSave={() => saveSection('core')}
+            onCancel={cancelEdit}
+          />
+
+          {isEditing('core') ? (
+            <>
+              <EditField label="Company Name" error={errors.company_name?.message}>
                 <input
                   {...register('company_name')}
-                  className="config-input text-lg font-bold text-forest uppercase border-b border-outline/20 pb-1 mt-1"
+                  className="field-input text-base font-bold text-forest uppercase"
                 />
-                {errors.company_name && (
-                  <p className="text-xs text-rust font-mono mt-1">{errors.company_name.message}</p>
-                )}
-              </div>
+              </EditField>
               <hr className="border-forest/15" />
-              <div>
-                <FieldLabel>What We Do</FieldLabel>
+              <EditField label="What We Do" error={errors.what_we_do?.message}>
                 <textarea
                   {...register('what_we_do')}
                   rows={3}
-                  className="config-input resize-none text-sm mt-1"
+                  className="field-input resize-none text-sm"
                 />
-                {errors.what_we_do && (
-                  <p className="text-xs text-rust font-mono mt-1">{errors.what_we_do.message}</p>
-                )}
-              </div>
+              </EditField>
               <hr className="border-forest/15" />
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <FieldLabel>Target Audience</FieldLabel>
+                <EditField label="Target Audience" error={errors.target_audience?.message}>
                   <textarea
                     {...register('target_audience')}
                     rows={3}
-                    className="config-input resize-none text-sm mt-1"
+                    className="field-input resize-none text-sm"
                   />
-                  {errors.target_audience && (
-                    <p className="text-xs text-rust font-mono mt-1">
-                      {errors.target_audience.message}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <FieldLabel>Differentiator</FieldLabel>
+                </EditField>
+                <EditField label="Differentiator">
                   <textarea
                     {...register('unique_differentiator')}
                     rows={3}
-                    className="config-input resize-none text-sm mt-1"
+                    className="field-input resize-none text-sm"
                   />
-                </div>
+                </EditField>
               </div>
               <hr className="border-forest/15" />
-              <div>
-                <FieldLabel>Sample Copy</FieldLabel>
+              <EditField label="Sample Copy" error={errors.sample_copy?.message}>
                 <textarea
                   {...register('sample_copy')}
                   rows={4}
-                  className="config-input resize-none text-xs mt-1"
+                  className="field-input resize-none text-xs"
                 />
-                {errors.sample_copy && (
-                  <p className="text-xs text-rust font-mono mt-1">{errors.sample_copy.message}</p>
+              </EditField>
+            </>
+          ) : (
+            <>
+              <div>
+                <h2 className="text-4xl font-bold font-sans text-forest uppercase leading-none tracking-tight">
+                  {brand.company_name}
+                </h2>
+                {brand.what_we_do && (
+                  <p className="text-sm text-graphite/60 mt-1.5 font-sans">{brand.what_we_do}</p>
                 )}
               </div>
-            </div>
-
-            {/* Voice & Messaging */}
-            <div className="card flex flex-col gap-5">
-              <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">
-                Voice &amp; Messaging
-              </p>
-              <div>
-                <FieldLabel>Voice Summary</FieldLabel>
-                <input
-                  {...register('voice_summary')}
-                  className="config-input border-b border-outline/20 pb-1 text-sm italic text-forest mt-1"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <FieldLabel>Words to Use</FieldLabel>
-                  <input
-                    {...register('words_to_use')}
-                    className="config-input text-xs mt-1"
-                    placeholder="bold, direct, ..."
-                  />
-                  <p className="text-xs text-graphite/40 mt-1 font-mono">comma-separated</p>
-                </div>
-                <div>
-                  <FieldLabel>Words to Avoid</FieldLabel>
-                  <input
-                    {...register('words_to_avoid')}
-                    className="config-input text-xs mt-1"
-                    placeholder="cheap, basic, ..."
-                  />
-                  <p className="text-xs text-graphite/40 mt-1 font-mono">comma-separated</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Brand Snapshot */}
-            <div className="card flex flex-col gap-5">
-              <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">
-                Brand Snapshot
-              </p>
-              <div>
-                <FieldLabel>Personality Traits</FieldLabel>
-                <input
-                  {...register('personality_traits')}
-                  className="config-input text-xs mt-1"
-                  placeholder="innovative, bold, ..."
-                />
-                <p className="text-xs text-graphite/40 mt-1 font-mono">comma-separated</p>
-              </div>
-            </div>
-
-            {/* Visual Identity — spans 2 cols */}
-            <div className="card col-span-2 flex flex-col gap-5">
-              <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">
-                Visual Identity
-              </p>
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <FieldLabel>Brand Colors</FieldLabel>
-                  <div className="flex gap-2 mt-2 mb-2 flex-wrap min-h-[2rem]">
-                    {liveColors.map((c) => (
-                      <div
-                        key={c}
-                        style={{ backgroundColor: c }}
-                        className="w-8 h-8 rounded border border-outline/20"
-                        title={c}
-                      />
-                    ))}
-                  </div>
-                  <input
-                    {...register('brand_colors')}
-                    className="config-input text-xs"
-                    placeholder="#1F3A32, #B55233"
-                  />
-                  <p className="text-xs text-graphite/40 mt-1 font-mono">comma-separated hex codes</p>
-                </div>
-                <div>
-                  <FieldLabel>Typography Notes</FieldLabel>
-                  <textarea
-                    {...register('typography_notes')}
-                    rows={3}
-                    className="config-input resize-none text-xs mt-1"
-                    placeholder="Font families, weights, usage notes..."
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {saveError && <p className="text-xs text-rust font-mono">{saveError}</p>}
-
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="flex-1 border border-outline/30 text-graphite font-mono text-xs uppercase tracking-widest py-3 hover:border-outline/60 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex-1 bg-forest text-white font-mono text-xs uppercase tracking-widest py-3 hover:bg-forest/90 transition-colors disabled:opacity-50"
-            >
-              {saving ? 'Saving...' : '[ Save Changes ]'}
-            </button>
-          </div>
-        </form>
-      ) : (
-        /* ── VIEW MODE ──────────────────────────────────────────── */
-        <div
-          className="grid grid-cols-3 gap-4 items-start"
-          style={{ gridTemplateRows: 'auto auto' }}
-        >
-          {/* Core Identity — spans 2 rows */}
-          <div className="card row-span-2 flex flex-col gap-5">
-            <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">
-              Core Identity
-            </p>
-            <div>
-              <h2 className="text-4xl font-bold font-sans text-forest uppercase leading-none tracking-tight">
-                {brand.company_name}
-              </h2>
-              {brand.what_we_do && (
-                <p className="text-sm text-graphite/60 mt-1.5 font-sans">{brand.what_we_do}</p>
-              )}
-            </div>
-            <hr className="border-forest/15" />
-            <div>
-              <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
-                What We Do
-              </p>
-              <p className="text-sm font-sans text-graphite leading-relaxed">{brand.what_we_do}</p>
-            </div>
-            <hr className="border-forest/15" />
-            <div className="grid grid-cols-2 gap-4">
+              <hr className="border-forest/15" />
               <div>
                 <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
-                  Target Audience
+                  What We Do
                 </p>
-                <p className="text-sm font-sans text-graphite leading-relaxed">
-                  {brand.target_audience}
-                </p>
+                <p className="text-sm font-sans text-graphite leading-relaxed">{brand.what_we_do}</p>
               </div>
-              {brand.unique_differentiator && (
+              <hr className="border-forest/15" />
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
-                    Differentiator
+                    Target Audience
                   </p>
                   <p className="text-sm font-sans text-graphite leading-relaxed">
-                    {brand.unique_differentiator}
+                    {brand.target_audience}
                   </p>
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Voice & Messaging */}
-          <div className="card flex flex-col gap-5">
-            <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">
-              Voice &amp; Messaging
-            </p>
-            {brand.voice_summary && (
-              <p className="text-xl font-sans font-semibold italic text-forest leading-snug">
-                &ldquo;{brand.voice_summary}&rdquo;
-              </p>
-            )}
-            <div className="grid grid-cols-2 gap-4">
-              {brand.words_to_use && brand.words_to_use.length > 0 && (
-                <div>
-                  <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
-                    Words to Use
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {brand.words_to_use.map((w) => (
-                      <span
-                        key={w}
-                        className="bg-forest text-white text-xs font-mono px-2.5 py-1 rounded-full capitalize"
-                      >
-                        {w}
-                      </span>
-                    ))}
+                {brand.unique_differentiator && (
+                  <div>
+                    <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
+                      Differentiator
+                    </p>
+                    <p className="text-sm font-sans text-graphite leading-relaxed">
+                      {brand.unique_differentiator}
+                    </p>
                   </div>
-                </div>
-              )}
-              {brand.words_to_avoid && brand.words_to_avoid.length > 0 && (
-                <div>
-                  <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
-                    Words to Avoid
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {brand.words_to_avoid.map((w) => (
-                      <span
-                        key={w}
-                        className="bg-rust text-white text-xs font-mono px-2.5 py-1 rounded-full capitalize"
-                      >
-                        {w}
-                      </span>
-                    ))}
+                )}
+              </div>
+              {brand.sample_copy && (
+                <>
+                  <hr className="border-forest/15" />
+                  <div>
+                    <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
+                      Sample Copy
+                    </p>
+                    <p className="text-xs font-sans text-graphite leading-relaxed italic">
+                      {brand.sample_copy}
+                    </p>
                   </div>
-                </div>
+                </>
               )}
-            </div>
-          </div>
+            </>
+          )}
+        </div>
 
-          {/* Brand Snapshot */}
-          <div className="card flex flex-col gap-3">
-            <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">
-              Brand Snapshot
-            </p>
-            {brand.personality_traits && brand.personality_traits.length > 0 && (
+        {/* ── Voice & Messaging ── */}
+        <div className="card flex flex-col gap-5">
+          <CardHeader
+            label="Voice &amp; Messaging"
+            editing={isEditing('voice')}
+            canEdit={canEdit}
+            saving={saving}
+            onEdit={() => startEdit('voice')}
+            onSave={() => saveSection('voice')}
+            onCancel={cancelEdit}
+          />
+
+          {isEditing('voice') ? (
+            <>
+              <EditField label="Voice Summary">
+                <input
+                  {...register('voice_summary')}
+                  className="field-input text-sm italic text-forest"
+                  placeholder="Our voice is..."
+                />
+              </EditField>
+              <div className="grid grid-cols-2 gap-3">
+                <EditField label="Words to Use">
+                  <textarea
+                    {...register('words_to_use')}
+                    rows={3}
+                    className="field-input resize-none text-xs"
+                    placeholder="bold, direct, clear..."
+                  />
+                  <p className="text-xs text-graphite/40 mt-1 font-mono">comma-separated</p>
+                </EditField>
+                <EditField label="Words to Avoid">
+                  <textarea
+                    {...register('words_to_avoid')}
+                    rows={3}
+                    className="field-input resize-none text-xs"
+                    placeholder="cheap, basic, easy..."
+                  />
+                  <p className="text-xs text-graphite/40 mt-1 font-mono">comma-separated</p>
+                </EditField>
+              </div>
+            </>
+          ) : (
+            <>
+              {brand.voice_summary && (
+                <p className="text-xl font-sans font-semibold italic text-forest leading-snug">
+                  &ldquo;{brand.voice_summary}&rdquo;
+                </p>
+              )}
+              <div className="grid grid-cols-2 gap-4">
+                {brand.words_to_use && brand.words_to_use.length > 0 && (
+                  <div>
+                    <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
+                      Words to Use
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {brand.words_to_use.map((w) => (
+                        <span
+                          key={w}
+                          className="bg-forest text-white text-xs font-mono px-2.5 py-1 rounded-full capitalize"
+                        >
+                          {w}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {brand.words_to_avoid && brand.words_to_avoid.length > 0 && (
+                  <div>
+                    <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
+                      Words to Avoid
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {brand.words_to_avoid.map((w) => (
+                        <span
+                          key={w}
+                          className="bg-rust text-white text-xs font-mono px-2.5 py-1 rounded-full capitalize"
+                        >
+                          {w}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* ── Brand Snapshot ── */}
+        <div className="card flex flex-col gap-3">
+          <CardHeader
+            label="Brand Snapshot"
+            editing={isEditing('snapshot')}
+            canEdit={canEdit}
+            saving={saving}
+            onEdit={() => startEdit('snapshot')}
+            onSave={() => saveSection('snapshot')}
+            onCancel={cancelEdit}
+          />
+
+          {isEditing('snapshot') ? (
+            <EditField label="Personality Traits">
+              <textarea
+                {...register('personality_traits')}
+                rows={4}
+                className="field-input resize-none text-xs"
+                placeholder="innovative, bold, direct..."
+              />
+              <p className="text-xs text-graphite/40 mt-1 font-mono">comma-separated</p>
+            </EditField>
+          ) : (
+            brand.personality_traits && brand.personality_traits.length > 0 && (
               <div className="flex flex-col gap-2 mt-1">
                 {brand.personality_traits.map((trait) => (
                   <span
@@ -442,14 +403,52 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                   </span>
                 ))}
               </div>
-            )}
-          </div>
+            )
+          )}
+        </div>
 
-          {/* Visual Identity — spans 2 cols */}
-          <div className="card col-span-2 flex flex-col gap-5">
-            <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">
-              Visual Identity
-            </p>
+        {/* ── Visual Identity — col-span-2 ── */}
+        <div className="card col-span-2 flex flex-col gap-5">
+          <CardHeader
+            label="Visual Identity"
+            editing={isEditing('visual')}
+            canEdit={canEdit}
+            saving={saving}
+            onEdit={() => startEdit('visual')}
+            onSave={() => saveSection('visual')}
+            onCancel={cancelEdit}
+          />
+
+          {isEditing('visual') ? (
+            <div className="grid grid-cols-2 gap-6">
+              <EditField label="Brand Colors">
+                <div className="flex gap-2 mb-2 flex-wrap min-h-[2rem]">
+                  {liveColors.map((c) => (
+                    <div
+                      key={c}
+                      style={{ backgroundColor: c }}
+                      className="w-8 h-8 rounded border border-outline/20"
+                      title={c}
+                    />
+                  ))}
+                </div>
+                <input
+                  {...register('brand_colors')}
+                  className="field-input text-xs"
+                  placeholder="#1F3A32, #B55233, ..."
+                />
+                <p className="text-xs text-graphite/40 mt-1 font-mono">comma-separated hex codes</p>
+              </EditField>
+              <EditField label="Typography Notes">
+                <textarea
+                  {...register('typography_notes')}
+                  rows={4}
+                  className="field-input resize-none text-xs"
+                  placeholder="Font families, weights, usage notes..."
+                />
+              </EditField>
+            </div>
+          ) : (
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-3">
@@ -491,17 +490,85 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                 )}
               </div>
             </div>
-          </div>
+          )}
         </div>
-      )}
+      </div>
     </>
   )
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Card Header with per-section Edit / Save / Cancel ────────────────────────
 
-function FieldLabel({ children }: { children: React.ReactNode }) {
+function CardHeader({
+  label,
+  editing,
+  canEdit,
+  saving,
+  onEdit,
+  onSave,
+  onCancel,
+}: {
+  label: string
+  editing: boolean
+  canEdit: boolean
+  saving: boolean
+  onEdit: () => void
+  onSave: () => void
+  onCancel: () => void
+}) {
   return (
-    <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">{children}</p>
+    <div className="flex items-center justify-between">
+      <p
+        className="text-xs font-mono uppercase tracking-widest text-graphite/40"
+        dangerouslySetInnerHTML={{ __html: label }}
+      />
+      {editing ? (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="text-xs font-mono text-graphite/50 hover:text-graphite uppercase tracking-widest px-3 py-1 border border-outline/30 hover:border-outline/60 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving}
+            className="text-xs font-mono text-white bg-forest uppercase tracking-widest px-3 py-1 hover:bg-forest/90 transition-colors disabled:opacity-50"
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      ) : canEdit ? (
+        <button
+          type="button"
+          onClick={onEdit}
+          className="text-xs font-mono text-graphite/40 hover:text-forest uppercase tracking-widest px-2 py-1 rounded hover:bg-forest/5 transition-colors"
+        >
+          Edit
+        </button>
+      ) : null}
+    </div>
+  )
+}
+
+// ─── Edit field wrapper with label + optional error ───────────────────────────
+
+function EditField({
+  label,
+  error,
+  children,
+}: {
+  label: string
+  error?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div>
+      <p className="text-xs font-mono uppercase tracking-widest text-graphite/50 mb-1.5">{label}</p>
+      {children}
+      {error && <p className="text-xs text-rust font-mono mt-1">{error}</p>}
+    </div>
   )
 }

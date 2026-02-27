@@ -31,9 +31,16 @@ body {
   @apply border-b-2 border-rust pb-2;
 }
 
-/* Brand configuration form inputs */
+/* Brand configuration form inputs (legacy) */
 .config-input {
   @apply w-full bg-transparent font-mono text-sm text-graphite outline-none placeholder:text-gray-400 placeholder:opacity-60;
+}
+
+/* Clearly visible edit-mode inputs */
+.field-input {
+  @apply w-full bg-white border border-forest/30 rounded px-2.5 py-2 font-mono text-sm text-graphite
+         focus:outline-none focus:border-forest focus:ring-1 focus:ring-forest/20
+         transition-colors placeholder:text-graphite/30;
 }
 
 /* Graph-paper grid background for brand page */
