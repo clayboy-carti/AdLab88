@@ -527,8 +527,11 @@ export default function Calendar({ posts = [] }: CalendarProps) {
                             </div>
                             <span className="text-[9px] font-mono uppercase text-rust/70 tracking-wide">{post.platform}</span>
                           </div>
+                          {post.title && (
+                            <p className="text-xs font-bold text-graphite leading-snug line-clamp-2">{post.title}</p>
+                          )}
                           {post.hook && (
-                            <p className="text-xs font-medium text-graphite leading-snug line-clamp-4">{post.hook}</p>
+                            <p className="text-xs font-medium text-graphite/70 leading-snug line-clamp-3">{post.hook}</p>
                           )}
                         </button>
                         <div className="flex border-t border-rust/20">
