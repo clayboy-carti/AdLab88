@@ -151,12 +151,9 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
     <>
       {/* ── PAGE HEADER ───────────────────────────────────────────── */}
       <div className="flex items-start justify-between mb-8">
-        <div>
-          <h1 className="text-6xl font-bold font-sans text-forest uppercase leading-none tracking-tighter">
-            {brand.company_name}
-          </h1>
-          <p className="text-sm text-graphite/60 mt-2 font-sans">{brand.what_we_do}</p>
-        </div>
+        <h1 className="text-6xl font-bold font-sans text-forest uppercase leading-none tracking-tighter">
+          {brand.company_name}
+        </h1>
         <span className="text-xs font-mono text-graphite/40 pt-2">
           Last Updated: {formatDate(brand.updated_at)}
         </span>
@@ -197,6 +194,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                   {...register('what_we_do')}
                   rows={3}
                   className="field-input resize-none text-sm"
+                  placeholder="Describe your products, solutions, and/or services..."
                 />
               </EditField>
               <hr className="border-forest/15" />
@@ -227,14 +225,9 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
             </>
           ) : (
             <>
-              <div>
-                <h2 className="text-4xl font-bold font-sans text-forest uppercase leading-none tracking-tight">
-                  {brand.company_name}
-                </h2>
-                {brand.what_we_do && (
-                  <p className="text-sm text-graphite/60 mt-1.5 font-sans">{brand.what_we_do}</p>
-                )}
-              </div>
+              <h2 className="text-4xl font-bold font-sans text-forest uppercase leading-none tracking-tight">
+                {brand.company_name}
+              </h2>
               <hr className="border-forest/15" />
               <div>
                 <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">

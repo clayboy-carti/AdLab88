@@ -20,7 +20,7 @@ Return ONLY valid JSON with this exact structure (omit any field you cannot conf
 
 {
   "company_name": "string — the company or brand name",
-  "what_we_do": "string — 1-2 sentences describing the business and its core offering",
+  "what_we_do": "string — 2-3 sentences focused specifically on the products, solutions, and/or services the company provides. Describe WHAT they offer, not who they are philosophically. Be concrete and specific about their offerings.",
   "target_audience": "string — who the company serves (e.g., 'small business owners', 'enterprise marketing teams')",
   "unique_differentiator": "string — what makes them different or better than alternatives",
   "voice_summary": "string — how the brand communicates (e.g., 'Direct, confident, no-nonsense')",
@@ -33,6 +33,7 @@ Return ONLY valid JSON with this exact structure (omit any field you cannot conf
 }
 
 Rules:
+- what_we_do: focus on PRODUCTS, SOLUTIONS, and SERVICES — what the company actually sells or delivers. Do NOT write a generic mission statement or brand philosophy here.
 - personality_traits: max 5 single words or short phrases
 - words_to_use: max 8 words/phrases that match their tone
 - words_to_avoid: max 5 words/phrases that conflict with their voice
