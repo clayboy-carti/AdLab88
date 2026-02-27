@@ -15,6 +15,7 @@ export interface ScheduledPost {
   // Ad details joined from generated_ads
   adId?: string
   videoId?: string
+  title?: string
   hook?: string
   cta?: string
   positioning_angle?: string
@@ -137,6 +138,7 @@ function postToAd(post: ScheduledPost): Ad | null {
   if (!post.adId) return null
   return {
     id: post.adId,
+    title: post.title ?? null,
     hook: post.hook ?? '',
     caption: post.caption,
     cta: post.cta ?? '',

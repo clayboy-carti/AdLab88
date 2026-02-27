@@ -19,7 +19,7 @@ export default async function SchedulePage() {
     .select(`
       id, scheduled_for, platform, caption, status, ad_id, video_id,
       generated_ads (
-        hook, cta, positioning_angle, target_platform, framework_applied, created_at, storage_path
+        title, hook, cta, positioning_angle, target_platform, framework_applied, created_at, storage_path
       ),
       generated_videos (
         storage_path, motion_prompt, source_ad_id, created_at
@@ -59,6 +59,7 @@ export default async function SchedulePage() {
       status: row.status,
       adId: row.ad_id ?? undefined,
       videoId: (row as any).video_id ?? undefined,
+      title: ad?.title ?? undefined,
       hook: ad?.hook ?? undefined,
       cta: ad?.cta ?? undefined,
       positioning_angle: ad?.positioning_angle ?? undefined,
