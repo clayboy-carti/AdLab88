@@ -35,3 +35,11 @@ body {
 .config-input {
   @apply w-full bg-transparent font-mono text-sm text-graphite outline-none placeholder:text-gray-400 placeholder:opacity-60;
 }
+
+/* Graph-paper grid background for brand page */
+.bg-grid-paper {
+  background-image:
+    linear-gradient(rgba(31, 58, 50, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(31, 58, 50, 0.055) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
