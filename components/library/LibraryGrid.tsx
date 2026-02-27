@@ -316,8 +316,18 @@ export default function LibraryGrid({
 
       {/* ── Campaigns sidebar ── */}
       <aside className="hidden md:flex flex-col w-52 flex-shrink-0 sticky top-8 max-h-[calc(100vh-5rem)] overflow-y-auto">
-        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm p-4 flex flex-col gap-1.5">
-          <p className="text-[10px] font-mono uppercase text-graphite/40 tracking-widest mb-2 px-1">Campaigns</p>
+        <div className="flex flex-col gap-1.5">
+          {/* Section header */}
+          <div className="flex items-center justify-between px-1 mb-1">
+            <p className="text-[10px] font-mono uppercase text-graphite/40 tracking-widest">Campaigns</p>
+            <button
+              onClick={() => setCreatingFolder(true)}
+              title="New campaign"
+              className="w-5 h-5 flex items-center justify-center rounded-full bg-white border border-forest/20 text-graphite/40 hover:text-rust hover:border-rust/40 transition-colors text-sm leading-none shadow-sm"
+            >
+              +
+            </button>
+          </div>
 
           {/* All Assets drop zone */}
           <div
@@ -328,15 +338,15 @@ export default function LibraryGrid({
           >
             <button
               onClick={() => setActiveFolderId(null)}
-              className={`w-full text-left px-3 py-2 text-xs font-mono uppercase tracking-wide transition-all rounded-xl ${
+              className={`w-full flex items-center justify-between px-3 py-2 text-xs font-mono transition-all rounded-xl border shadow-sm ${
                 activeFolderId === null
-                  ? 'bg-forest text-white'
-                  : 'text-graphite/60 hover:bg-sage/20 hover:text-graphite'
+                  ? 'bg-white border-forest/15 border-l-2 border-l-rust text-graphite'
+                  : 'bg-white border-forest/10 text-graphite/55 hover:border-rust/25 hover:text-graphite'
               }`}
             >
-              All Assets
-              <span className={`ml-1.5 text-[10px] ${activeFolderId === null ? 'text-white/50' : 'text-graphite/35'}`}>
-                ({totalCount})
+              <span>All Assets</span>
+              <span className={`text-[10px] font-normal tabular-nums ${activeFolderId === null ? 'text-graphite/40' : 'text-graphite/30'}`}>
+                {totalCount}
               </span>
             </button>
           </div>
@@ -362,20 +372,20 @@ export default function LibraryGrid({
                     if (e.key === 'Escape') setRenamingFolderId(null)
                   }}
                   onBlur={() => handleRenameFolder(folder.id)}
-                  className="w-full px-3 py-2 text-xs font-mono border border-rust/40 bg-white focus:outline-none rounded-xl"
+                  className="w-full px-3 py-2 text-xs font-mono border border-rust/40 bg-white focus:outline-none rounded-xl shadow-sm"
                 />
               ) : (
                 <button
                   onClick={() => setActiveFolderId(folder.id)}
-                  className={`w-full text-left px-3 py-2 text-xs font-mono uppercase tracking-wide transition-all rounded-xl pr-14 ${
+                  className={`w-full flex items-center justify-between px-3 py-2 text-xs font-mono transition-all rounded-xl border shadow-sm pr-10 ${
                     activeFolderId === folder.id
-                      ? 'bg-rust text-white'
-                      : 'text-graphite/60 hover:bg-rust/10 hover:text-rust'
+                      ? 'bg-white border-forest/15 border-l-2 border-l-rust text-graphite'
+                      : 'bg-white border-forest/10 text-graphite/55 hover:border-rust/25 hover:text-graphite'
                   }`}
                 >
                   <span className="block truncate">{folder.name}</span>
-                  <span className={`text-[10px] font-normal ${activeFolderId === folder.id ? 'text-white/50' : 'text-graphite/35'}`}>
-                    ({folderCounts.get(folder.id) ?? 0})
+                  <span className={`text-[10px] font-normal tabular-nums flex-shrink-0 ml-2 ${activeFolderId === folder.id ? 'text-graphite/40' : 'text-graphite/30'}`}>
+                    {folderCounts.get(folder.id) ?? 0}
                   </span>
                 </button>
               )}
@@ -386,14 +396,14 @@ export default function LibraryGrid({
                   <button
                     onClick={() => startRename(folder)}
                     title="Rename"
-                    className={`p-1 rounded transition-colors ${activeFolderId === folder.id ? 'text-white/60 hover:text-white' : 'text-graphite/30 hover:text-rust'}`}
+                    className="p-1 rounded transition-colors text-graphite/30 hover:text-rust"
                   >
                     <PencilIcon />
                   </button>
                   <button
                     onClick={() => handleDeleteFolder(folder.id)}
                     title="Delete campaign"
-                    className={`p-1 rounded transition-colors ${activeFolderId === folder.id ? 'text-white/60 hover:text-white' : 'text-graphite/30 hover:text-red-500'}`}
+                    className="p-1 rounded transition-colors text-graphite/30 hover:text-red-500"
                   >
                     <TrashIcon />
                   </button>
@@ -414,20 +424,16 @@ export default function LibraryGrid({
               }}
               onBlur={handleCreateFolder}
               placeholder="Campaign name…"
-              className="w-full px-3 py-2 text-xs font-mono border border-rust/40 bg-white focus:outline-none rounded-xl placeholder:text-graphite/25"
+              className="w-full px-3 py-2 text-xs font-mono border border-rust/40 bg-white focus:outline-none rounded-xl shadow-sm placeholder:text-graphite/25 mt-1"
             />
           ) : (
             <button
               onClick={() => setCreatingFolder(true)}
-              className="w-full text-left px-3 py-2 text-xs font-mono text-graphite/40 hover:text-rust transition-colors uppercase mt-1"
+              className="w-full flex items-center justify-center gap-1 px-3 py-2 mt-1 text-xs font-mono text-graphite/50 hover:text-graphite border border-forest/15 hover:border-forest/30 rounded-xl bg-white transition-all shadow-sm"
             >
               + New Campaign
             </button>
           )}
-
-          <p className="text-[9px] font-mono text-graphite/25 uppercase mt-2 leading-relaxed px-1">
-            Drag cards to a campaign to organize them
-          </p>
         </div>
       </aside>
 
