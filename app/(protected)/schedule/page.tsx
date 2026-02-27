@@ -75,9 +75,6 @@ export default async function SchedulePage() {
 
   return (
     <div className="w-full p-4 lg:p-8">
-      <div className="flex items-baseline justify-between mb-8">
-        <h1 className="text-3xl font-mono header-accent">Field Log</h1>
-      </div>
       <Calendar posts={posts} />
     </div>
   )
