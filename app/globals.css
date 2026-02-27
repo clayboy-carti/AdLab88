@@ -10,35 +10,20 @@ body {
   font-family: 'Inter', sans-serif;
 }
 
-/* Remove all rounded corners globally */
-* {
-  border-radius: 0 !important;
-}
-
 /* Button base styles */
 .btn-primary {
-  @apply bg-rust border border-outline text-white uppercase font-mono px-6 py-3;
+  @apply bg-rust text-white font-sans font-semibold px-6 py-3 rounded-xl;
   @apply hover:bg-[#9a4429] transition-colors;
 }
 
 .btn-secondary {
-  @apply bg-transparent border border-outline uppercase font-mono px-6 py-3;
-  @apply hover:bg-gray-100 transition-colors;
-}
-
-/* Input base styles */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-textarea,
-select {
-  @apply border border-outline bg-white p-3 font-mono;
-  @apply focus:outline-none focus:border-2;
+  @apply bg-transparent border border-forest/25 text-graphite font-sans px-6 py-3 rounded-xl;
+  @apply hover:border-forest/50 transition-colors;
 }
 
 /* Card base styles */
 .card {
-  @apply border border-outline bg-white p-6;
+  @apply bg-white rounded-2xl border border-forest/20 shadow-sm p-6;
 }
 
 /* Header underline accent */
