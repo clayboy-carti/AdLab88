@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import AdCard, { type Ad } from './AdCard'
 import AdSetCard from './AdSetCard'
 import AdSetModal from './AdSetModal'
@@ -118,6 +118,36 @@ export default function LibraryGrid({
   const [carouselMode, setCarouselMode] = useState(false)
   const [carouselItems, setCarouselItems] = useState<CarouselSelItem[]>([])
   const [showCarouselModal, setShowCarouselModal] = useState(false)
+
+  // ── Image upload ──
+  const uploadInputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!e.target) return
+    e.target.value = ''
+    if (!file) return
+
+    setUploading(true)
+    setUploadError(null)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/upload-library-image', { method: 'POST', body: formData })
+      const json = await res.json()
+      if (!res.ok) {
+        setUploadError(json.error ?? 'Upload failed')
+      } else {
+        setAds((prev) => [json.ad, ...prev])
+      }
+    } catch {
+      setUploadError('Upload failed')
+    } finally {
+      setUploading(false)
+    }
+  }
 
   // ── Filtered assets ──
   const filteredAds = activeFolderId
@@ -474,6 +504,31 @@ export default function LibraryGrid({
             </button>
           )}
 
+          {!carouselMode && (
+            <>
+              <input
+                ref={uploadInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={handleImageUpload}
+              />
+              <button
+                onClick={() => uploadInputRef.current?.click()}
+                disabled={uploading}
+                className={`flex items-center gap-1.5 text-xs font-mono uppercase border px-3 py-1.5 transition-colors ${
+                  uploading
+                    ? 'border-outline text-gray-300 cursor-not-allowed'
+                    : 'border-outline text-gray-500 hover:border-graphite hover:text-graphite'
+                } ${activeFolderName ? '' : 'ml-auto'}`}
+                title="Upload an image to your library"
+              >
+                <UploadIcon />
+                {uploading ? 'Uploading…' : 'Upload Image'}
+              </button>
+            </>
+          )}
+
           {carouselMode && (
             <button
               onClick={exitCarouselMode}
@@ -481,6 +536,12 @@ export default function LibraryGrid({
             >
               Cancel
             </button>
+          )}
+
+          {uploadError && (
+            <span className="w-full text-[10px] font-mono text-rust uppercase mt-1">
+              {uploadError}
+            </span>
           )}
         </div>
 
@@ -837,6 +898,16 @@ function CarouselIcon() {
       <rect x="3" y="5" width="12" height="14" />
       <path d="M17 7h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2" />
       <path d="M1 7H3" />
+    </svg>
+  )
+}
+
+function UploadIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
     </svg>
   )
 }
