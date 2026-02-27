@@ -22,11 +22,9 @@ export default async function BrandPage() {
 
   if (brand) {
     return (
-      <div className="min-h-screen bg-grid-paper">
-        <div className="max-w-6xl mx-auto p-4 lg:p-8">
+      <div className="max-w-6xl mx-auto p-4 lg:p-8">
           <BrandDashboard brand={brand as Brand} />
         </div>
-      </div>
     )
   }
 
