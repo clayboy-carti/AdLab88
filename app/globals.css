@@ -30,3 +30,8 @@ body {
 .header-accent {
   @apply border-b-2 border-rust pb-2;
 }
+
+/* Brand configuration form inputs */
+.config-input {
+  @apply w-full bg-transparent font-mono text-sm text-graphite outline-none placeholder:text-gray-400 placeholder:opacity-60;
+}
