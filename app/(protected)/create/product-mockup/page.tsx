@@ -243,7 +243,7 @@ function VideoForm({
   return (
     <div className="p-4 space-y-3">
       <div className="flex flex-col gap-1.5">
-        <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/40">
+        <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
           Video Title <span className="text-rust">*</span>
         </label>
         <input
@@ -256,8 +256,8 @@ function VideoForm({
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/40">
-          Motion <span className="text-graphite/25">(optional)</span>
+        <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
+          Motion <span className="text-graphite/40">(optional)</span>
         </label>
         <textarea
           value={motionPrompt}
@@ -501,10 +501,10 @@ export default function ProductMockupPage() {
         <div className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col overflow-hidden">
 
           {/* Card header */}
-          <div className="px-6 pt-6 pb-5 border-b border-forest/10">
-            <div className="flex items-center gap-2 mb-4">
-              <FlaskConical size={15} className="text-forest/35" strokeWidth={1.8} />
-              <span className="text-[11px] font-mono uppercase tracking-widest text-graphite/40">Mockup Setup</span>
+          <div className="px-6 pt-5 pb-4 border-b border-forest/10">
+            <div className="flex items-center gap-2 mb-3">
+              <FlaskConical size={15} className="text-forest/50" strokeWidth={1.8} />
+              <span className="text-[11px] font-mono uppercase tracking-widest text-graphite/60">Mockup Setup</span>
             </div>
 
             {/* Mode toggle */}
@@ -536,11 +536,11 @@ export default function ProductMockupPage() {
             </div>
           </div>
 
-          <div className="px-6 py-5 flex flex-col gap-5">
+          <div className="px-6 py-4 flex flex-col gap-4">
 
             {/* Title */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/40">
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
                 Title <span className="text-rust">*</span>
               </label>
               <input
@@ -554,8 +554,8 @@ export default function ProductMockupPage() {
             </div>
 
             {/* Scene description */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/40">Scene</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Scene</label>
               <textarea
                 value={sceneText}
                 onChange={(e) => {
@@ -563,7 +563,7 @@ export default function ProductMockupPage() {
                   setSelectedPreset('')
                 }}
                 placeholder="Describe the scene… marble countertop · golden hour · white studio void"
-                rows={3}
+                rows={2}
                 maxLength={300}
                 className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-3 text-sm font-sans resize-none focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
               />
@@ -627,8 +627,8 @@ export default function ProductMockupPage() {
             <div className="h-px bg-forest/10" />
 
             {/* Aspect Ratio chips */}
-            <div className="flex flex-col gap-2">
-              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/40">Aspect Ratio</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Aspect Ratio</label>
               <div className="flex flex-wrap gap-1.5">
                 {aspectRatioOptions.map((r) => (
                   <button
@@ -647,8 +647,8 @@ export default function ProductMockupPage() {
             </div>
 
             {/* Resolution chips */}
-            <div className="flex flex-col gap-2">
-              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/40">Resolution</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Resolution</label>
               <div className="flex gap-1.5">
                 {(['1K', '2K'] as const).map((q) => (
                   <button
@@ -667,8 +667,8 @@ export default function ProductMockupPage() {
             </div>
 
             {/* Model */}
-            <div className="flex flex-col gap-2">
-              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/40">Model</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Model</label>
               <div className="relative">
                 <select
                   value={imageModel}
