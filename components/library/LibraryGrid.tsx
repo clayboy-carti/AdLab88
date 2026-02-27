@@ -106,8 +106,8 @@ export default function LibraryGrid({
   const [newFolderName, setNewFolderName] = useState('')
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
+
   // ── Drag-and-drop ──
-  // null = no drag-over target; 'all' = All Assets zone; UUID = specific folder
   const [dragOverTarget, setDragOverTarget] = useState<string | null>(null)
 
   // ── Modals ──
@@ -141,7 +141,7 @@ export default function LibraryGrid({
   const adFeed = useMemo(() => buildFeed(filteredAds), [filteredAds])
   const unifiedFeed = useMemo(() => buildUnifiedFeed(adFeed, filteredVideos), [adFeed, filteredVideos])
 
-  // ── Per-folder asset counts (for sidebar labels) ──
+  // ── Per-folder asset counts ──
   const folderCounts = useMemo(() => {
     const counts = new Map<string, number>()
     for (const ad of ads) {
@@ -153,12 +153,11 @@ export default function LibraryGrid({
     return counts
   }, [ads, videos])
 
-  // Keep selectedSet in sync with ads state (e.g. after a delete)
   const liveSetAds = selectedSet
     ? ads.filter((a) => a.batch_id === selectedSet.batchId)
     : null
 
-  // ── Ad/video update handlers ──
+  // ── Handlers ──
   const handleCaptionUpdate = (adId: string, newCaption: string) => {
     setAds((prev) => prev.map((a) => (a.id === adId ? { ...a, caption: newCaption } : a)))
     setSelectedAd((prev) => (prev?.id === adId ? { ...prev, caption: newCaption } : prev))
@@ -189,7 +188,7 @@ export default function LibraryGrid({
     setCarouselItems((prev) => {
       const exists = prev.find((i) => i.id === item.id)
       if (exists) return prev.filter((i) => i.id !== item.id)
-      if (prev.length >= 10) return prev  // Instagram max
+      if (prev.length >= 10) return prev
       return [...prev, item]
     })
   }
@@ -218,7 +217,6 @@ export default function LibraryGrid({
   }
 
   const handleDragLeave = (e: React.DragEvent) => {
-    // Only clear if leaving the actual drop zone (not entering a child)
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setDragOverTarget(null)
     }
@@ -241,7 +239,7 @@ export default function LibraryGrid({
         setVideos((prev) => prev.map((v) => videoIds.includes(v.id) ? { ...v, folder_id: folderId } : v))
       }
     } catch {
-      // silent — user can retry
+      // silent
     }
   }
 
@@ -310,163 +308,168 @@ export default function LibraryGrid({
     }
   }
 
-  // ── Helpers ──
   const activeFolderName = activeFolderId ? folders.find((f) => f.id === activeFolderId)?.name : null
   const totalCount = ads.length + videos.length
 
   return (
-    <div className="flex gap-8 items-start">
+    <div className="flex gap-6 items-start">
 
-      {/* ── Campaign / Folder sidebar ── */}
-      <aside className="hidden md:flex flex-col w-44 flex-shrink-0 sticky top-8 max-h-[calc(100vh-5rem)] overflow-y-auto gap-1">
-        <p className="text-[10px] font-mono uppercase text-gray-400 tracking-widest mb-2">Campaigns</p>
+      {/* ── Campaigns sidebar ── */}
+      <aside className="hidden md:flex flex-col w-52 flex-shrink-0 sticky top-8 max-h-[calc(100vh-5rem)] overflow-y-auto">
+        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm p-4 flex flex-col gap-1.5">
+          <p className="text-[10px] font-mono uppercase text-graphite/40 tracking-widest mb-2 px-1">Campaigns</p>
 
-        {/* All Assets drop zone */}
-        <div
-          onDragOver={(e) => handleDragOver(e, 'all')}
-          onDragLeave={handleDragLeave}
-          onDrop={(e) => handleDrop(e, null)}
-          className={`rounded-sm transition-colors ${dragOverTarget === 'all' ? 'bg-rust/10 ring-1 ring-rust' : ''}`}
-        >
-          <button
-            onClick={() => setActiveFolderId(null)}
-            className={`w-full text-left px-3 py-2 text-xs font-mono uppercase transition-colors rounded-sm ${
-              activeFolderId === null
-                ? 'bg-graphite text-white'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            All Assets
-            <span className={`ml-1.5 ${activeFolderId === null ? 'text-gray-300' : 'text-gray-400'}`}>
-              ({totalCount})
-            </span>
-          </button>
-        </div>
-
-        {/* Folder list */}
-        {folders.map((folder) => (
+          {/* All Assets drop zone */}
           <div
-            key={folder.id}
-            onDragOver={(e) => handleDragOver(e, folder.id)}
+            onDragOver={(e) => handleDragOver(e, 'all')}
             onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, folder.id)}
-            className={`group relative rounded-sm transition-colors ${
-              dragOverTarget === folder.id ? 'bg-rust/10 ring-1 ring-rust' : ''
-            }`}
+            onDrop={(e) => handleDrop(e, null)}
+            className={`rounded-xl transition-colors ${dragOverTarget === 'all' ? 'ring-2 ring-rust/50' : ''}`}
           >
-            {renamingFolderId === folder.id ? (
-              <input
-                autoFocus
-                value={renameValue}
-                onChange={(e) => setRenameValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleRenameFolder(folder.id)
-                  if (e.key === 'Escape') setRenamingFolderId(null)
-                }}
-                onBlur={() => handleRenameFolder(folder.id)}
-                className="w-full px-3 py-2 text-xs font-mono border border-rust bg-white focus:outline-none rounded-sm"
-              />
-            ) : (
-              <button
-                onClick={() => setActiveFolderId(folder.id)}
-                className={`w-full text-left px-3 py-2.5 text-[11px] font-bold font-mono uppercase tracking-wider transition-all rounded border-2 pr-14 shadow-sm ${
-                  activeFolderId === folder.id
-                    ? 'bg-rust border-rust text-white shadow-rust/30'
-                    : 'bg-rust/8 border-rust/60 text-rust hover:bg-rust/15 hover:border-rust'
-                }`}
-              >
-                <span className="block truncate">{folder.name}</span>
-                <span className={`text-[10px] font-normal ${activeFolderId === folder.id ? 'text-white/60' : 'text-rust/60'}`}>
-                  ({folderCounts.get(folder.id) ?? 0})
-                </span>
-              </button>
-            )}
-
-            {/* Rename + delete icons (visible on hover) */}
-            {renamingFolderId !== folder.id && (
-              <div className="absolute right-1 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-0.5">
-                <button
-                  onClick={() => startRename(folder)}
-                  title="Rename"
-                  className={`p-1 transition-colors ${activeFolderId === folder.id ? 'text-white/60 hover:text-white' : 'text-gray-400 hover:text-rust'}`}
-                >
-                  <PencilIcon />
-                </button>
-                <button
-                  onClick={() => handleDeleteFolder(folder.id)}
-                  title="Delete campaign"
-                  className={`p-1 transition-colors ${activeFolderId === folder.id ? 'text-white/60 hover:text-white' : 'text-gray-400 hover:text-red-500'}`}
-                >
-                  <TrashIcon />
-                </button>
-              </div>
-            )}
+            <button
+              onClick={() => setActiveFolderId(null)}
+              className={`w-full text-left px-3 py-2 text-xs font-mono uppercase tracking-wide transition-all rounded-xl ${
+                activeFolderId === null
+                  ? 'bg-forest text-white'
+                  : 'text-graphite/60 hover:bg-sage/20 hover:text-graphite'
+              }`}
+            >
+              All Assets
+              <span className={`ml-1.5 text-[10px] ${activeFolderId === null ? 'text-white/50' : 'text-graphite/35'}`}>
+                ({totalCount})
+              </span>
+            </button>
           </div>
-        ))}
 
-        {/* New Campaign input / button */}
-        {creatingFolder ? (
-          <input
-            autoFocus
-            value={newFolderName}
-            onChange={(e) => setNewFolderName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleCreateFolder()
-              if (e.key === 'Escape') { setCreatingFolder(false); setNewFolderName('') }
-            }}
-            onBlur={handleCreateFolder}
-            placeholder="Campaign name…"
-            className="w-full px-3 py-2 text-xs font-mono border border-rust bg-white focus:outline-none rounded-sm placeholder:text-gray-300"
-          />
-        ) : (
-          <button
-            onClick={() => setCreatingFolder(true)}
-            className="w-full text-left px-3 py-2 text-xs font-mono text-gray-400 hover:text-rust transition-colors uppercase"
-          >
-            + New Campaign
-          </button>
-        )}
+          {/* Folder list */}
+          {folders.map((folder) => (
+            <div
+              key={folder.id}
+              onDragOver={(e) => handleDragOver(e, folder.id)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, folder.id)}
+              className={`group relative rounded-xl transition-colors ${
+                dragOverTarget === folder.id ? 'ring-2 ring-rust/50' : ''
+              }`}
+            >
+              {renamingFolderId === folder.id ? (
+                <input
+                  autoFocus
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleRenameFolder(folder.id)
+                    if (e.key === 'Escape') setRenamingFolderId(null)
+                  }}
+                  onBlur={() => handleRenameFolder(folder.id)}
+                  className="w-full px-3 py-2 text-xs font-mono border border-rust/40 bg-white focus:outline-none rounded-xl"
+                />
+              ) : (
+                <button
+                  onClick={() => setActiveFolderId(folder.id)}
+                  className={`w-full text-left px-3 py-2 text-xs font-mono uppercase tracking-wide transition-all rounded-xl pr-14 ${
+                    activeFolderId === folder.id
+                      ? 'bg-rust text-white'
+                      : 'text-graphite/60 hover:bg-rust/10 hover:text-rust'
+                  }`}
+                >
+                  <span className="block truncate">{folder.name}</span>
+                  <span className={`text-[10px] font-normal ${activeFolderId === folder.id ? 'text-white/50' : 'text-graphite/35'}`}>
+                    ({folderCounts.get(folder.id) ?? 0})
+                  </span>
+                </button>
+              )}
 
-        {/* Drag hint */}
-        <p className="text-[9px] font-mono text-gray-300 uppercase mt-3 leading-relaxed px-1">
-          Drag cards to a campaign to organize them
-        </p>
+              {/* Rename + delete icons */}
+              {renamingFolderId !== folder.id && (
+                <div className="absolute right-1.5 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-0.5">
+                  <button
+                    onClick={() => startRename(folder)}
+                    title="Rename"
+                    className={`p-1 rounded transition-colors ${activeFolderId === folder.id ? 'text-white/60 hover:text-white' : 'text-graphite/30 hover:text-rust'}`}
+                  >
+                    <PencilIcon />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteFolder(folder.id)}
+                    title="Delete campaign"
+                    className={`p-1 rounded transition-colors ${activeFolderId === folder.id ? 'text-white/60 hover:text-white' : 'text-graphite/30 hover:text-red-500'}`}
+                  >
+                    <TrashIcon />
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* New Campaign */}
+          {creatingFolder ? (
+            <input
+              autoFocus
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleCreateFolder()
+                if (e.key === 'Escape') { setCreatingFolder(false); setNewFolderName('') }
+              }}
+              onBlur={handleCreateFolder}
+              placeholder="Campaign name…"
+              className="w-full px-3 py-2 text-xs font-mono border border-rust/40 bg-white focus:outline-none rounded-xl placeholder:text-graphite/25"
+            />
+          ) : (
+            <button
+              onClick={() => setCreatingFolder(true)}
+              className="w-full text-left px-3 py-2 text-xs font-mono text-graphite/40 hover:text-rust transition-colors uppercase mt-1"
+            >
+              + New Campaign
+            </button>
+          )}
+
+          <p className="text-[9px] font-mono text-graphite/25 uppercase mt-2 leading-relaxed px-1">
+            Drag cards to a campaign to organize them
+          </p>
+        </div>
       </aside>
 
       {/* ── Main content ── */}
       <div className="flex-1 min-w-0">
 
-        {/* Filter tabs + active campaign badge */}
-        <div className="flex items-center gap-2 mb-6 border-b border-outline pb-4 flex-wrap">
-          {(['all', 'images', 'videos'] as Filter[]).map((f) => {
-            const count =
-              f === 'all'
-                ? filteredAds.length + filteredVideos.length
-                : f === 'images'
-                ? filteredAds.length
-                : filteredVideos.length
-            return (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`text-xs font-mono uppercase px-3 py-1.5 border transition-colors ${
-                  filter === f
-                    ? 'border-graphite bg-graphite text-white'
-                    : 'border-outline text-gray-500 hover:border-graphite'
-                }`}
-              >
-                {f} ({count})
-              </button>
-            )
-          })}
+        {/* Toolbar row */}
+        <div className="flex items-center gap-2 mb-6 flex-wrap">
 
+          {/* Filter pills */}
+          <div className="flex items-center gap-1.5 bg-white rounded-2xl border border-forest/20 shadow-sm p-1.5">
+            {(['all', 'images', 'videos'] as Filter[]).map((f) => {
+              const count =
+                f === 'all'
+                  ? filteredAds.length + filteredVideos.length
+                  : f === 'images'
+                  ? filteredAds.length
+                  : filteredVideos.length
+              return (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`text-xs font-mono uppercase px-3 py-1.5 rounded-xl transition-all ${
+                    filter === f
+                      ? 'bg-forest text-white shadow-sm'
+                      : 'text-graphite/50 hover:text-graphite hover:bg-sage/20'
+                  }`}
+                >
+                  {f} <span className={filter === f ? 'text-white/60' : 'text-graphite/35'}>({count})</span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Active folder badge */}
           {activeFolderName && (
-            <span className="ml-auto flex items-center gap-2 text-xs font-mono text-gray-500 border border-outline px-3 py-1.5">
+            <span className="flex items-center gap-1.5 text-xs font-mono text-graphite/60 bg-white border border-forest/20 shadow-sm px-3 py-2 rounded-xl">
               <FolderIcon />
               {activeFolderName}
               <button
                 onClick={() => setActiveFolderId(null)}
-                className="text-gray-400 hover:text-graphite transition-colors"
+                className="text-graphite/30 hover:text-graphite transition-colors ml-0.5"
                 title="Back to all assets"
               >
                 ✕
@@ -474,58 +477,62 @@ export default function LibraryGrid({
             </span>
           )}
 
-          {activeFolderId && !carouselMode && (
-            <button
-              onClick={() => { setCarouselMode(true); setCarouselItems([]) }}
-              className="ml-auto flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:border-rust hover:text-rust transition-colors"
-              title="Select images and videos to build a carousel post"
-            >
-              <CarouselIcon />
-              Create Carousel
-            </button>
-          )}
-
-          {!carouselMode && (
-            <>
-              <input
-                ref={uploadInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                className="hidden"
-                onChange={handleFileSelected}
-              />
+          <div className="ml-auto flex items-center gap-2">
+            {/* Carousel button */}
+            {activeFolderId && !carouselMode && (
               <button
-                onClick={() => uploadInputRef.current?.click()}
-                className={`flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 text-gray-500 hover:border-graphite hover:text-graphite transition-colors ${activeFolderName ? '' : 'ml-auto'}`}
-                title="Upload an image to your library"
+                onClick={() => { setCarouselMode(true); setCarouselItems([]) }}
+                className="flex items-center gap-1.5 text-xs font-mono uppercase bg-white border border-forest/20 shadow-sm px-3 py-2 rounded-xl text-graphite/60 hover:border-rust/50 hover:text-rust transition-all"
+                title="Select images and videos to build a carousel post"
               >
-                <UploadIcon />
-                Upload Image
+                <CarouselIcon />
+                Carousel
               </button>
-            </>
-          )}
+            )}
 
-          {carouselMode && (
-            <button
-              onClick={exitCarouselMode}
-              className="ml-auto text-xs font-mono uppercase text-gray-400 hover:text-graphite transition-colors px-3 py-1.5"
-            >
-              Cancel
-            </button>
-          )}
+            {/* Upload */}
+            {!carouselMode && (
+              <>
+                <input
+                  ref={uploadInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={handleFileSelected}
+                />
+                <button
+                  onClick={() => uploadInputRef.current?.click()}
+                  className="flex items-center gap-1.5 text-xs font-mono uppercase bg-white border border-forest/20 shadow-sm px-3 py-2 rounded-xl text-graphite/60 hover:border-forest/40 hover:text-graphite transition-all"
+                  title="Upload an image to your library"
+                >
+                  <UploadIcon />
+                  Upload
+                </button>
+              </>
+            )}
 
+            {/* Cancel carousel */}
+            {carouselMode && (
+              <button
+                onClick={exitCarouselMode}
+                className="text-xs font-mono uppercase text-graphite/40 hover:text-graphite transition-colors px-3 py-2"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Empty state for folder */}
         {activeFolderId && filteredAds.length === 0 && filteredVideos.length === 0 && (
-          <div className="border border-outline border-dashed p-12 text-center">
-            <p className="text-xs font-mono uppercase text-gray-400 mb-2">Campaign is empty</p>
-            <p className="text-[11px] font-mono text-gray-300">Drag assets here to add them to this campaign</p>
+          <div className="bg-white rounded-2xl border border-forest/20 border-dashed p-12 text-center shadow-sm">
+            <p className="text-xs font-mono uppercase text-graphite/40 mb-1">Campaign is empty</p>
+            <p className="text-[11px] font-mono text-graphite/25">Drag assets here to add them to this campaign</p>
           </div>
         )}
 
-        {/* ── Library grid ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {/* ── Grid ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 
           {filter === 'all' && unifiedFeed.map((item) => {
             if (item.kind === 'video') {
@@ -542,7 +549,7 @@ export default function LibraryGrid({
                   {activeFolderId && !carouselMode && (
                     <button
                       onClick={() => handleRemoveFromCampaign([], [item.video.id])}
-                      className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-gray-300 rounded-sm px-2 py-0.5 text-[10px] font-mono uppercase text-gray-500 hover:text-rust hover:border-rust"
+                      className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 border border-forest/20 rounded-lg px-2 py-1 text-[10px] font-mono uppercase text-graphite/50 hover:text-rust hover:border-rust/40 shadow-sm"
                     >
                       Remove
                     </button>
@@ -574,14 +581,14 @@ export default function LibraryGrid({
                   {activeFolderId && !carouselMode && (
                     <button
                       onClick={() => handleRemoveFromCampaign(feedItem.ads.map((a) => a.id), [])}
-                      className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-gray-300 rounded-sm px-2 py-0.5 text-[10px] font-mono uppercase text-gray-500 hover:text-rust hover:border-rust"
+                      className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 border border-forest/20 rounded-lg px-2 py-1 text-[10px] font-mono uppercase text-graphite/50 hover:text-rust hover:border-rust/40 shadow-sm"
                     >
                       Remove
                     </button>
                   )}
                   {carouselMode && (
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
-                      <span className="text-[10px] font-mono uppercase text-white bg-black/60 px-2 py-1">Open to pick individually</span>
+                    <div className="absolute inset-0 bg-black/30 rounded-2xl flex items-center justify-center pointer-events-none">
+                      <span className="text-[10px] font-mono uppercase text-white bg-black/60 px-3 py-1.5 rounded-lg">Open to pick individually</span>
                     </div>
                   )}
                 </div>
@@ -600,7 +607,7 @@ export default function LibraryGrid({
                 {activeFolderId && !carouselMode && (
                   <button
                     onClick={() => handleRemoveFromCampaign([feedItem.ad.id], [])}
-                    className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-gray-300 rounded-sm px-2 py-0.5 text-[10px] font-mono uppercase text-gray-500 hover:text-rust hover:border-rust"
+                    className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 border border-forest/20 rounded-lg px-2 py-1 text-[10px] font-mono uppercase text-graphite/50 hover:text-rust hover:border-rust/40 shadow-sm"
                   >
                     Remove
                   </button>
@@ -633,14 +640,14 @@ export default function LibraryGrid({
                   {activeFolderId && !carouselMode && (
                     <button
                       onClick={() => handleRemoveFromCampaign(item.ads.map((a) => a.id), [])}
-                      className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-gray-300 rounded-sm px-2 py-0.5 text-[10px] font-mono uppercase text-gray-500 hover:text-rust hover:border-rust"
+                      className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 border border-forest/20 rounded-lg px-2 py-1 text-[10px] font-mono uppercase text-graphite/50 hover:text-rust hover:border-rust/40 shadow-sm"
                     >
                       Remove
                     </button>
                   )}
                   {carouselMode && (
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
-                      <span className="text-[10px] font-mono uppercase text-white bg-black/60 px-2 py-1">Open to pick individually</span>
+                    <div className="absolute inset-0 bg-black/30 rounded-2xl flex items-center justify-center pointer-events-none">
+                      <span className="text-[10px] font-mono uppercase text-white bg-black/60 px-3 py-1.5 rounded-lg">Open to pick individually</span>
                     </div>
                   )}
                 </div>
@@ -659,7 +666,7 @@ export default function LibraryGrid({
                 {activeFolderId && !carouselMode && (
                   <button
                     onClick={() => handleRemoveFromCampaign([item.ad.id], [])}
-                    className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-gray-300 rounded-sm px-2 py-0.5 text-[10px] font-mono uppercase text-gray-500 hover:text-rust hover:border-rust"
+                    className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 border border-forest/20 rounded-lg px-2 py-1 text-[10px] font-mono uppercase text-graphite/50 hover:text-rust hover:border-rust/40 shadow-sm"
                   >
                     Remove
                   </button>
@@ -689,7 +696,7 @@ export default function LibraryGrid({
                 {activeFolderId && !carouselMode && (
                   <button
                     onClick={() => handleRemoveFromCampaign([], [video.id])}
-                    className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-gray-300 rounded-sm px-2 py-0.5 text-[10px] font-mono uppercase text-gray-500 hover:text-rust hover:border-rust"
+                    className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 border border-forest/20 rounded-lg px-2 py-1 text-[10px] font-mono uppercase text-graphite/50 hover:text-rust hover:border-rust/40 shadow-sm"
                   >
                     Remove
                   </button>
@@ -707,18 +714,18 @@ export default function LibraryGrid({
 
         </div>
 
-        {/* ── Carousel selection sticky bar ── */}
+        {/* ── Carousel sticky bar ── */}
         {carouselMode && (
-          <div className="sticky bottom-0 left-0 right-0 z-40 bg-graphite border-t-2 border-rust shadow-lg px-6 py-4 flex items-center gap-4 mt-6">
-            <span className="text-xs font-mono text-white uppercase">
+          <div className="sticky bottom-4 left-0 right-0 z-40 bg-forest rounded-2xl border border-forest shadow-xl px-6 py-4 flex items-center gap-4 mt-6">
+            <span className="text-xs font-mono text-white/80 uppercase">
               {carouselItems.length === 0
                 ? 'Click items to select them'
-                : `${carouselItems.length}/10 item${carouselItems.length !== 1 ? 's' : ''} selected`}
+                : `${carouselItems.length}/10 selected`}
             </span>
             {carouselItems.length > 0 && (
               <button
                 onClick={() => setCarouselItems([])}
-                className="text-xs font-mono text-gray-400 hover:text-white transition-colors uppercase"
+                className="text-xs font-mono text-white/40 hover:text-white transition-colors uppercase"
               >
                 Clear
               </button>
@@ -726,14 +733,14 @@ export default function LibraryGrid({
             <div className="ml-auto flex items-center gap-3">
               <button
                 onClick={exitCarouselMode}
-                className="text-xs font-mono uppercase text-gray-400 hover:text-white transition-colors"
+                className="text-xs font-mono uppercase text-white/40 hover:text-white transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={() => setShowCarouselModal(true)}
                 disabled={carouselItems.length < 2}
-                className="text-xs font-mono uppercase bg-rust text-white px-4 py-2 hover:bg-rust/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="text-xs font-mono uppercase bg-rust text-white px-4 py-2 rounded-xl hover:bg-rust/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 Build Carousel ({carouselItems.length}) →
               </button>
@@ -742,7 +749,7 @@ export default function LibraryGrid({
         )}
       </div>
 
-      {/* ── Level 1: Set variant picker ── */}
+      {/* ── Modals ── */}
       {selectedSet && liveSetAds && liveSetAds.length > 0 && !selectedAd && (
         <AdSetModal
           ads={liveSetAds}
@@ -751,7 +758,6 @@ export default function LibraryGrid({
         />
       )}
 
-      {/* ── Level 2: Ad detail / edit ── */}
       {selectedAd && (
         <AdModal
           ad={selectedAd}
@@ -762,7 +768,6 @@ export default function LibraryGrid({
         />
       )}
 
-      {/* ── Video detail modal ── */}
       {selectedVideo && (
         <VideoModal
           video={selectedVideo}
@@ -772,7 +777,6 @@ export default function LibraryGrid({
         />
       )}
 
-      {/* ── Carousel builder modal ── */}
       {showCarouselModal && (
         <CarouselModal
           items={carouselItems}
@@ -782,7 +786,6 @@ export default function LibraryGrid({
         />
       )}
 
-      {/* ── Upload image modal ── */}
       {pendingUploadFile && (
         <UploadImageModal
           file={pendingUploadFile}
@@ -816,7 +819,7 @@ function CarouselOverlay({
       onClick={onToggle}
       title={!selected && atMax ? 'Maximum 10 items per carousel' : undefined}
       className={[
-        'absolute inset-0 cursor-pointer transition-all',
+        'absolute inset-0 rounded-2xl cursor-pointer transition-all',
         selected
           ? 'bg-rust/20 ring-2 ring-inset ring-rust'
           : atMax
@@ -824,16 +827,14 @@ function CarouselOverlay({
           : 'bg-transparent hover:bg-rust/10',
       ].join(' ')}
     >
-      {/* Order badge */}
       {selected && (
-        <span className="absolute top-2 left-2 bg-rust text-white text-[10px] font-mono font-bold w-5 h-5 flex items-center justify-center rounded-full shadow">
+        <span className="absolute top-3 left-3 bg-rust text-white text-[10px] font-mono font-bold w-5 h-5 flex items-center justify-center rounded-full shadow">
           {selIdx + 1}
         </span>
       )}
-      {/* Checkbox */}
       <span
         className={[
-          'absolute top-2 right-2 w-5 h-5 rounded border-2 flex items-center justify-center shadow transition-all',
+          'absolute top-3 right-3 w-5 h-5 rounded-full border-2 flex items-center justify-center shadow transition-all',
           selected ? 'bg-rust border-rust' : 'bg-white border-gray-300',
         ].join(' ')}
       >
