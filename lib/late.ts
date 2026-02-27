@@ -93,6 +93,61 @@ export async function createLatePost(params: {
   return post
 }
 
+// ─── Account Connection ───────────────────────────────────────────────────────
+
+export async function getLateConnectUrl(params: {
+  platform: string
+  profileId: string
+  redirectUrl: string
+}): Promise<string> {
+  const url = new URL(`${LATE_API_BASE}/connect/${params.platform}`)
+  url.searchParams.set('profileId', params.profileId)
+  url.searchParams.set('redirect_url', params.redirectUrl)
+
+  const res = await fetch(url.toString(), { headers: authHeaders() })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`Late API ${res.status}: ${body}`)
+  }
+  const data = await res.json()
+  const authUrl = data.authUrl ?? data.auth_url ?? data.url
+  if (!authUrl) throw new Error('Late API did not return an authUrl')
+  return authUrl
+}
+
+export async function connectBlueskyCredentials(params: {
+  profileId: string
+  identifier: string
+  password: string
+}): Promise<LateAccount> {
+  const res = await fetch(`${LATE_API_BASE}/connect/bluesky/credentials`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({
+      profileId: params.profileId,
+      identifier: params.identifier,
+      password: params.password,
+    }),
+  })
+  const text = await res.text()
+  if (!res.ok) throw new Error(`Late API ${res.status}: ${text}`)
+  const raw = JSON.parse(text)
+  return raw.account ?? raw.data ?? raw
+}
+
+export async function disconnectLateAccount(accountId: string): Promise<void> {
+  const res = await fetch(`${LATE_API_BASE}/accounts/${accountId}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  })
+  if (!res.ok && res.status !== 404) {
+    const body = await res.text()
+    throw new Error(`Late API ${res.status}: ${body}`)
+  }
+}
+
+// ─── Posts ────────────────────────────────────────────────────────────────────
+
 export async function deleteLatePost(latePostId: string): Promise<void> {
   const res = await fetch(`${LATE_API_BASE}/posts/${latePostId}`, {
     method: 'DELETE',
