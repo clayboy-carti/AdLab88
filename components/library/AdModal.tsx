@@ -457,6 +457,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onTitleUpdate, o
   })
 
   return (
+    <>
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
@@ -852,6 +853,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onTitleUpdate, o
         />
       </div>
     )}
+    </>
   )
 }
 
