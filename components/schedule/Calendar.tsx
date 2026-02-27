@@ -520,19 +520,30 @@ export default function Calendar({ posts = [] }: CalendarProps) {
                           onClick={() => setSelectedPost(post)}
                           className="flex flex-col gap-2 w-full text-left p-3 hover:bg-rust/5 transition-colors flex-1"
                         >
-                          <div className="flex items-center justify-between gap-1">
-                            <div className="flex items-baseline gap-1">
-                              <span className="text-lg font-bold text-graphite leading-none">{day}</span>
-                              <span className="text-[9px] font-mono uppercase text-graphite/45">{monthAbbr}</span>
+                          <div className="flex items-start gap-2">
+                            {post.signedUrl && (
+                              <img
+                                src={post.signedUrl}
+                                alt=""
+                                className="w-12 h-12 rounded-md object-cover flex-shrink-0"
+                              />
+                            )}
+                            <div className="flex flex-col gap-1 min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-1">
+                                <div className="flex items-baseline gap-1">
+                                  <span className="text-lg font-bold text-graphite leading-none">{day}</span>
+                                  <span className="text-[9px] font-mono uppercase text-graphite/45">{monthAbbr}</span>
+                                </div>
+                                <span className="text-[9px] font-mono uppercase text-rust/70 tracking-wide">{post.platform}</span>
+                              </div>
+                              {post.title && (
+                                <p className="text-xs font-bold text-graphite leading-snug line-clamp-2">{post.title}</p>
+                              )}
+                              {post.hook && (
+                                <p className="text-xs font-medium text-graphite/70 leading-snug line-clamp-2">{post.hook}</p>
+                              )}
                             </div>
-                            <span className="text-[9px] font-mono uppercase text-rust/70 tracking-wide">{post.platform}</span>
                           </div>
-                          {post.title && (
-                            <p className="text-xs font-bold text-graphite leading-snug line-clamp-2">{post.title}</p>
-                          )}
-                          {post.hook && (
-                            <p className="text-xs font-medium text-graphite/70 leading-snug line-clamp-3">{post.hook}</p>
-                          )}
                         </button>
                         <div className="flex border-t border-rust/20">
                           <button
