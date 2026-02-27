@@ -33,7 +33,7 @@ export default function BrandSetupFlow() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-8">
+    <div className="max-w-4xl mx-auto p-4 sm:p-8">
       {step === 'url_input' && (
         <div className="space-y-8">
           <div className="card">
@@ -69,7 +69,7 @@ export default function BrandSetupFlow() {
 
       {step === 'wizard' && (
         <div>
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex flex-wrap items-start gap-2 justify-between">
             <h1 className="text-3xl uppercase font-mono header-accent">Brand Setup</h1>
             {scannedDNA && (
               <p className="text-xs font-mono text-gray-400">

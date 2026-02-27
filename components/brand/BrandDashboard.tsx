@@ -231,11 +231,11 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
   return (
     <>
       {/* ── PAGE HEADER ───────────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-6xl font-bold font-mono text-forest uppercase leading-none tracking-tighter">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6 lg:mb-8">
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold font-mono text-forest uppercase leading-none tracking-tighter">
           {brand.company_name}
         </h1>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 flex-wrap">
           <span className="text-xs font-mono text-graphite/40">
             Last Updated: {formatDate(brand.updated_at)}
           </span>
@@ -279,7 +279,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
 
           {/* URL input step */}
           {(rescanStep === 'input' || rescanStep === 'scanning') && (
-            <div className="px-6 py-5 space-y-4">
+            <div className="px-4 sm:px-6 py-5 space-y-4">
               <form onSubmit={runRescan} className="flex gap-3">
                 <input
                   type="url"
@@ -327,9 +327,9 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
 
           {/* Review step */}
           {rescanStep === 'review' && rescanData && (
-            <div className="px-6 py-5 space-y-5">
+            <div className="px-4 sm:px-6 py-5 space-y-5">
               {/* Compact preview grid */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {/* Col 1: Core identity fields */}
                 <div className="space-y-3">
                   <RescanField label="Company Name" value={rescanData.company_name} />
@@ -453,13 +453,13 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
         </div>
       )}
 
-      {/* ── GRID — layout never changes ────────────────────────────── */}
+      {/* ── GRID ──────────────────────────────────────────────────── */}
       <div
-        className="grid grid-cols-3 gap-4 items-start"
+        className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start"
         style={{ gridTemplateRows: 'auto auto' }}
       >
         {/* ── Core Identity — row-span-2 ── */}
-        <div className="card row-span-2 flex flex-col gap-5">
+        <div className="card lg:row-span-2 flex flex-col gap-5">
           <CardHeader
             label="Core Identity"
             editing={isEditing('core')}
@@ -488,7 +488,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                 />
               </EditField>
               <hr className="border-forest/15" />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <EditField label="Target Audience" error={errors.target_audience?.message}>
                   <textarea
                     {...register('target_audience')}
@@ -515,7 +515,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
             </>
           ) : (
             <>
-              <h2 className="text-4xl font-bold font-mono text-forest uppercase leading-none tracking-tight">
+              <h2 className="text-3xl sm:text-4xl font-bold font-mono text-forest uppercase leading-none tracking-tight">
                 {brand.company_name}
               </h2>
               <hr className="border-forest/15" />
@@ -526,7 +526,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                 <p className="text-sm font-mono text-graphite leading-relaxed">{brand.what_we_do}</p>
               </div>
               <hr className="border-forest/15" />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
                     Target Audience
@@ -584,7 +584,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                   placeholder="Our voice is..."
                 />
               </EditField>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <EditField label="Words to Use">
                   <textarea
                     {...register('words_to_use')}
@@ -612,7 +612,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                   &ldquo;{brand.voice_summary}&rdquo;
                 </p>
               )}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {brand.words_to_use && brand.words_to_use.length > 0 && (
                   <div>
                     <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
@@ -691,7 +691,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
         </div>
 
         {/* ── Visual Identity — col-span-2 ── */}
-        <div className="card col-span-2 flex flex-col gap-5">
+        <div className="card lg:col-span-2 flex flex-col gap-5">
           <CardHeader
             label="Visual Identity"
             editing={isEditing('visual')}
@@ -703,7 +703,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
           />
 
           {isEditing('visual') ? (
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <EditField label="Brand Colors">
                 <div className="flex gap-2 mb-2 flex-wrap min-h-[2rem]">
                   {liveColors.map((c) => (
@@ -732,7 +732,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
               </EditField>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-3">
                   Brand Colors
