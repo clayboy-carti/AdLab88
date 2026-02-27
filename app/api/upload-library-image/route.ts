@@ -60,8 +60,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
     }
 
-    // Derive a display title from the filename (strip extension)
-    const title = file.name.replace(/\.[^.]+$/, '') || 'Uploaded Image'
+    // Optional metadata from the upload modal
+    const rawTitle = (formData.get('title') as string | null)?.trim()
+    const title = rawTitle || file.name.replace(/\.[^.]+$/, '') || 'Uploaded Image'
+    const caption = (formData.get('caption') as string | null) ?? ''
+    const folderId = (formData.get('folderId') as string | null) || null
 
     const { data: adRow, error: dbError } = await supabase
       .from('generated_ads')
@@ -72,8 +75,9 @@ export async function POST(request: Request) {
         title,
         positioning_angle: 'user-upload',
         hook: '',
-        caption: '',
+        caption,
         cta: '',
+        folder_id: folderId,
       })
       .select('id, user_id, batch_id, positioning_angle, hook, caption, cta, storage_path, framework_applied, target_platform, created_at, image_quality, aspect_ratio, folder_id, title')
       .single()

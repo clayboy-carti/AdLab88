@@ -8,6 +8,7 @@ import AdModal from './AdModal'
 import VideoCard, { type VideoItem } from './VideoCard'
 import VideoModal from './VideoModal'
 import CarouselModal from './CarouselModal'
+import UploadImageModal from './UploadImageModal'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -121,32 +122,12 @@ export default function LibraryGrid({
 
   // ── Image upload ──
   const uploadInputRef = useRef<HTMLInputElement>(null)
-  const [uploading, setUploading] = useState(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [pendingUploadFile, setPendingUploadFile] = useState<File | null>(null)
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!e.target) return
     e.target.value = ''
-    if (!file) return
-
-    setUploading(true)
-    setUploadError(null)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      const res = await fetch('/api/upload-library-image', { method: 'POST', body: formData })
-      const json = await res.json()
-      if (!res.ok) {
-        setUploadError(json.error ?? 'Upload failed')
-      } else {
-        setAds((prev) => [json.ad, ...prev])
-      }
-    } catch {
-      setUploadError('Upload failed')
-    } finally {
-      setUploading(false)
-    }
+    if (file) setPendingUploadFile(file)
   }
 
   // ── Filtered assets ──
@@ -511,20 +492,15 @@ export default function LibraryGrid({
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif"
                 className="hidden"
-                onChange={handleImageUpload}
+                onChange={handleFileSelected}
               />
               <button
                 onClick={() => uploadInputRef.current?.click()}
-                disabled={uploading}
-                className={`flex items-center gap-1.5 text-xs font-mono uppercase border px-3 py-1.5 transition-colors ${
-                  uploading
-                    ? 'border-outline text-gray-300 cursor-not-allowed'
-                    : 'border-outline text-gray-500 hover:border-graphite hover:text-graphite'
-                } ${activeFolderName ? '' : 'ml-auto'}`}
+                className={`flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 text-gray-500 hover:border-graphite hover:text-graphite transition-colors ${activeFolderName ? '' : 'ml-auto'}`}
                 title="Upload an image to your library"
               >
                 <UploadIcon />
-                {uploading ? 'Uploading…' : 'Upload Image'}
+                Upload Image
               </button>
             </>
           )}
@@ -538,11 +514,6 @@ export default function LibraryGrid({
             </button>
           )}
 
-          {uploadError && (
-            <span className="w-full text-[10px] font-mono text-rust uppercase mt-1">
-              {uploadError}
-            </span>
-          )}
         </div>
 
         {/* Empty state for folder */}
@@ -808,6 +779,20 @@ export default function LibraryGrid({
           onItemsChange={setCarouselItems}
           onClose={() => setShowCarouselModal(false)}
           onScheduled={exitCarouselMode}
+        />
+      )}
+
+      {/* ── Upload image modal ── */}
+      {pendingUploadFile && (
+        <UploadImageModal
+          file={pendingUploadFile}
+          folders={folders}
+          onClose={() => setPendingUploadFile(null)}
+          onUploaded={(ad, newFolder) => {
+            setAds((prev) => [ad, ...prev])
+            if (newFolder) setFolders((prev) => [...prev, newFolder])
+            setPendingUploadFile(null)
+          }}
         />
       )}
     </div>
