@@ -10,9 +10,10 @@ import {
   parseCommaSeparated,
   parseColors,
 } from '@/lib/validations/brand'
-import type { Brand } from '@/types/database'
+import type { Brand, BrandDNA } from '@/types/database'
 
 type Section = 'core' | 'voice' | 'snapshot' | 'visual'
+type RescanStep = 'input' | 'scanning' | 'review'
 
 const SECTION_FIELDS: Record<Section, (keyof BrandFormData)[]> = {
   core: ['company_name', 'what_we_do', 'target_audience', 'unique_differentiator', 'sample_copy'],
@@ -50,6 +51,15 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
   const [editingSection, setEditingSection] = useState<Section | null>(null)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+
+  // ── Rescan state ──────────────────────────────────────────────────
+  const [rescanOpen, setRescanOpen] = useState(false)
+  const [rescanStep, setRescanStep] = useState<RescanStep>('input')
+  const [rescanUrl, setRescanUrl] = useState('')
+  const [rescanData, setRescanData] = useState<BrandDNA | null>(null)
+  const [rescanError, setRescanError] = useState<string | null>(null)
+  const [applying, setApplying] = useState(false)
+
   const supabase = createClient()
 
   const {
@@ -67,6 +77,61 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
   const colorsRaw = watch('brand_colors')
   const liveColors = parseColors(colorsRaw) ?? []
 
+  // ── Shared DB save ────────────────────────────────────────────────
+  const persistToDB = async (data: BrandFormData) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const parsed = {
+      personality_traits: parseCommaSeparated(data.personality_traits),
+      words_to_use: parseCommaSeparated(data.words_to_use),
+      words_to_avoid: parseCommaSeparated(data.words_to_avoid),
+      brand_colors: parseColors(data.brand_colors),
+    }
+
+    const now = new Date().toISOString()
+    const dbPayload = {
+      company_name: data.company_name,
+      what_we_do: data.what_we_do,
+      target_audience: data.target_audience,
+      unique_differentiator: data.unique_differentiator || null,
+      voice_summary: data.voice_summary || null,
+      personality_traits: parsed.personality_traits ?? null,
+      words_to_use: parsed.words_to_use ?? null,
+      words_to_avoid: parsed.words_to_avoid ?? null,
+      sample_copy: data.sample_copy,
+      brand_colors: parsed.brand_colors ?? null,
+      typography_notes: data.typography_notes || null,
+      updated_at: now,
+    }
+
+    const { error: updateError } = await supabase
+      .from('brands')
+      .update(dbPayload)
+      .eq('user_id', user.id)
+
+    if (updateError) throw updateError
+
+    setBrand((prev) => ({
+      ...prev,
+      company_name: dbPayload.company_name,
+      what_we_do: dbPayload.what_we_do,
+      target_audience: dbPayload.target_audience,
+      unique_differentiator: dbPayload.unique_differentiator ?? undefined,
+      voice_summary: dbPayload.voice_summary ?? undefined,
+      sample_copy: dbPayload.sample_copy,
+      typography_notes: dbPayload.typography_notes ?? undefined,
+      updated_at: dbPayload.updated_at,
+      personality_traits: parsed.personality_traits ?? prev.personality_traits,
+      words_to_use: parsed.words_to_use ?? prev.words_to_use,
+      words_to_avoid: parsed.words_to_avoid ?? prev.words_to_avoid,
+      brand_colors: parsed.brand_colors ?? prev.brand_colors,
+    }))
+  }
+
+  // ── Per-section editing ───────────────────────────────────────────
   const startEdit = (section: Section) => {
     setSaveError(null)
     setEditingSection(section)
@@ -81,61 +146,10 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
   const saveSection = async (section: Section) => {
     const valid = await trigger(SECTION_FIELDS[section])
     if (!valid) return
-
-    const data = getValues()
     setSaving(true)
     setSaveError(null)
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
-
-      const parsed = {
-        personality_traits: parseCommaSeparated(data.personality_traits),
-        words_to_use: parseCommaSeparated(data.words_to_use),
-        words_to_avoid: parseCommaSeparated(data.words_to_avoid),
-        brand_colors: parseColors(data.brand_colors),
-      }
-
-      const now = new Date().toISOString()
-      const dbPayload = {
-        company_name: data.company_name,
-        what_we_do: data.what_we_do,
-        target_audience: data.target_audience,
-        unique_differentiator: data.unique_differentiator || null,
-        voice_summary: data.voice_summary || null,
-        personality_traits: parsed.personality_traits ?? null,
-        words_to_use: parsed.words_to_use ?? null,
-        words_to_avoid: parsed.words_to_avoid ?? null,
-        sample_copy: data.sample_copy,
-        brand_colors: parsed.brand_colors ?? null,
-        typography_notes: data.typography_notes || null,
-        updated_at: now,
-      }
-
-      const { error: updateError } = await supabase
-        .from('brands')
-        .update(dbPayload)
-        .eq('user_id', user.id)
-
-      if (updateError) throw updateError
-
-      setBrand((prev) => ({
-        ...prev,
-        company_name: dbPayload.company_name,
-        what_we_do: dbPayload.what_we_do,
-        target_audience: dbPayload.target_audience,
-        unique_differentiator: dbPayload.unique_differentiator ?? undefined,
-        voice_summary: dbPayload.voice_summary ?? undefined,
-        sample_copy: dbPayload.sample_copy,
-        typography_notes: dbPayload.typography_notes ?? undefined,
-        updated_at: dbPayload.updated_at,
-        personality_traits: parsed.personality_traits ?? prev.personality_traits,
-        words_to_use: parsed.words_to_use ?? prev.words_to_use,
-        words_to_avoid: parsed.words_to_avoid ?? prev.words_to_avoid,
-        brand_colors: parsed.brand_colors ?? prev.brand_colors,
-      }))
+      await persistToDB(getValues())
       setEditingSection(null)
     } catch (err: any) {
       setSaveError(err.message || 'Failed to save')
@@ -144,23 +158,299 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
     }
   }
 
+  // ── Rescan handlers ───────────────────────────────────────────────
+  const openRescan = () => {
+    setRescanOpen(true)
+    setRescanStep('input')
+    setRescanData(null)
+    setRescanError(null)
+  }
+
+  const closeRescan = () => {
+    setRescanOpen(false)
+    setRescanUrl('')
+    setRescanData(null)
+    setRescanError(null)
+    setRescanStep('input')
+  }
+
+  const runRescan = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!rescanUrl.trim()) return
+    setRescanStep('scanning')
+    setRescanError(null)
+    try {
+      const res = await fetch('/api/brand-scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: rescanUrl.trim() }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Scan failed')
+      setRescanData(json.scan as BrandDNA)
+      setRescanStep('review')
+    } catch (err: any) {
+      setRescanError(err.message || 'Scan failed')
+      setRescanStep('input')
+    }
+  }
+
+  const applyRescan = async () => {
+    if (!rescanData) return
+    setApplying(true)
+    try {
+      // Merge scanned data over existing brand values (scan wins where it returned data)
+      const merged: BrandFormData = {
+        company_name: rescanData.company_name ?? brand.company_name,
+        what_we_do: rescanData.what_we_do ?? brand.what_we_do,
+        target_audience: rescanData.target_audience ?? brand.target_audience,
+        unique_differentiator: rescanData.unique_differentiator ?? brand.unique_differentiator ?? '',
+        voice_summary: rescanData.voice_summary ?? brand.voice_summary ?? '',
+        personality_traits:
+          rescanData.personality_traits?.join(', ') ?? brand.personality_traits?.join(', ') ?? '',
+        words_to_use: rescanData.words_to_use?.join(', ') ?? brand.words_to_use?.join(', ') ?? '',
+        words_to_avoid:
+          rescanData.words_to_avoid?.join(', ') ?? brand.words_to_avoid?.join(', ') ?? '',
+        sample_copy: rescanData.sample_copy ?? brand.sample_copy,
+        brand_colors: rescanData.brand_colors?.join(', ') ?? brand.brand_colors?.join(', ') ?? '',
+        typography_notes: rescanData.typography_notes ?? brand.typography_notes ?? '',
+      }
+      reset(merged)
+      await persistToDB(merged)
+      closeRescan()
+    } catch (err: any) {
+      setRescanError(err.message || 'Failed to apply')
+    } finally {
+      setApplying(false)
+    }
+  }
+
   const isEditing = (s: Section) => editingSection === s
-  const canEdit = editingSection === null
+  const canEdit = editingSection === null && !rescanOpen
 
   return (
     <>
       {/* ── PAGE HEADER ───────────────────────────────────────────── */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex items-center justify-between mb-8">
         <h1 className="text-6xl font-bold font-sans text-forest uppercase leading-none tracking-tighter">
           {brand.company_name}
         </h1>
-        <span className="text-xs font-mono text-graphite/40 pt-2">
-          Last Updated: {formatDate(brand.updated_at)}
-        </span>
+        <div className="flex items-center gap-4">
+          <span className="text-xs font-mono text-graphite/40">
+            Last Updated: {formatDate(brand.updated_at)}
+          </span>
+          {!rescanOpen && (
+            <button
+              type="button"
+              onClick={openRescan}
+              className="border border-forest text-forest font-mono text-xs uppercase tracking-widest px-4 py-2 hover:bg-forest hover:text-white transition-colors"
+            >
+              ↺ Update Brand
+            </button>
+          )}
+        </div>
       </div>
 
-      {saveError && (
-        <p className="text-xs text-rust font-mono mb-4">{saveError}</p>
+      {saveError && <p className="text-xs text-rust font-mono mb-4">{saveError}</p>}
+
+      {/* ── RESCAN PANEL ──────────────────────────────────────────── */}
+      {rescanOpen && (
+        <div className="mb-6 border border-forest/30 bg-white rounded-2xl overflow-hidden">
+          {/* Panel header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-forest/15">
+            <div>
+              <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">
+                {rescanStep === 'review' ? `Scan results — ${rescanUrl}` : 'Update Brand'}
+              </p>
+              <p className="text-sm font-sans text-graphite mt-0.5">
+                {rescanStep === 'review'
+                  ? 'Review what was detected. Applying will overwrite your current brand profile.'
+                  : 'Re-scan your website to pull in updated brand data automatically.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={closeRescan}
+              className="text-graphite/30 hover:text-graphite transition-colors text-xl leading-none px-2"
+            >
+              ×
+            </button>
+          </div>
+
+          {/* URL input step */}
+          {(rescanStep === 'input' || rescanStep === 'scanning') && (
+            <div className="px-6 py-5 space-y-4">
+              <form onSubmit={runRescan} className="flex gap-3">
+                <input
+                  type="url"
+                  value={rescanUrl}
+                  onChange={(e) => setRescanUrl(e.target.value)}
+                  placeholder="https://yourcompany.com"
+                  disabled={rescanStep === 'scanning'}
+                  required
+                  className="field-input flex-1"
+                />
+                <button
+                  type="submit"
+                  disabled={rescanStep === 'scanning' || !rescanUrl.trim()}
+                  className="bg-forest text-white font-mono text-xs uppercase tracking-widest px-5 py-2 hover:bg-forest/90 transition-colors disabled:opacity-50 shrink-0"
+                >
+                  {rescanStep === 'scanning' ? (
+                    <span className="flex items-center gap-2">
+                      <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent animate-spin rounded-full" />
+                      Scanning…
+                    </span>
+                  ) : (
+                    '[ Scan ]'
+                  )}
+                </button>
+              </form>
+
+              {rescanStep === 'scanning' && (
+                <div className="border border-outline/40 bg-[#F3ECDC]/60 px-4 py-3 font-mono text-xs text-graphite/50 space-y-1">
+                  <p>&gt; Fetching website content...</p>
+                  <p>&gt; Analyzing brand signals...</p>
+                  <p>
+                    &gt; Extracting brand DNA
+                    <span className="animate-pulse">_</span>
+                  </p>
+                </div>
+              )}
+
+              {rescanError && (
+                <p className="text-xs font-mono text-rust border border-rust/20 bg-rust/5 px-3 py-2 rounded">
+                  {rescanError}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Review step */}
+          {rescanStep === 'review' && rescanData && (
+            <div className="px-6 py-5 space-y-5">
+              {/* Compact preview grid */}
+              <div className="grid grid-cols-3 gap-4">
+                {/* Col 1: Core identity fields */}
+                <div className="space-y-3">
+                  <RescanField label="Company Name" value={rescanData.company_name} />
+                  <RescanField label="What We Do" value={rescanData.what_we_do} />
+                  <RescanField label="Target Audience" value={rescanData.target_audience} />
+                  <RescanField label="Differentiator" value={rescanData.unique_differentiator} />
+                </div>
+
+                {/* Col 2: Voice */}
+                <div className="space-y-3">
+                  <RescanField label="Voice Summary" value={rescanData.voice_summary} italic />
+                  {rescanData.personality_traits && rescanData.personality_traits.length > 0 && (
+                    <div>
+                      <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-1.5">
+                        Personality Traits
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {rescanData.personality_traits.map((t) => (
+                          <span
+                            key={t}
+                            className="bg-sage/20 text-forest border border-sage/50 text-xs font-mono px-2 py-0.5 rounded-full capitalize"
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {rescanData.words_to_use && rescanData.words_to_use.length > 0 && (
+                    <div>
+                      <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-1.5">
+                        Words to Use
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {rescanData.words_to_use.map((w) => (
+                          <span
+                            key={w}
+                            className="bg-forest text-white text-xs font-mono px-2 py-0.5 rounded-full capitalize"
+                          >
+                            {w}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {rescanData.words_to_avoid && rescanData.words_to_avoid.length > 0 && (
+                    <div>
+                      <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-1.5">
+                        Words to Avoid
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {rescanData.words_to_avoid.map((w) => (
+                          <span
+                            key={w}
+                            className="bg-rust text-white text-xs font-mono px-2 py-0.5 rounded-full capitalize"
+                          >
+                            {w}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Col 3: Visual */}
+                <div className="space-y-3">
+                  {rescanData.brand_colors && rescanData.brand_colors.length > 0 && (
+                    <div>
+                      <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-1.5">
+                        Brand Colors
+                      </p>
+                      <div className="flex gap-2 flex-wrap">
+                        {rescanData.brand_colors.map((c) => (
+                          <div key={c} className="flex flex-col items-center gap-1">
+                            <div
+                              style={{ backgroundColor: c }}
+                              className="w-8 h-8 rounded border border-outline/20"
+                              title={c}
+                            />
+                            <span className="text-xs font-mono text-graphite/40">{c}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <RescanField label="Typography" value={rescanData.typography_notes} />
+                  <RescanField label="Sample Copy" value={rescanData.sample_copy} italic />
+                </div>
+              </div>
+
+              {rescanError && (
+                <p className="text-xs font-mono text-rust border border-rust/20 bg-rust/5 px-3 py-2 rounded">
+                  {rescanError}
+                </p>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-1 border-t border-forest/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRescanStep('input')
+                    setRescanData(null)
+                    setRescanError(null)
+                  }}
+                  className="font-mono text-xs uppercase tracking-widest text-graphite/50 hover:text-graphite px-4 py-2 border border-outline/30 hover:border-outline/60 transition-colors"
+                >
+                  ← Re-scan
+                </button>
+                <button
+                  type="button"
+                  onClick={applyRescan}
+                  disabled={applying}
+                  className="flex-1 bg-forest text-white font-mono text-xs uppercase tracking-widest py-2 hover:bg-forest/90 transition-colors disabled:opacity-50"
+                >
+                  {applying ? 'Applying…' : '[ Apply to Brand Profile ]'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* ── GRID — layout never changes ────────────────────────────── */}
@@ -546,7 +836,7 @@ function CardHeader({
   )
 }
 
-// ─── Edit field wrapper with label + optional error ───────────────────────────
+// ─── Edit field wrapper ────────────────────────────────────────────────────────
 
 function EditField({
   label,
@@ -562,6 +852,28 @@ function EditField({
       <p className="text-xs font-mono uppercase tracking-widest text-graphite/50 mb-1.5">{label}</p>
       {children}
       {error && <p className="text-xs text-rust font-mono mt-1">{error}</p>}
+    </div>
+  )
+}
+
+// ─── Rescan preview field ──────────────────────────────────────────────────────
+
+function RescanField({
+  label,
+  value,
+  italic = false,
+}: {
+  label: string
+  value?: string | null
+  italic?: boolean
+}) {
+  if (!value) return null
+  return (
+    <div>
+      <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-1">{label}</p>
+      <p className={`text-xs font-sans text-graphite leading-relaxed ${italic ? 'italic' : ''}`}>
+        {value}
+      </p>
     </div>
   )
 }
