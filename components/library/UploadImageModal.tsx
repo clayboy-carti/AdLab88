@@ -88,17 +88,17 @@ export default function UploadImageModal({ file, folders, onClose, onUploaded }:
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={handleOverlayClick}
     >
-      <div className="bg-white border border-outline w-full max-w-xl flex flex-col">
+      <div className="bg-white rounded-2xl border border-forest/50 shadow-lg w-full max-w-xl flex flex-col">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-outline">
-          <h2 className="text-sm font-mono uppercase tracking-widest">Upload Image</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-forest/15">
+          <h2 className="font-mono text-xs uppercase tracking-widest text-forest/70">Upload Image</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-graphite transition-colors text-lg leading-none"
+            className="text-graphite/40 hover:text-graphite transition-colors text-lg leading-none"
           >
             ✕
           </button>
@@ -112,9 +112,9 @@ export default function UploadImageModal({ file, folders, onClose, onUploaded }:
             <img
               src={previewUrl.current}
               alt="Preview"
-              className="w-full h-40 object-cover border border-outline"
+              className="w-full h-40 object-cover rounded-xl border border-forest/25"
             />
-            <p className="text-[10px] font-mono text-gray-400 mt-1 truncate" title={file.name}>
+            <p className="text-[10px] font-mono text-graphite/40 mt-2 truncate" title={file.name}>
               {file.name}
             </p>
           </div>
@@ -124,35 +124,35 @@ export default function UploadImageModal({ file, folders, onClose, onUploaded }:
 
             {/* Title */}
             <div>
-              <label className="block text-[10px] font-mono uppercase text-gray-500 mb-1">Title</label>
+              <label className="block text-[10px] font-mono uppercase tracking-widest text-forest/60 mb-1.5">Title</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Image title"
-                className="w-full border border-outline px-3 py-2 text-xs font-mono focus:outline-none focus:border-graphite"
+                className="field-input"
               />
             </div>
 
             {/* Caption */}
             <div>
-              <label className="block text-[10px] font-mono uppercase text-gray-500 mb-1">Caption</label>
+              <label className="block text-[10px] font-mono uppercase tracking-widest text-forest/60 mb-1.5">Caption</label>
               <textarea
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 placeholder="Optional caption for this image…"
                 rows={3}
-                className="w-full border border-outline px-3 py-2 text-xs font-mono focus:outline-none focus:border-graphite resize-none"
+                className="field-input resize-none"
               />
             </div>
 
             {/* Campaign */}
             <div>
-              <label className="block text-[10px] font-mono uppercase text-gray-500 mb-1">Campaign</label>
+              <label className="block text-[10px] font-mono uppercase tracking-widest text-forest/60 mb-1.5">Campaign</label>
               <select
                 value={campaignValue}
                 onChange={(e) => { setCampaignValue(e.target.value); setNewCampaignName('') }}
-                className="w-full border border-outline px-3 py-2 text-xs font-mono focus:outline-none focus:border-graphite bg-white"
+                className="field-input"
               >
                 <option value="">No campaign</option>
                 {folders.map((f) => (
@@ -168,7 +168,7 @@ export default function UploadImageModal({ file, folders, onClose, onUploaded }:
                   onChange={(e) => setNewCampaignName(e.target.value)}
                   placeholder="Campaign name"
                   autoFocus
-                  className="w-full mt-2 border border-outline px-3 py-2 text-xs font-mono focus:outline-none focus:border-graphite"
+                  className="field-input mt-2"
                 />
               )}
             </div>
@@ -177,7 +177,7 @@ export default function UploadImageModal({ file, folders, onClose, onUploaded }:
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-outline">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-forest/15">
           {error
             ? <p className="text-[10px] font-mono text-rust uppercase">{error}</p>
             : <span />
@@ -185,18 +185,14 @@ export default function UploadImageModal({ file, folders, onClose, onUploaded }:
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="text-xs font-mono uppercase px-4 py-2 border border-outline text-gray-500 hover:border-graphite hover:text-graphite transition-colors"
+              className="btn-secondary text-xs px-4 py-2"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={uploading}
-              className={`text-xs font-mono uppercase px-4 py-2 border transition-colors ${
-                uploading
-                  ? 'border-outline text-gray-300 cursor-not-allowed'
-                  : 'border-graphite bg-graphite text-white hover:bg-black'
-              }`}
+              className={`btn-primary text-xs px-4 py-2 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {uploading ? 'Uploading…' : 'Upload'}
             </button>
