@@ -98,7 +98,14 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
 
       setBrand((prev) => ({
         ...prev,
-        ...dbPayload,
+        company_name: dbPayload.company_name,
+        what_we_do: dbPayload.what_we_do,
+        target_audience: dbPayload.target_audience,
+        unique_differentiator: dbPayload.unique_differentiator ?? undefined,
+        voice_summary: dbPayload.voice_summary ?? undefined,
+        sample_copy: dbPayload.sample_copy,
+        typography_notes: dbPayload.typography_notes ?? undefined,
+        updated_at: dbPayload.updated_at,
         personality_traits: parsed.personality_traits ?? prev.personality_traits,
         words_to_use: parsed.words_to_use ?? prev.words_to_use,
         words_to_avoid: parsed.words_to_avoid ?? prev.words_to_avoid,
