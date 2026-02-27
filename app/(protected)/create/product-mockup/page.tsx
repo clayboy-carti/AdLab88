@@ -646,39 +646,39 @@ export default function ProductMockupPage() {
               </div>
             </div>
 
-            {/* Resolution chips */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Resolution</label>
-              <div className="flex gap-1.5">
-                {(['1K', '2K'] as const).map((q) => (
-                  <button
-                    key={q}
-                    onClick={() => setImageQuality(q)}
-                    className={`px-5 py-1.5 rounded-lg text-xs font-mono transition-all border ${
-                      imageQuality === q
-                        ? 'bg-sage border-forest/30 text-forest font-semibold'
-                        : 'border-forest/15 text-graphite/50 hover:border-forest/35'
-                    }`}
-                  >
-                    {q}
-                  </button>
-                ))}
+            {/* Resolution + Model row */}
+            <div className="flex gap-4 items-end">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Resolution</label>
+                <div className="flex gap-1.5">
+                  {(['1K', '2K'] as const).map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => setImageQuality(q)}
+                      className={`px-5 py-1.5 rounded-lg text-xs font-mono transition-all border ${
+                        imageQuality === q
+                          ? 'bg-sage border-forest/30 text-forest font-semibold'
+                          : 'border-forest/15 text-graphite/50 hover:border-forest/35'
+                      }`}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-
-            {/* Model */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Model</label>
-              <div className="relative">
-                <select
-                  value={imageModel}
-                  onChange={(e) => setImageModel(e.target.value as 'gemini' | 'seedream')}
-                  className="w-full appearance-none rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 pr-8 text-sm font-mono text-graphite focus:outline-none focus:border-forest/50 cursor-pointer"
-                >
-                  <option value="gemini">Gemini</option>
-                  <option value="seedream">Seedream 4</option>
-                </select>
-                <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-graphite/30 pointer-events-none" />
+              <div className="flex flex-col gap-1.5 flex-1">
+                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Model</label>
+                <div className="relative">
+                  <select
+                    value={imageModel}
+                    onChange={(e) => setImageModel(e.target.value as 'gemini' | 'seedream')}
+                    className="w-full appearance-none rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 pr-8 text-sm font-mono text-graphite focus:outline-none focus:border-forest/50 cursor-pointer"
+                  >
+                    <option value="gemini">Gemini</option>
+                    <option value="seedream">Seedream 4</option>
+                  </select>
+                  <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-graphite/30 pointer-events-none" />
+                </div>
               </div>
             </div>
 
