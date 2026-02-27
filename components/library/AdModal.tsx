@@ -211,6 +211,7 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onTitleUpdate, o
   const [copiedField, setCopiedField] = useState<EditableField | null>(null)
 
   const [downloading, setDownloading] = useState(false)
+  const [showFullPreview, setShowFullPreview] = useState(false)
 
   // Delete state
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -518,9 +519,18 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onTitleUpdate, o
         <div className="flex border-b border-outline flex-shrink-0 min-h-[280px]">
 
           {/* Left: image preview */}
-          <div className="flex-1 border-r border-outline flex items-center justify-center bg-gray-50">
+          <div className="flex-1 border-r border-outline flex items-center justify-center bg-gray-50 relative group">
             {ad.signedUrl ? (
-              <img src={ad.signedUrl} alt={ad.hook} className="max-h-[45vh] w-auto max-w-full object-contain" />
+              <>
+                <img src={ad.signedUrl} alt={ad.hook} className="max-h-[45vh] w-auto max-w-full object-contain" />
+                <button
+                  onClick={() => setShowFullPreview(true)}
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 border border-outline p-1.5 hover:border-graphite hover:bg-white"
+                  title="View full size"
+                >
+                  <ExpandIcon />
+                </button>
+              </>
             ) : (
               <span className="text-xs font-mono text-gray-400 uppercase">No image</span>
             )}
@@ -819,6 +829,29 @@ export default function AdModal({ ad, onClose, onCaptionUpdate, onTitleUpdate, o
         </div>
       </div>
     </div>
+
+    {/* Full-size image lightbox */}
+    {showFullPreview && ad.signedUrl && (
+      <div
+        className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4 cursor-zoom-out"
+        onClick={() => setShowFullPreview(false)}
+      >
+        <button
+          onClick={() => setShowFullPreview(false)}
+          className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors border border-white/20 p-2 hover:border-white/60"
+          title="Close"
+        >
+          <CloseIcon />
+        </button>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={ad.signedUrl}
+          alt={ad.hook}
+          className="max-h-full max-w-full object-contain"
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+    )}
   )
 }
 
@@ -865,6 +898,17 @@ function EditIcon() {
     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+  )
+}
+
+function ExpandIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
+      <polyline points="15 3 21 3 21 9" />
+      <polyline points="9 21 3 21 3 15" />
+      <line x1="21" y1="3" x2="14" y2="10" />
+      <line x1="3" y1="21" x2="10" y2="14" />
     </svg>
   )
 }
