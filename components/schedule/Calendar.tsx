@@ -414,10 +414,10 @@ export default function Calendar({ posts = [] }: CalendarProps) {
 
       {/* ── Month view ── */}
       {view === 'month' && (
-        <div className="flex gap-5 items-start">
+        <div className="flex flex-col gap-5">
 
           {/* ── Calendar card ── */}
-          <div className="flex-1 min-w-0 bg-white rounded-2xl border border-forest/20 shadow-sm p-5">
+          <div className="bg-white rounded-2xl border border-forest/20 shadow-sm p-5">
 
             {/* Month navigation */}
             <div className="flex items-center justify-center gap-3 mb-5">
@@ -489,8 +489,8 @@ export default function Calendar({ posts = [] }: CalendarProps) {
             </div>
           </div>
 
-          {/* ── Upcoming posts sidebar ── */}
-          <div className="w-[220px] flex-shrink-0 bg-white rounded-2xl border border-forest/20 shadow-sm p-5">
+          {/* ── Upcoming posts (below calendar) ── */}
+          <div className="bg-white rounded-2xl border border-forest/20 shadow-sm p-5">
             <h3 className="text-base font-bold text-graphite mb-4">Upcoming Posts</h3>
 
             {upcomingPosts.length === 0 ? (
@@ -499,58 +499,60 @@ export default function Calendar({ posts = [] }: CalendarProps) {
                 <p className="text-sm font-medium text-graphite/55">No Scheduled Posts</p>
                 <a
                   href="/create"
-                  className="bg-rust text-white font-semibold px-4 py-2.5 rounded-xl text-sm inline-block text-center w-full hover:bg-[#9a4429] transition-colors"
+                  className="bg-rust text-white font-semibold px-4 py-2.5 rounded-xl text-sm inline-block text-center w-full max-w-[180px] hover:bg-[#9a4429] transition-colors"
                 >
                   Generate an Ad →
                 </a>
               </div>
             ) : (
-              <div className="flex flex-col gap-2">
-                {upcomingPosts.slice(0, 5).map((post) => {
-                  const day = parseInt(post.date.slice(8, 10))
-                  const monthAbbr = MONTH_NAMES[parseInt(post.date.slice(5, 7)) - 1].slice(0, 3)
-                  const isUnscheduling = unschedulingId === post.id
-                  return (
-                    <div key={post.id} className="rounded-xl border border-forest/15 overflow-hidden bg-paper/30">
-                      <button
-                        onClick={() => setSelectedPost(post)}
-                        className="flex items-center gap-3 w-full text-left p-3 hover:bg-forest/5 transition-colors"
-                      >
-                        <div className="flex flex-col items-center flex-shrink-0 w-9">
-                          <span className="text-xl font-bold text-graphite leading-none">{day}</span>
-                          <span className="text-[9px] font-mono uppercase text-graphite/45 mt-0.5">{monthAbbr}</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-[9px] font-mono uppercase text-graphite/40 tracking-wide block">{post.platform}</span>
-                          {post.hook && (
-                            <p className="text-xs font-medium text-graphite truncate mt-0.5">{post.hook}</p>
-                          )}
-                        </div>
-                      </button>
-                      <div className="flex border-t border-forest/10">
+              <>
+                <div className="flex flex-row flex-wrap gap-3">
+                  {upcomingPosts.slice(0, 5).map((post) => {
+                    const day = parseInt(post.date.slice(8, 10))
+                    const monthAbbr = MONTH_NAMES[parseInt(post.date.slice(5, 7)) - 1].slice(0, 3)
+                    const isUnscheduling = unschedulingId === post.id
+                    return (
+                      <div key={post.id} className="rounded-xl border border-forest/15 overflow-hidden bg-paper/30 w-[200px] flex-shrink-0">
                         <button
                           onClick={() => setSelectedPost(post)}
-                          className="flex-1 py-1.5 text-[10px] font-mono uppercase text-graphite/45 hover:bg-forest/5 transition-colors text-center"
+                          className="flex items-center gap-3 w-full text-left p-3 hover:bg-forest/5 transition-colors"
                         >
-                          Edit
+                          <div className="flex flex-col items-center flex-shrink-0 w-9">
+                            <span className="text-xl font-bold text-graphite leading-none">{day}</span>
+                            <span className="text-[9px] font-mono uppercase text-graphite/45 mt-0.5">{monthAbbr}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[9px] font-mono uppercase text-graphite/40 tracking-wide block">{post.platform}</span>
+                            {post.hook && (
+                              <p className="text-xs font-medium text-graphite truncate mt-0.5">{post.hook}</p>
+                            )}
+                          </div>
                         </button>
-                        <button
-                          onClick={() => handleUnschedule(post.id)}
-                          disabled={isUnscheduling}
-                          className="flex-1 py-1.5 text-[10px] font-mono uppercase text-graphite/45 hover:bg-red-50 hover:text-red-500 border-l border-forest/10 disabled:opacity-40 transition-colors text-center"
-                        >
-                          {isUnscheduling ? '...' : 'Remove'}
-                        </button>
+                        <div className="flex border-t border-forest/10">
+                          <button
+                            onClick={() => setSelectedPost(post)}
+                            className="flex-1 py-1.5 text-[10px] font-mono uppercase text-graphite/45 hover:bg-forest/5 transition-colors text-center"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleUnschedule(post.id)}
+                            disabled={isUnscheduling}
+                            className="flex-1 py-1.5 text-[10px] font-mono uppercase text-graphite/45 hover:bg-red-50 hover:text-red-500 border-l border-forest/10 disabled:opacity-40 transition-colors text-center"
+                          >
+                            {isUnscheduling ? '...' : 'Remove'}
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
                 {upcomingPosts.length > 5 && (
-                  <p className="text-[10px] font-mono text-center text-graphite/40 uppercase mt-1">
+                  <p className="text-[10px] font-mono text-graphite/40 uppercase mt-3">
                     +{upcomingPosts.length - 5} more
                   </p>
                 )}
-              </div>
+              </>
             )}
           </div>
         </div>
