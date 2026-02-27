@@ -112,28 +112,28 @@ const PHOTO_SHOOT_SHOTS = [
 // 3:4 outputs 896×1200 (0.747) which is fractionally below Instagram's 0.75 floor.
 // Use 4:5 (928×1152 = 0.806) for Instagram feed portrait with Gemini.
 const GEMINI_ASPECT_RATIOS = [
-  { value: '1:1',  label: '1:1' },
-  { value: '4:5',  label: '4:5' },
-  { value: '4:3',  label: '4:3' },
-  { value: '3:4',  label: '3:4' },
-  { value: '16:9', label: '16:9' },
-  { value: '9:16', label: '9:16' },
-  { value: '3:2',  label: '3:2' },
-  { value: '2:3',  label: '2:3' },
+  { value: '1:1',  label: '1:1 — Square (Instagram)' },
+  { value: '4:5',  label: '4:5 — Feed Portrait (Instagram)' },
+  { value: '4:3',  label: '4:3 — Standard' },
+  { value: '3:4',  label: '3:4 — Portrait' },
+  { value: '16:9', label: '16:9 — Landscape (Instagram)' },
+  { value: '9:16', label: '9:16 — Story / Reel (Instagram)' },
+  { value: '3:2',  label: '3:2 — Wide' },
+  { value: '2:3',  label: '2:3 — Narrow' },
   { value: '5:4',  label: '5:4' },
-  { value: '21:9', label: '21:9' },
+  { value: '21:9', label: '21:9 — Cinematic' },
 ]
 
 // Seedream 4 — valid enum values from Replicate API (no 4:5 or 5:4 support)
 const SEEDREAM_ASPECT_RATIOS = [
-  { value: '1:1',  label: '1:1' },
-  { value: '4:3',  label: '4:3' },
-  { value: '3:4',  label: '3:4' },
-  { value: '16:9', label: '16:9' },
-  { value: '9:16', label: '9:16' },
-  { value: '3:2',  label: '3:2' },
-  { value: '2:3',  label: '2:3' },
-  { value: '21:9', label: '21:9' },
+  { value: '1:1',  label: '1:1 — Square (Instagram)' },
+  { value: '4:3',  label: '4:3 — Standard' },
+  { value: '3:4',  label: '3:4 — Portrait' },
+  { value: '16:9', label: '16:9 — Landscape (Instagram)' },
+  { value: '9:16', label: '9:16 — Story / Reel (Instagram)' },
+  { value: '3:2',  label: '3:2 — Wide' },
+  { value: '2:3',  label: '2:3 — Narrow' },
+  { value: '21:9', label: '21:9 — Cinematic' },
 ]
 
 interface GeneratedAd {
