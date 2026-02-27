@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getLateConnectUrl, disconnectLateAccount } from '@/lib/late'
+import { getOrCreateLateProfileId } from '@/lib/late-profile'
 
 // GET /api/social/connect?platform=instagram
 // Starts the OAuth flow — redirects user to the platform's auth page via Late.
@@ -23,19 +24,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'LATE_API_KEY not configured' }, { status: 500 })
   }
 
-  const profileId = process.env.LATE_PROFILE_ID
-  if (!profileId) {
-    return NextResponse.json({ error: 'LATE_PROFILE_ID not configured' }, { status: 500 })
-  }
-
   const origin = req.nextUrl.origin
   const redirectUrl = `${origin}/api/social/connect/callback`
 
   try {
+    const profileId = await getOrCreateLateProfileId(user.id)
     const authUrl = await getLateConnectUrl({ platform, profileId, redirectUrl })
     return NextResponse.redirect(authUrl)
   } catch (err: any) {
-    console.error('[Connect] getLateConnectUrl error:', err.message)
+    console.error('[Connect] error:', err.message)
     return NextResponse.redirect(
       new URL(`/profile?connect_error=${encodeURIComponent(err.message)}`, origin)
     )

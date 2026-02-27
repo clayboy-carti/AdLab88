@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { connectBlueskyCredentials } from '@/lib/late'
+import { getOrCreateLateProfileId } from '@/lib/late-profile'
 
 // POST /api/social/connect/bluesky  body: { identifier, password }
 export async function POST(req: NextRequest) {
@@ -17,11 +18,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'LATE_API_KEY not configured' }, { status: 500 })
   }
 
-  const profileId = process.env.LATE_PROFILE_ID
-  if (!profileId) {
-    return NextResponse.json({ error: 'LATE_PROFILE_ID not configured' }, { status: 500 })
-  }
-
   let identifier: string, password: string
   try {
     const body = await req.json()
@@ -36,6 +32,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const profileId = await getOrCreateLateProfileId(user.id)
     const account = await connectBlueskyCredentials({ profileId, identifier, password })
     return NextResponse.json({ account })
   } catch (err: any) {

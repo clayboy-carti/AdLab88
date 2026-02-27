@@ -17,8 +17,17 @@ export async function GET() {
     return NextResponse.json({ accounts: [], configured: false })
   }
 
+  // Look up this user's Late profile ID so we only return their accounts
+  const { data: brand } = await supabase
+    .from('brands')
+    .select('late_profile_id')
+    .eq('user_id', user.id)
+    .single()
+
+  const profileId = brand?.late_profile_id ?? undefined
+
   try {
-    const accounts = await fetchLateAccounts()
+    const accounts = await fetchLateAccounts(profileId)
     return NextResponse.json({ accounts, configured: true })
   } catch (err: any) {
     console.error('[Accounts] Late API error:', err.message)

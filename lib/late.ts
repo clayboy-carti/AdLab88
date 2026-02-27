@@ -27,8 +27,11 @@ export interface LatePost {
   status: string
 }
 
-export async function fetchLateAccounts(): Promise<LateAccount[]> {
-  const res = await fetch(`${LATE_API_BASE}/accounts`, {
+export async function fetchLateAccounts(profileId?: string): Promise<LateAccount[]> {
+  const url = new URL(`${LATE_API_BASE}/accounts`)
+  if (profileId) url.searchParams.set('profileId', profileId)
+
+  const res = await fetch(url.toString(), {
     headers: authHeaders(),
     cache: 'no-store',
   })
@@ -39,6 +42,21 @@ export async function fetchLateAccounts(): Promise<LateAccount[]> {
   const data = await res.json()
   // API may return { accounts: [...] } or a raw array
   return Array.isArray(data) ? data : (data.accounts ?? data.data ?? [])
+}
+
+export async function createLateProfile(name: string): Promise<string> {
+  const res = await fetch(`${LATE_API_BASE}/profiles`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ name }),
+  })
+  const text = await res.text()
+  if (!res.ok) throw new Error(`Late API ${res.status}: ${text}`)
+  const data = JSON.parse(text)
+  const profile = data.profile ?? data.data ?? data
+  const id = profile._id ?? profile.id
+  if (!id) throw new Error('Late API did not return a profile ID')
+  return id
 }
 
 export interface LateMediaItem {
