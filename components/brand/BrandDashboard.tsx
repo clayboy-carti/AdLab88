@@ -232,7 +232,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
     <>
       {/* ── PAGE HEADER ───────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-6xl font-bold font-sans text-forest uppercase leading-none tracking-tighter">
+        <h1 className="text-6xl font-bold font-mono text-forest uppercase leading-none tracking-tighter">
           {brand.company_name}
         </h1>
         <div className="flex items-center gap-4">
@@ -262,7 +262,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
               <p className="text-xs font-mono uppercase tracking-widest text-graphite/40">
                 {rescanStep === 'review' ? `Scan results — ${rescanUrl}` : 'Update Brand'}
               </p>
-              <p className="text-sm font-sans text-graphite mt-0.5">
+              <p className="text-sm font-mono text-graphite mt-0.5">
                 {rescanStep === 'review'
                   ? 'Review what was detected. Applying will overwrite your current brand profile.'
                   : 'Re-scan your website to pull in updated brand data automatically.'}
@@ -515,7 +515,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
             </>
           ) : (
             <>
-              <h2 className="text-4xl font-bold font-sans text-forest uppercase leading-none tracking-tight">
+              <h2 className="text-4xl font-bold font-mono text-forest uppercase leading-none tracking-tight">
                 {brand.company_name}
               </h2>
               <hr className="border-forest/15" />
@@ -523,7 +523,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                 <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
                   What We Do
                 </p>
-                <p className="text-sm font-sans text-graphite leading-relaxed">{brand.what_we_do}</p>
+                <p className="text-sm font-mono text-graphite leading-relaxed">{brand.what_we_do}</p>
               </div>
               <hr className="border-forest/15" />
               <div className="grid grid-cols-2 gap-4">
@@ -531,7 +531,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                   <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
                     Target Audience
                   </p>
-                  <p className="text-sm font-sans text-graphite leading-relaxed">
+                  <p className="text-sm font-mono text-graphite leading-relaxed">
                     {brand.target_audience}
                   </p>
                 </div>
@@ -540,7 +540,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                     <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
                       Differentiator
                     </p>
-                    <p className="text-sm font-sans text-graphite leading-relaxed">
+                    <p className="text-sm font-mono text-graphite leading-relaxed">
                       {brand.unique_differentiator}
                     </p>
                   </div>
@@ -553,7 +553,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                     <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
                       Sample Copy
                     </p>
-                    <p className="text-xs font-sans text-graphite leading-relaxed italic">
+                    <p className="text-xs font-mono text-graphite leading-relaxed italic">
                       {brand.sample_copy}
                     </p>
                   </div>
@@ -608,7 +608,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
           ) : (
             <>
               {brand.voice_summary && (
-                <p className="text-xl font-sans font-semibold italic text-forest leading-snug">
+                <p className="text-xl font-mono font-semibold italic text-forest leading-snug">
                   &ldquo;{brand.voice_summary}&rdquo;
                 </p>
               )}
@@ -750,17 +750,17 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs font-sans text-graphite/40 italic">No colors defined</p>
+                  <p className="text-xs font-mono text-graphite/40 italic">No colors defined</p>
                 )}
               </div>
               <div>
                 <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-3">
                   Typography
                 </p>
-                <p className="text-3xl font-bold font-sans text-graphite/10 leading-none select-none">
+                <p className="text-3xl font-bold font-mono text-graphite/10 leading-none select-none">
                   The quick br
                 </p>
-                <p className="text-xs font-sans text-graphite/40 mt-1.5">
+                <p className="text-xs font-mono text-graphite/40 mt-1.5">
                   Body copy — regular weight
                 </p>
                 {brand.typography_notes && (
@@ -768,7 +768,7 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                     <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mt-4 mb-1">
                       Font Stack
                     </p>
-                    <p className="text-xs font-sans text-graphite">{brand.typography_notes}</p>
+                    <p className="text-xs font-mono text-graphite">{brand.typography_notes}</p>
                   </>
                 )}
               </div>
@@ -871,7 +871,7 @@ function RescanField({
   return (
     <div>
       <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-1">{label}</p>
-      <p className={`text-xs font-sans text-graphite leading-relaxed ${italic ? 'italic' : ''}`}>
+      <p className={`text-xs font-mono text-graphite leading-relaxed ${italic ? 'italic' : ''}`}>
         {value}
       </p>
     </div>

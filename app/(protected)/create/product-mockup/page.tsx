@@ -220,7 +220,7 @@ function VideoForm({
     return (
       <div className="flex flex-col items-center gap-3 py-8 px-4">
         <div className="w-6 h-6 border-2 border-rust border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-sans text-graphite/50">Animating with Grok Video…</p>
+        <p className="text-sm font-mono text-graphite/50">Animating with Grok Video…</p>
         <p className="text-xs font-mono text-graphite/30 text-center">60–120 seconds. Hang tight.</p>
       </div>
     )
@@ -252,7 +252,7 @@ function VideoForm({
           onChange={e => onTitleChange(e.target.value)}
           placeholder="e.g. Studio Shot Animation"
           maxLength={80}
-          className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 text-sm font-sans focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
+          className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
         />
       </div>
       <div className="flex flex-col gap-1.5">
@@ -264,7 +264,7 @@ function VideoForm({
           onChange={e => onMotionChange(e.target.value)}
           placeholder="e.g. slow 360° rotation · steam rising · camera pulls back"
           rows={2}
-          className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 text-sm font-sans resize-none focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
+          className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 text-sm font-mono resize-none focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
         />
       </div>
       {videoError && (
@@ -275,7 +275,7 @@ function VideoForm({
       <button
         onClick={onGenerate}
         disabled={!title.trim()}
-        className="w-full bg-forest text-white rounded-xl py-2.5 text-sm font-sans font-medium hover:bg-forest/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        className="w-full bg-forest text-white rounded-xl py-2.5 text-sm font-mono font-medium hover:bg-forest/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
         Generate Video
       </button>
@@ -492,7 +492,7 @@ export default function ProductMockupPage() {
         >
           ← The Lab Bench
         </Link>
-        <h1 className="text-3xl font-sans font-semibold text-graphite">Product Mockup</h1>
+        <h1 className="text-3xl font-mono font-semibold text-graphite">Product Mockup</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
@@ -549,7 +549,7 @@ export default function ProductMockupPage() {
                 onChange={(e) => setImageTitle(e.target.value)}
                 placeholder="e.g. Studio Launch Shot"
                 maxLength={80}
-                className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-3 text-sm font-sans focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
+                className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-3 text-sm font-mono focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
               />
             </div>
 
@@ -565,7 +565,7 @@ export default function ProductMockupPage() {
                 placeholder="Describe the scene… marble countertop · golden hour · white studio void"
                 rows={2}
                 maxLength={300}
-                className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-3 text-sm font-sans resize-none focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
+                className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-3 text-sm font-mono resize-none focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
               />
               <div className="text-right">
                 <span className="text-[11px] font-mono text-graphite/25">{sceneText.length} / 300</span>
@@ -686,7 +686,7 @@ export default function ProductMockupPage() {
             <button
               onClick={photoShootMode ? handlePhotoShoot : handleGenerate}
               disabled={generating || photoShootGenerating || !imageTitle.trim()}
-              className="w-full bg-rust text-white rounded-xl py-4 font-sans font-semibold text-sm tracking-wide hover:bg-[#9a4429] active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full bg-rust text-white rounded-xl py-4 font-mono font-semibold text-sm tracking-wide hover:bg-[#9a4429] active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {photoShootMode
                 ? (photoShootGenerating ? 'Generating Photo Shoot…' : 'Generate Photo Shoot — 6 Images')
@@ -733,7 +733,7 @@ export default function ProductMockupPage() {
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-5" style={dotGrid}>
                     <StudioIllustration />
                     <div className="text-center">
-                      <p className="text-sm font-sans text-graphite/40">Your mockup will appear here</p>
+                      <p className="text-sm font-mono text-graphite/40">Your mockup will appear here</p>
                       <p className="text-[11px] font-mono text-graphite/25 mt-1">upload a photo · describe the scene · generate</p>
                     </div>
                   </div>
@@ -745,7 +745,7 @@ export default function ProductMockupPage() {
                     <div className="bg-white rounded-2xl border border-forest/15 shadow-sm p-6 w-full max-w-xs">
                       <div className="flex items-center gap-3 mb-5">
                         <div className="w-5 h-5 border-2 border-rust border-t-transparent rounded-full animate-spin flex-shrink-0" />
-                        <p className="text-sm font-sans text-graphite/60 leading-tight">{generationStage}</p>
+                        <p className="text-sm font-mono text-graphite/60 leading-tight">{generationStage}</p>
                       </div>
                       <div className="space-y-2.5">
                         <p className="text-xs font-mono text-graphite/40">✓ Brand profile loaded</p>
@@ -815,7 +815,7 @@ export default function ProductMockupPage() {
                         setSelectedRefs([])
                         setShowPhoto(false)
                       }}
-                      className="w-full rounded-xl border border-forest/20 py-3 text-sm font-sans text-graphite/50 hover:text-graphite hover:border-forest/40 transition-colors"
+                      className="w-full rounded-xl border border-forest/20 py-3 text-sm font-mono text-graphite/50 hover:text-graphite hover:border-forest/40 transition-colors"
                     >
                       Generate Another Mockup
                     </button>
@@ -832,7 +832,7 @@ export default function ProductMockupPage() {
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-5" style={dotGrid}>
                     <StudioIllustration />
                     <div className="text-center">
-                      <p className="text-sm font-sans text-graphite/40">6 angles will generate simultaneously</p>
+                      <p className="text-sm font-mono text-graphite/40">6 angles will generate simultaneously</p>
                       <p className="text-[11px] font-mono text-graphite/25 mt-1">Front · Three-Quarter · Overhead · Close-Up · Wide · Low Angle</p>
                     </div>
                   </div>
@@ -956,7 +956,7 @@ export default function ProductMockupPage() {
                           setImageTitle('')
                           setSelectedRefs([])
                         }}
-                        className="w-full rounded-xl border border-forest/20 py-3 text-sm font-sans text-graphite/50 hover:text-graphite hover:border-forest/40 transition-colors"
+                        className="w-full rounded-xl border border-forest/20 py-3 text-sm font-mono text-graphite/50 hover:text-graphite hover:border-forest/40 transition-colors"
                       >
                         Generate Another Photo Shoot
                       </button>

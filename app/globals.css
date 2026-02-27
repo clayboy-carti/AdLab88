@@ -7,17 +7,17 @@
 body {
   background-color: #F3ECDC;
   color: #2A2A2A;
-  font-family: 'Inter', sans-serif;
+  font-family: 'IBM Plex Mono', monospace;
 }
 
 /* Button base styles */
 .btn-primary {
-  @apply bg-rust text-white font-sans font-semibold px-6 py-3 rounded-xl;
+  @apply bg-rust text-white font-mono font-semibold px-6 py-3 rounded-xl;
   @apply hover:bg-[#9a4429] transition-colors;
 }
 
 .btn-secondary {
-  @apply bg-transparent border border-forest/25 text-graphite font-sans px-6 py-3 rounded-xl;
+  @apply bg-transparent border border-forest/25 text-graphite font-mono px-6 py-3 rounded-xl;
   @apply hover:border-forest/50 transition-colors;
 }
 

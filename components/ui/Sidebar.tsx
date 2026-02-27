@@ -89,7 +89,7 @@ export default function Sidebar() {
               ].join(' ')}
             >
               <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
-              <span className="hidden lg:block font-sans text-sm font-medium tracking-wide">
+              <span className="hidden lg:block font-mono text-sm font-medium tracking-wide">
                 {label}
               </span>
             </Link>
@@ -107,7 +107,7 @@ export default function Sidebar() {
               href="/profile"
               onClick={() => setMenuOpen(false)}
               className={[
-                'flex items-center gap-3 px-4 py-3 text-sm font-sans transition-colors',
+                'flex items-center gap-3 px-4 py-3 text-sm font-mono transition-colors',
                 'justify-center lg:justify-start',
                 pathname === '/profile'
                   ? 'text-white bg-paper/10'
@@ -121,7 +121,7 @@ export default function Sidebar() {
               href="/subscription"
               onClick={() => setMenuOpen(false)}
               className={[
-                'flex items-center gap-3 px-4 py-3 text-sm font-sans transition-colors border-t border-paper/10',
+                'flex items-center gap-3 px-4 py-3 text-sm font-mono transition-colors border-t border-paper/10',
                 'justify-center lg:justify-start',
                 pathname === '/subscription'
                   ? 'text-white bg-paper/10'
@@ -133,7 +133,7 @@ export default function Sidebar() {
             </Link>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-sans text-paper/70 hover:text-paper hover:bg-paper/10 transition-colors border-t border-paper/10 justify-center lg:justify-start"
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-mono text-paper/70 hover:text-paper hover:bg-paper/10 transition-colors border-t border-paper/10 justify-center lg:justify-start"
             >
               <LogOut size={16} strokeWidth={1.8} />
               <span className="hidden lg:inline">Log out</span>
@@ -151,7 +151,7 @@ export default function Sidebar() {
             <span className="text-xs font-mono font-bold text-white leading-none">{initials}</span>
           </div>
           <div className="hidden lg:flex flex-col items-start min-w-0">
-            <span className="text-sm font-sans text-paper/80 leading-tight">Account</span>
+            <span className="text-sm font-mono text-paper/80 leading-tight">Account</span>
           </div>
           <span className="hidden lg:block ml-auto text-paper/30 text-[10px]">▲</span>
         </button>

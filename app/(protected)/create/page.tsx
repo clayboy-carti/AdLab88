@@ -39,10 +39,10 @@ export default function CreatePage() {
             <div className="inline-flex items-center bg-paper border border-forest/25 rounded-full px-3 py-1 mb-5">
               <span className="font-mono text-[10px] uppercase tracking-widest text-forest/60">{ct.tag}</span>
             </div>
-            <h2 className="font-sans text-xl font-semibold text-graphite mb-2 group-hover:text-rust transition-colors">
+            <h2 className="font-mono text-xl font-semibold text-graphite mb-2 group-hover:text-rust transition-colors">
               {ct.title}
             </h2>
-            <p className="font-sans text-sm text-graphite/60 leading-relaxed mb-6">
+            <p className="font-mono text-sm text-graphite/60 leading-relaxed mb-6">
               {ct.description}
             </p>
             <div className="flex items-center justify-between">
