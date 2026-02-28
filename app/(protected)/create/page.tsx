@@ -17,6 +17,14 @@ const CONTENT_TYPES = [
       'Upload a product photo. Describe a scene. Gemini places your product there with photorealistic quality — ready for social or your site.',
     badge: 'Single · Batch ×6',
   },
+  {
+    href: '/create/animate',
+    tag: '[ ANIMATE ]',
+    title: 'Animate',
+    description:
+      'Pick any image from your library or upload a new one. Add a motion prompt and Grok Video turns it into a 5-second cinematic clip.',
+    badge: 'Grok Video · 5s',
+  },
 ]
 
 export default function CreatePage() {

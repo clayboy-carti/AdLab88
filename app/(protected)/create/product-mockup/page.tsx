@@ -116,28 +116,28 @@ const PHOTO_SHOOT_SHOTS = [
 // 3:4 outputs 896×1200 (0.747) which is fractionally below Instagram's 0.75 floor.
 // Use 4:5 (928×1152 = 0.806) for Instagram feed portrait with Gemini.
 const GEMINI_ASPECT_RATIOS = [
-  { value: '1:1',  label: '1:1 — Square (Instagram)' },
-  { value: '4:5',  label: '4:5 — Feed Portrait (Instagram)' },
-  { value: '4:3',  label: '4:3 — Standard' },
-  { value: '3:4',  label: '3:4 — Portrait' },
-  { value: '16:9', label: '16:9 — Landscape (Instagram)' },
-  { value: '9:16', label: '9:16 — Story / Reel (Instagram)' },
-  { value: '3:2',  label: '3:2 — Wide' },
-  { value: '2:3',  label: '2:3 — Narrow' },
-  { value: '5:4',  label: '5:4' },
-  { value: '21:9', label: '21:9 — Cinematic' },
+  { value: '1:1',  label: '1:1 — Square (Instagram)',          tooltip: 'Instagram Feed · Facebook · LinkedIn' },
+  { value: '4:5',  label: '4:5 — Feed Portrait (Instagram)',   tooltip: 'Instagram Feed Portrait · Facebook' },
+  { value: '4:3',  label: '4:3 — Standard',                   tooltip: 'Facebook · LinkedIn · Pinterest' },
+  { value: '3:4',  label: '3:4 — Portrait',                   tooltip: 'Pinterest · Facebook · Print' },
+  { value: '16:9', label: '16:9 — Landscape (Instagram)',      tooltip: 'YouTube · Twitter/X · LinkedIn · Facebook' },
+  { value: '9:16', label: '9:16 — Story / Reel (Instagram)',   tooltip: 'Instagram Stories & Reels · TikTok · YouTube Shorts' },
+  { value: '3:2',  label: '3:2 — Wide',                       tooltip: 'Twitter/X · Blog headers' },
+  { value: '2:3',  label: '2:3 — Narrow',                     tooltip: 'Pinterest · Print' },
+  { value: '5:4',  label: '5:4',                              tooltip: 'Facebook · Print' },
+  { value: '21:9', label: '21:9 — Cinematic',                  tooltip: 'YouTube banners · Desktop headers' },
 ]
 
 // Seedream 4 — valid enum values from Replicate API (no 4:5 or 5:4 support)
 const SEEDREAM_ASPECT_RATIOS = [
-  { value: '1:1',  label: '1:1 — Square (Instagram)' },
-  { value: '4:3',  label: '4:3 — Standard' },
-  { value: '3:4',  label: '3:4 — Portrait' },
-  { value: '16:9', label: '16:9 — Landscape (Instagram)' },
-  { value: '9:16', label: '9:16 — Story / Reel (Instagram)' },
-  { value: '3:2',  label: '3:2 — Wide' },
-  { value: '2:3',  label: '2:3 — Narrow' },
-  { value: '21:9', label: '21:9 — Cinematic' },
+  { value: '1:1',  label: '1:1 — Square (Instagram)',        tooltip: 'Instagram Feed · Facebook · LinkedIn' },
+  { value: '4:3',  label: '4:3 — Standard',                 tooltip: 'Facebook · LinkedIn · Pinterest' },
+  { value: '3:4',  label: '3:4 — Portrait',                 tooltip: 'Pinterest · Facebook · Print' },
+  { value: '16:9', label: '16:9 — Landscape (Instagram)',    tooltip: 'YouTube · Twitter/X · LinkedIn · Facebook' },
+  { value: '9:16', label: '9:16 — Story / Reel (Instagram)', tooltip: 'Instagram Stories & Reels · TikTok · YouTube Shorts' },
+  { value: '3:2',  label: '3:2 — Wide',                     tooltip: 'Twitter/X · Blog headers' },
+  { value: '2:3',  label: '2:3 — Narrow',                   tooltip: 'Pinterest · Print' },
+  { value: '21:9', label: '21:9 — Cinematic',                tooltip: 'YouTube banners · Desktop headers' },
 ]
 
 interface GeneratedAd {
@@ -631,17 +631,24 @@ export default function ProductMockupPage() {
               <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Aspect Ratio</label>
               <div className="flex flex-wrap gap-1.5">
                 {aspectRatioOptions.map((r) => (
-                  <button
-                    key={r.value}
-                    onClick={() => setAspectRatio(r.value)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all border ${
-                      aspectRatio === r.value
-                        ? 'bg-sage border-forest/30 text-forest font-semibold'
-                        : 'border-forest/15 text-graphite/50 hover:border-forest/35 hover:text-graphite'
-                    }`}
-                  >
-                    {r.value}
-                  </button>
+                  <div key={r.value} className="relative group">
+                    <button
+                      onClick={() => setAspectRatio(r.value)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all border ${
+                        aspectRatio === r.value
+                          ? 'bg-sage border-forest/30 text-forest font-semibold'
+                          : 'border-forest/15 text-graphite/50 hover:border-forest/35 hover:text-graphite'
+                      }`}
+                    >
+                      {r.value}
+                    </button>
+                    {r.tooltip && (
+                      <div className="pointer-events-none absolute bottom-full left-0 mb-2 px-2.5 py-1.5 bg-graphite text-paper text-[10px] font-mono whitespace-nowrap rounded opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
+                        {r.tooltip}
+                        <div className="absolute top-full left-3 border-4 border-transparent border-t-graphite" />
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
@@ -742,16 +749,26 @@ export default function ProductMockupPage() {
                 {/* Loading state */}
                 {generating && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-8" style={dotGrid}>
-                    <div className="bg-white rounded-2xl border border-forest/15 shadow-sm p-6 w-full max-w-xs">
-                      <div className="flex items-center gap-3 mb-5">
-                        <div className="w-5 h-5 border-2 border-rust border-t-transparent rounded-full animate-spin flex-shrink-0" />
-                        <p className="text-sm font-mono text-graphite/60 leading-tight">{generationStage}</p>
+                    <div className="bg-white rounded-2xl border border-forest/15 shadow-sm p-6 w-full max-w-xs flex flex-col items-center gap-5">
+                      {/* Video loading animation */}
+                      <div className="rounded-xl overflow-hidden border border-forest/15 w-full aspect-video bg-paper">
+                        <video
+                          src="/Generation_Loading.mp4"
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <div className="space-y-2.5">
-                        <p className="text-xs font-mono text-graphite/40">✓ Brand profile loaded</p>
-                        <p className="text-xs font-mono text-rust animate-pulse">→ Building scene prompt…</p>
-                        <p className="text-xs font-mono text-graphite/20">→ Generating with {imageModel === 'seedream' ? 'Seedream 4' : 'Gemini'}…</p>
-                        <p className="text-xs font-mono text-graphite/20">→ Saving to library…</p>
+                      <div className="w-full">
+                        <p className="text-sm font-mono text-graphite/60 leading-tight mb-3">{generationStage}</p>
+                        <div className="space-y-2.5">
+                          <p className="text-xs font-mono text-graphite/40">✓ Brand profile loaded</p>
+                          <p className="text-xs font-mono text-rust animate-pulse">→ Building scene prompt…</p>
+                          <p className="text-xs font-mono text-graphite/20">→ Generating with {imageModel === 'seedream' ? 'Seedream 4' : 'Gemini'}…</p>
+                          <p className="text-xs font-mono text-graphite/20">→ Saving to library…</p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -838,6 +855,28 @@ export default function ProductMockupPage() {
                   </div>
                 )}
 
+                {/* Loading overlay — shown before any results arrive */}
+                {photoShootGenerating && shootResults.length === 0 && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-8" style={dotGrid}>
+                    <div className="bg-white rounded-2xl border border-forest/15 shadow-sm p-6 w-full max-w-xs flex flex-col items-center gap-5">
+                      <div className="rounded-xl overflow-hidden border border-forest/15 w-full aspect-video bg-paper">
+                        <video
+                          src="/Generation_Loading.mp4"
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="w-full">
+                        <p className="text-sm font-mono text-graphite/60 leading-tight mb-1">Generating 6 angles…</p>
+                        <p className="text-xs font-mono text-graphite/30">Results will appear as each shot completes.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Results */}
                 {shootResults.length > 0 && (
                   <div className="p-5 space-y-4">
@@ -865,11 +904,15 @@ export default function ProductMockupPage() {
                       {shootResults.map((slot, idx) => (
                         <div key={idx} className="flex flex-col gap-1.5">
                           {slot.loading ? (
-                            <div
-                              className="aspect-square rounded-xl border border-forest/10 flex items-center justify-center"
-                              style={{ backgroundImage: 'radial-gradient(circle, rgba(31,58,50,0.06) 1px, transparent 1px)', backgroundSize: '14px 14px' }}
-                            >
-                              <div className="w-5 h-5 border-2 border-rust border-t-transparent rounded-full animate-spin" />
+                            <div className="aspect-square rounded-xl border border-forest/15 overflow-hidden">
+                              <video
+                                src="/Generation_Loading.mp4"
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
+                                className="w-full h-full object-cover"
+                              />
                             </div>
                           ) : slot.error ? (
                             <div className="aspect-square rounded-xl border border-red-200 bg-red-50 flex items-center justify-center p-2">

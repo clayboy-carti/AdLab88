@@ -63,9 +63,8 @@ export default function Sidebar() {
     <>
       {/* ── Mobile top bar ── */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-forest text-paper flex items-center justify-between px-4 z-40 border-b border-paper/10">
-        <span className="text-sm font-mono font-bold tracking-[0.2em] text-paper uppercase">
-          AdLab 88
-        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/AdLab_Logo2.png" alt="AdLab 88" style={{ height: 32, width: 'auto' }} className="object-contain" />
         <button
           onClick={() => setMobileOpen(true)}
           aria-label="Open navigation"
@@ -87,14 +86,8 @@ export default function Sidebar() {
           <div className="relative w-72 max-w-[85vw] h-full bg-forest text-paper flex flex-col shadow-2xl">
             {/* Drawer header */}
             <div className="flex items-center justify-between px-5 pt-8 pb-6 flex-shrink-0">
-              <div>
-                <h1 className="text-base font-mono font-bold tracking-[0.2em] text-paper uppercase">
-                  AdLab 88
-                </h1>
-                <p className="text-[10px] font-mono text-paper/40 uppercase tracking-widest mt-1">
-                  Creative Studio
-                </p>
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/AdLab_Logo2.png" alt="AdLab 88" style={{ height: 38, width: 'auto' }} className="object-contain" />
               <button
                 onClick={() => setMobileOpen(false)}
                 aria-label="Close navigation"
@@ -172,12 +165,8 @@ export default function Sidebar() {
 
         {/* Logo */}
         <div className="px-5 pt-8 pb-6 flex-shrink-0">
-          <h1 className="text-base font-mono font-bold tracking-[0.2em] text-paper uppercase">
-            AdLab 88
-          </h1>
-          <p className="text-[10px] font-mono text-paper/40 uppercase tracking-widest mt-1">
-            Creative Studio
-          </p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/AdLab_Logo2.png" alt="AdLab 88" style={{ width: '100%', height: 'auto' }} className="object-contain" />
         </div>
 
         {/* Nav links */}
