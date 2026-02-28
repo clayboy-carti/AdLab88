@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Film, Upload, ImagePlus, X, CheckCircle, LayoutGrid } from 'lucide-react'
@@ -23,7 +23,7 @@ const dotGrid = {
   backgroundSize: '24px 24px',
 }
 
-export default function AnimatePage() {
+function AnimateContent() {
   const supabase = createClient()
   const searchParams = useSearchParams()
   const preselectedAdId = searchParams.get('adId')
@@ -477,5 +477,13 @@ export default function AnimatePage() {
 
       </div>
     </div>
+  )
+}
+
+export default function AnimatePage() {
+  return (
+    <Suspense>
+      <AnimateContent />
+    </Suspense>
   )
 }
