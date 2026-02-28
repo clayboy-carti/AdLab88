@@ -22,6 +22,7 @@ export type Brand = {
   brand_colors?: string[]
   typography_notes?: string
   website_url?: string
+  late_profile_id?: string
   created_at: string
   updated_at: string
 }

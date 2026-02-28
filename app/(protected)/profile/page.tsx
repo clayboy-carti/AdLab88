@@ -1,5 +1,7 @@
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import ProfileForm from '@/components/profile/ProfileForm'
+import ConnectedAccounts from '@/components/profile/ConnectedAccounts'
 import type { UserProfile } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
@@ -28,6 +30,10 @@ export default async function ProfilePage() {
       </div>
 
       <ProfileForm profile={profile} />
+
+      <Suspense fallback={null}>
+        <ConnectedAccounts />
+      </Suspense>
 
       <div className="mt-8 p-4 bg-white border border-outline">
         <p className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-1">Member Since</p>

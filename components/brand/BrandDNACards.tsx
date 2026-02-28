@@ -143,7 +143,7 @@ export default function BrandDNACards({ data, onApply, onRescan }: BrandDNACards
           <DNASection label="04 — Sample Copy">
             <div className="flex gap-4">
               <div className="w-1 bg-rust flex-shrink-0" />
-              <p className="text-sm text-graphite leading-relaxed font-sans italic">
+              <p className="text-sm text-graphite leading-relaxed font-mono italic">
                 {data.sample_copy}
               </p>
             </div>

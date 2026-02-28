@@ -12,6 +12,15 @@ export async function PATCH(
   const { name } = await req.json()
   if (!name?.trim()) return NextResponse.json({ error: 'Name required' }, { status: 400 })
 
+  const { data: existing } = await supabase
+    .from('folders')
+    .select('id')
+    .eq('user_id', user.id)
+    .ilike('name', name.trim())
+    .neq('id', params.id)
+    .maybeSingle()
+  if (existing) return NextResponse.json({ error: 'A campaign with that name already exists.' }, { status: 409 })
+
   const { data, error } = await supabase
     .from('folders')
     .update({ name: name.trim() })

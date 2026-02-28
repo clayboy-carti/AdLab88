@@ -14,6 +14,7 @@ const config: Config = {
         rust: '#B55233',
         graphite: '#2A2A2A',
         outline: '#111111',
+        sage: '#8FA99B',
       },
       fontFamily: {
         mono: ['IBM Plex Mono', 'monospace'],

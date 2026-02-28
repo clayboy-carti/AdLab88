@@ -15,7 +15,7 @@ const CONTENT_TYPES = [
     title: 'Product Mockup',
     description:
       'Upload a product photo. Describe a scene. Gemini places your product there with photorealistic quality — ready for social or your site.',
-    badge: 'Single',
+    badge: 'Single · Batch ×6',
   },
 ]
 
@@ -29,31 +29,29 @@ export default function CreatePage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl">
         {CONTENT_TYPES.map((ct) => (
           <Link
             key={ct.href}
             href={ct.href}
-            className="group block border border-outline hover:border-rust transition-colors bg-white"
+            className="group block bg-white rounded-2xl border border-forest/50 shadow-sm hover:shadow-md hover:border-forest/70 transition-all p-6"
           >
-            <div className="bg-[#e4dcc8] border-b border-outline px-4 py-2">
-              <span className="font-mono text-xs uppercase tracking-widest">{ct.tag}</span>
+            <div className="inline-flex items-center bg-paper border border-forest/25 rounded-full px-3 py-1 mb-5">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-forest/60">{ct.tag}</span>
             </div>
-            <div className="p-5">
-              <h2 className="font-mono text-lg font-bold mb-2 group-hover:text-rust transition-colors">
-                {ct.title}
-              </h2>
-              <p className="font-mono text-xs text-gray-500 leading-relaxed mb-5">
-                {ct.description}
-              </p>
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-[10px] text-gray-400 border border-gray-200 px-2 py-0.5">
-                  {ct.badge}
-                </span>
-                <span className="font-mono text-xs text-rust group-hover:translate-x-0.5 transition-transform inline-block">
-                  START →
-                </span>
-              </div>
+            <h2 className="font-mono text-xl font-semibold text-graphite mb-2 group-hover:text-rust transition-colors">
+              {ct.title}
+            </h2>
+            <p className="font-mono text-sm text-graphite/60 leading-relaxed mb-6">
+              {ct.description}
+            </p>
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-[10px] uppercase tracking-wide text-forest/50 bg-paper border border-forest/20 rounded-full px-3 py-1">
+                {ct.badge}
+              </span>
+              <span className="font-mono text-xs font-medium text-rust group-hover:translate-x-0.5 transition-transform inline-block">
+                START →
+              </span>
             </div>
           </Link>
         ))}

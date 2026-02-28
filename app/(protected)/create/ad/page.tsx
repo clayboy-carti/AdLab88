@@ -281,10 +281,15 @@ export default function AdPage() {
                     className="w-full font-mono text-xs bg-transparent focus:outline-none border-none p-0 text-gray-700"
                   >
                     <option value="1:1">1:1 — Square</option>
-                    <option value="9:16">9:16 — Story / Reel</option>
-                    <option value="16:9">16:9 — Landscape</option>
-                    <option value="3:4">3:4 — Feed Portrait</option>
+                    <option value="4:5">4:5 — Feed Portrait (Instagram)</option>
                     <option value="4:3">4:3 — Standard</option>
+                    <option value="3:4">3:4 — Portrait</option>
+                    <option value="16:9">16:9 — Landscape</option>
+                    <option value="9:16">9:16 — Story / Reel</option>
+                    <option value="3:2">3:2 — Wide</option>
+                    <option value="2:3">2:3 — Narrow</option>
+                    <option value="5:4">5:4</option>
+                    <option value="21:9">21:9 — Cinematic</option>
                   </select>
                 </div>
               </div>

@@ -75,22 +75,22 @@ export default async function LibraryPage() {
 
   return (
     <div className="w-full p-4 lg:p-8">
-      <div className="flex items-baseline justify-between mb-8">
+      <div className="flex items-center gap-3 mb-8">
         <h1 className="text-3xl font-mono header-accent">Lab Records</h1>
         {totalCount > 0 && (
-          <span className="text-sm font-mono text-gray-500 uppercase">
+          <span className="text-xs font-mono text-graphite/40 bg-white border border-forest/20 px-2.5 py-1 rounded-full shadow-sm uppercase">
             {totalCount} item{totalCount !== 1 ? 's' : ''}
           </span>
         )}
       </div>
 
       {totalCount === 0 ? (
-        <div className="text-center py-16 border border-outline bg-white">
-          <p className="text-gray-500 uppercase font-mono text-sm mb-4">
+        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm text-center py-16 px-8">
+          <p className="text-graphite/40 uppercase font-mono text-sm mb-5">
             No content generated yet
           </p>
           <a href="/create" className="btn-primary inline-block">
-            CREATE YOUR FIRST AD
+            Create your first ad
           </a>
         </div>
       ) : (

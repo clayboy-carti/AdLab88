@@ -28,59 +28,47 @@ export default function AdCard({ ad, onClick }: { ad: Ad; onClick: () => void })
   return (
     <button
       onClick={onClick}
-      className="border border-outline bg-white flex flex-col text-left w-full hover:border-rust transition-colors group cursor-pointer"
+      className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col text-left w-full hover:border-rust/50 hover:shadow-md transition-all duration-200 group cursor-pointer overflow-hidden"
     >
       {/* Image */}
-      <div className="border-b border-outline overflow-hidden bg-gray-100 aspect-video w-full">
+      <div className="overflow-hidden bg-sage/10 aspect-video w-full">
         {ad.signedUrl ? (
           <img
             src={ad.signedUrl}
-            alt={ad.hook}
-            className="w-full h-full object-cover group-hover:opacity-95 transition-opacity"
+            alt={ad.title ?? ''}
+            className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
             loading="lazy"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <span className="text-xs font-mono text-gray-400 uppercase">No image</span>
+            <span className="text-xs font-mono text-graphite/30 uppercase">No image</span>
           </div>
         )}
       </div>
 
-      {/* Copy */}
-      <div className="p-5 flex flex-col gap-3 flex-1 w-full">
+      {/* Content */}
+      <div className="p-4 flex flex-col gap-2 flex-1">
         {ad.title && (
-          <p className="font-bold text-graphite leading-snug">{ad.title}</p>
+          <p className="font-semibold text-sm text-graphite leading-snug line-clamp-2">{ad.title}</p>
+        )}
+        {ad.hook && (
+          <p className="text-xs text-graphite/55 leading-relaxed line-clamp-2">{ad.hook}</p>
         )}
 
-        <div>
-          <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-1">Hook</p>
-          <p className={`text-graphite leading-snug ${ad.title ? 'text-sm text-gray-600' : 'font-bold'}`}>{ad.hook}</p>
-        </div>
-
-        <div>
-          <p className="text-xs uppercase font-mono text-gray-400 tracking-widest mb-1">Caption</p>
-          <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">{ad.caption}</p>
-        </div>
-
-        {/* Meta row */}
-        <div className="flex flex-wrap gap-2 pt-3 border-t border-outline mt-auto">
-          <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 uppercase">
-            {ad.positioning_angle}
-          </span>
-          {ad.target_platform && (
-            <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 uppercase">
-              {ad.target_platform}
+        {/* Badges + date */}
+        <div className="flex items-center justify-between mt-auto pt-2 gap-2 flex-wrap">
+          <div className="flex gap-1 flex-wrap">
+            <span className="text-[10px] font-mono text-graphite/50 bg-sage/20 px-2 py-0.5 rounded-full uppercase">
+              {ad.positioning_angle}
             </span>
-          )}
+            {ad.target_platform && (
+              <span className="text-[10px] font-mono text-graphite/50 bg-sage/20 px-2 py-0.5 rounded-full uppercase">
+                {ad.target_platform}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] font-mono text-graphite/35">{formattedDate}</span>
         </div>
-      </div>
-
-      {/* Footer */}
-      <div className="flex items-center justify-between px-5 py-3 border-t border-outline bg-gray-50 w-full">
-        <span className="text-xs font-mono text-gray-400">{formattedDate}</span>
-        <span className="text-xs font-mono text-gray-400 uppercase group-hover:text-rust transition-colors">
-          View →
-        </span>
       </div>
     </button>
   )

@@ -1,8 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import PhotoPicker from '@/components/create/PhotoPicker'
+import {
+  ImagePlus, ChevronDown, Monitor, Maximize2,
+  CheckCircle, X, Film, FlaskConical,
+} from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -84,28 +88,56 @@ const SCENE_PRESETS = [
 const PHOTO_SHOOT_SHOTS = [
   {
     label: 'Front Shot',
-    directive: 'Camera positioned directly in front, eye-level, 50mm lens, f/8 aperture for deep focus, approximately 3 feet from subject. Lighting identical to scene preset.',
+    directive: 'Straight-on, eye-level framing. 50mm lens perspective, f/8 deep focus, centered composition.',
   },
   {
     label: 'Three-Quarter',
-    directive: 'Camera at 45-degree angle from front, slightly elevated, 50mm lens, f/5.6 aperture, approximately 2 feet from subject. Same lighting direction and quality.',
+    directive: '45-degree angle from front, slightly elevated. 50mm lens, f/5.6 aperture, slight depth separation between subject and background.',
   },
   {
     label: 'Overhead / Flat Lay',
-    directive: 'Camera positioned directly above subject looking straight down, 35mm lens, f/11 deep focus, approximately 18 inches from subject. Lighting adapted for top-down perspective.',
+    directive: 'Directly overhead, looking straight down. 35mm lens, f/11 deep focus, flat lay composition.',
   },
   {
     label: 'Close-Up Detail',
-    directive: 'Macro close-up shot, 100mm lens, f/2.8 aperture for shallow depth of field with soft bokeh background, approximately 6 inches from subject. Same lighting source direction softened at close range.',
+    directive: 'Tight macro close-up of the product. 100mm lens, f/2.8 shallow depth of field, soft bokeh background.',
   },
   {
     label: 'Environmental Wide',
-    directive: 'Wide-angle shot showing full scene context, 24mm lens, f/11 for deep focus, approximately 7 feet from subject. Complete scene environment visible with consistent lighting.',
+    directive: 'Wide-angle view that shows the full scene and surrounding environment. 24mm lens, f/11 deep focus, expansive composition.',
   },
   {
     label: 'Low Angle Hero',
-    directive: 'Camera positioned at ground level pointing upward toward subject, 35mm lens, f/4 aperture for moderate depth of field, approximately 2 feet from subject. Same scene lighting with slight dramatic upward perspective.',
+    directive: 'Camera at ground level pointing upward toward the subject. 35mm lens, f/4, dramatic upward perspective against the scene environment.',
   },
+]
+
+// Gemini 3 Pro Image Preview — full supported set (from API docs)
+// 3:4 outputs 896×1200 (0.747) which is fractionally below Instagram's 0.75 floor.
+// Use 4:5 (928×1152 = 0.806) for Instagram feed portrait with Gemini.
+const GEMINI_ASPECT_RATIOS = [
+  { value: '1:1',  label: '1:1 — Square (Instagram)' },
+  { value: '4:5',  label: '4:5 — Feed Portrait (Instagram)' },
+  { value: '4:3',  label: '4:3 — Standard' },
+  { value: '3:4',  label: '3:4 — Portrait' },
+  { value: '16:9', label: '16:9 — Landscape (Instagram)' },
+  { value: '9:16', label: '9:16 — Story / Reel (Instagram)' },
+  { value: '3:2',  label: '3:2 — Wide' },
+  { value: '2:3',  label: '2:3 — Narrow' },
+  { value: '5:4',  label: '5:4' },
+  { value: '21:9', label: '21:9 — Cinematic' },
+]
+
+// Seedream 4 — valid enum values from Replicate API (no 4:5 or 5:4 support)
+const SEEDREAM_ASPECT_RATIOS = [
+  { value: '1:1',  label: '1:1 — Square (Instagram)' },
+  { value: '4:3',  label: '4:3 — Standard' },
+  { value: '3:4',  label: '3:4 — Portrait' },
+  { value: '16:9', label: '16:9 — Landscape (Instagram)' },
+  { value: '9:16', label: '9:16 — Story / Reel (Instagram)' },
+  { value: '3:2',  label: '3:2 — Wide' },
+  { value: '2:3',  label: '2:3 — Narrow' },
+  { value: '21:9', label: '21:9 — Cinematic' },
 ]
 
 interface GeneratedAd {
@@ -128,12 +160,146 @@ type ShootSlot = {
   loading: boolean
 }
 
+// ── Studio illustration for empty state ──────────────────────────────────────
+function StudioIllustration() {
+  return (
+    <svg width="180" height="140" viewBox="0 0 180 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Floor line */}
+      <rect x="20" y="97" width="140" height="1.5" rx="1" fill="rgba(31,58,50,0.07)" />
+
+      {/* Softbox light stand — right */}
+      <line x1="148" y1="52" x2="148" y2="98" stroke="rgba(31,58,50,0.18)" strokeWidth="2" strokeLinecap="round" />
+      <line x1="141" y1="98" x2="155" y2="98" stroke="rgba(31,58,50,0.18)" strokeWidth="2" strokeLinecap="round" />
+      <rect x="133" y="32" width="30" height="22" rx="5" fill="rgba(31,58,50,0.05)" stroke="rgba(31,58,50,0.14)" strokeWidth="1.5" />
+      <rect x="137" y="36" width="22" height="14" rx="3" fill="rgba(255,255,255,0.65)" />
+
+      {/* Product pedestal */}
+      <rect x="72" y="78" width="36" height="20" rx="3" fill="rgba(31,58,50,0.06)" stroke="rgba(31,58,50,0.09)" strokeWidth="1" />
+      {/* Product box */}
+      <rect x="78" y="54" width="24" height="26" rx="4" fill="rgba(31,58,50,0.05)" stroke="rgba(31,58,50,0.12)" strokeWidth="1.5" />
+      {/* Highlight */}
+      <rect x="81" y="57" width="8" height="8" rx="2" fill="rgba(255,255,255,0.55)" />
+
+      {/* Camera + tripod — left */}
+      <line x1="36" y1="64" x2="36" y2="98" stroke="rgba(31,58,50,0.18)" strokeWidth="2" strokeLinecap="round" />
+      <line x1="36" y1="90" x2="26" y2="98" stroke="rgba(31,58,50,0.14)" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="36" y1="90" x2="46" y2="98" stroke="rgba(31,58,50,0.14)" strokeWidth="1.5" strokeLinecap="round" />
+      <rect x="24" y="49" width="24" height="16" rx="3" fill="rgba(31,58,50,0.09)" stroke="rgba(31,58,50,0.17)" strokeWidth="1.5" />
+      <circle cx="36" cy="57" r="5" fill="rgba(31,58,50,0.06)" stroke="rgba(31,58,50,0.2)" strokeWidth="1.5" />
+      <circle cx="36" cy="57" r="2.5" fill="rgba(31,58,50,0.14)" />
+      <rect x="40" y="47" width="5" height="3" rx="1" fill="rgba(31,58,50,0.14)" />
+
+      {/* Plant — background right */}
+      <line x1="122" y1="82" x2="122" y2="98" stroke="rgba(31,58,50,0.18)" strokeWidth="1.5" strokeLinecap="round" />
+      <ellipse cx="118" cy="74" rx="6" ry="9" fill="rgba(143,169,155,0.28)" stroke="rgba(31,58,50,0.10)" strokeWidth="1" />
+      <ellipse cx="126" cy="71" rx="5" ry="8" fill="rgba(143,169,155,0.22)" stroke="rgba(31,58,50,0.08)" strokeWidth="1" />
+
+      {/* Light rays */}
+      <line x1="133" y1="43" x2="108" y2="62" stroke="rgba(31,58,50,0.04)" strokeWidth="1.5" />
+      <line x1="133" y1="48" x2="106" y2="68" stroke="rgba(31,58,50,0.03)" strokeWidth="1.5" />
+    </svg>
+  )
+}
+
+// ── Reusable video generation form ───────────────────────────────────────────
+function VideoForm({
+  title, onTitleChange, motionPrompt, onMotionChange,
+  onGenerate, generating, generatedVideo, videoError, onReset,
+}: {
+  title: string
+  onTitleChange: (v: string) => void
+  motionPrompt: string
+  onMotionChange: (v: string) => void
+  onGenerate: () => void
+  generating: boolean
+  generatedVideo: { videoUrl: string } | null
+  videoError: string | null
+  onReset: () => void
+}) {
+  if (generating) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-8 px-4">
+        <div className="w-6 h-6 border-2 border-rust border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm font-mono text-graphite/50">Animating with Grok Video…</p>
+        <p className="text-xs font-mono text-graphite/30 text-center">60–120 seconds. Hang tight.</p>
+      </div>
+    )
+  }
+
+  if (generatedVideo) {
+    return (
+      <div className="p-4 space-y-3">
+        <video src={generatedVideo.videoUrl} controls autoPlay loop className="w-full rounded-xl" />
+        <button
+          onClick={onReset}
+          className="text-xs font-mono text-graphite/40 hover:text-rust transition-colors"
+        >
+          ← Generate another video
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="p-4 space-y-3">
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
+          Video Title <span className="text-rust">*</span>
+        </label>
+        <input
+          type="text"
+          value={title}
+          onChange={e => onTitleChange(e.target.value)}
+          placeholder="e.g. Studio Shot Animation"
+          maxLength={80}
+          className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
+        />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
+          Motion <span className="text-graphite/40">(optional)</span>
+        </label>
+        <textarea
+          value={motionPrompt}
+          onChange={e => onMotionChange(e.target.value)}
+          placeholder="e.g. slow 360° rotation · steam rising · camera pulls back"
+          rows={2}
+          className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 text-sm font-mono resize-none focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
+        />
+      </div>
+      {videoError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+          <p className="text-xs font-mono text-red-500">{videoError}</p>
+        </div>
+      )}
+      <button
+        onClick={onGenerate}
+        disabled={!title.trim()}
+        className="w-full bg-forest text-white rounded-xl py-2.5 text-sm font-mono font-medium hover:bg-forest/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        Generate Video
+      </button>
+    </div>
+  )
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 export default function ProductMockupPage() {
   const [sceneText, setSceneText] = useState('')
   const [selectedPreset, setSelectedPreset] = useState('')
   const [imageModel, setImageModel] = useState<'gemini' | 'seedream'>('gemini')
   const [imageQuality, setImageQuality] = useState<'1K' | '2K'>('1K')
   const [aspectRatio, setAspectRatio] = useState('1:1')
+
+  const aspectRatioOptions = imageModel === 'seedream' ? SEEDREAM_ASPECT_RATIOS : GEMINI_ASPECT_RATIOS
+
+  useEffect(() => {
+    const valid = (imageModel === 'seedream' ? SEEDREAM_ASPECT_RATIOS : GEMINI_ASPECT_RATIOS)
+    if (!valid.find((r) => r.value === aspectRatio)) {
+      setAspectRatio('1:1')
+    }
+  }, [imageModel])
+
   const [generating, setGenerating] = useState(false)
   const [generationStage, setGenerationStage] = useState<string>('')
   const [generatedAd, setGeneratedAd] = useState<GeneratedAd | null>(null)
@@ -143,14 +309,14 @@ export default function ProductMockupPage() {
   const [showPhoto, setShowPhoto] = useState(false)
   const [selectedRefs, setSelectedRefs] = useState<{ id: string; url: string }[]>([])
 
-  // Video generation state
   const [videoTitle, setVideoTitle] = useState('')
   const [motionPrompt, setMotionPrompt] = useState('')
   const [generatingVideo, setGeneratingVideo] = useState(false)
   const [generatedVideo, setGeneratedVideo] = useState<{ id: string; videoUrl: string } | null>(null)
   const [videoError, setVideoError] = useState<string | null>(null)
 
-  // Photo shoot state
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
   const [photoShootMode, setPhotoShootMode] = useState(false)
   const [photoShootGenerating, setPhotoShootGenerating] = useState(false)
   const [shootResults, setShootResults] = useState<ShootSlot[]>([])
@@ -211,7 +377,6 @@ export default function ProductMockupPage() {
     setGeneratedVideo(null)
     setVideoError(null)
 
-    // 1. Create campaign folder
     let folderId: string
     const folderName = `${imageTitle.trim()} — Photo Shoot`
     try {
@@ -231,7 +396,6 @@ export default function ProductMockupPage() {
       return
     }
 
-    // 2. Fire 6 parallel generation requests
     const basePayload = {
       image_quality: imageQuality,
       aspect_ratio: aspectRatio,
@@ -311,110 +475,117 @@ export default function ProductMockupPage() {
   const shootDone = shootResults.length > 0 && shootResults.every((s) => !s.loading)
   const shootComplete = shootResults.filter((s) => !s.loading).length
 
+  // ── Dot-grid background used in empty/loading states
+  const dotGrid = {
+    backgroundImage: 'radial-gradient(circle, rgba(31,58,50,0.07) 1px, transparent 1px)',
+    backgroundSize: '24px 24px',
+  }
+
   return (
-    <div className="w-full p-4 lg:p-8">
+    <div className="min-h-screen p-6 lg:p-8">
+
       {/* Header */}
-      <div className="flex items-baseline justify-between mb-8">
-        <div>
-          <Link
-            href="/create"
-            className="font-mono text-xs text-gray-400 uppercase tracking-widest hover:text-rust transition-colors"
-          >
-            ← The Lab Bench
-          </Link>
-          <h1 className="text-3xl font-mono header-accent mt-1">Product Mockup</h1>
-        </div>
+      <div className="mb-8">
+        <Link
+          href="/create"
+          className="inline-flex items-center gap-1 text-xs font-mono text-graphite/40 uppercase tracking-widest hover:text-rust transition-colors mb-3"
+        >
+          ← The Lab Bench
+        </Link>
+        <h1 className="text-3xl font-mono font-semibold text-graphite">Product Mockup</h1>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 
-        {/* ── LEFT COLUMN ── */}
-        <div>
+        {/* ── LEFT COLUMN — Controls Card ─────────────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col overflow-hidden">
 
-          {/* ── Compact compose card ── */}
-          <div className="border border-outline bg-white flex flex-col">
+          {/* Card header */}
+          <div className="px-6 pt-5 pb-4 border-b border-forest/10">
+            <div className="flex items-center gap-2 mb-3">
+              <FlaskConical size={15} className="text-forest/50" strokeWidth={1.8} />
+              <span className="text-[11px] font-mono uppercase tracking-widest text-graphite/60">Mockup Setup</span>
+            </div>
 
-            {/* Title row */}
-            <div className="flex items-center gap-3 px-4 py-2.5 border-b border-outline">
-              <span className="font-mono text-[10px] uppercase tracking-widest text-gray-400 shrink-0">Title</span>
+            {/* Mode toggle */}
+            <div className="flex gap-1 p-1 bg-paper rounded-xl">
+              <button
+                onClick={() => {
+                  setPhotoShootMode(false)
+                  setShootResults([])
+                  setSelectedShootAdId(null)
+                  setSelectedShootLabel(null)
+                }}
+                className={`flex-1 py-2 rounded-lg text-xs font-mono uppercase tracking-widest transition-all ${
+                  !photoShootMode ? 'bg-rust text-white shadow-sm' : 'text-graphite/45 hover:text-graphite'
+                }`}
+              >
+                Single
+              </button>
+              <button
+                onClick={() => {
+                  setPhotoShootMode(true)
+                  setGeneratedAd(null)
+                }}
+                className={`flex-1 py-2 rounded-lg text-xs font-mono uppercase tracking-widest transition-all ${
+                  photoShootMode ? 'bg-rust text-white shadow-sm' : 'text-graphite/45 hover:text-graphite'
+                }`}
+              >
+                Photo Shoot · 6×
+              </button>
+            </div>
+          </div>
+
+          <div className="px-6 py-4 flex flex-col gap-4">
+
+            {/* Title */}
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
+                Title <span className="text-rust">*</span>
+              </label>
               <input
                 type="text"
                 value={imageTitle}
                 onChange={(e) => setImageTitle(e.target.value)}
                 placeholder="e.g. Studio Launch Shot"
                 maxLength={80}
-                className="flex-1 text-sm font-mono bg-transparent focus:outline-none placeholder:text-gray-300 min-w-0"
+                className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-3 text-sm font-mono focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
               />
-              {!imageTitle.trim() && (
-                <span className="font-mono text-[10px] text-rust uppercase tracking-widest shrink-0">Required</span>
-              )}
             </div>
 
-            {/* Scene textarea */}
-            <div className="px-4 pt-3 pb-2">
+            {/* Scene description */}
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Scene</label>
               <textarea
                 value={sceneText}
                 onChange={(e) => {
                   setSceneText(e.target.value)
                   setSelectedPreset('')
                 }}
-                placeholder="Describe the scene… e.g. marble countertop · golden hour outdoor · white studio void"
-                rows={5}
+                placeholder="Describe the scene… marble countertop · golden hour · white studio void"
+                rows={2}
                 maxLength={300}
-                className="w-full text-sm font-mono bg-transparent resize-none focus:outline-none placeholder:text-gray-300"
+                className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-3 text-sm font-mono resize-none focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
               />
-              <div className="text-right mt-1">
-                <span className="font-mono text-[10px] text-gray-300">{sceneText.length} / 300</span>
+              <div className="text-right">
+                <span className="text-[11px] font-mono text-graphite/25">{sceneText.length} / 300</span>
               </div>
             </div>
 
-            {/* Active reference panel — only shown when references are selected */}
-            {selectedRefs.length > 0 && (
-              <div className="border-t border-outline px-4 py-3">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-gray-400 mb-2">
-                  Active References
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {selectedRefs.map((ref) => (
-                    <div
-                      key={ref.id}
-                      className="flex items-center gap-1.5 border border-outline p-1.5 bg-[#f7f4ef]"
-                    >
-                      <img
-                        src={ref.url}
-                        alt="Reference"
-                        className="w-10 h-10 object-cover border border-outline"
-                      />
-                      <button
-                        onClick={() => setSelectedRefs((prev) => prev.filter((r) => r.id !== ref.id))}
-                        className="font-mono text-sm text-gray-400 hover:text-rust leading-none transition-colors"
-                        title="Remove this reference"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Toolbar */}
-            <div className="border-t border-outline flex items-stretch divide-x divide-outline">
-
-              {/* Photo — opens library modal */}
+            {/* Photo & Preset row */}
+            <div className="flex gap-2">
               <button
                 onClick={() => setShowPhoto(true)}
-                title="Open reference image library"
-                className={`flex items-center gap-1.5 px-3 py-2.5 font-mono text-xs uppercase tracking-wide transition-colors hover:bg-gray-50 ${selectedRefs.length > 0 ? 'text-rust' : 'text-gray-500'}`}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-mono transition-all whitespace-nowrap ${
+                  selectedRefs.length > 0
+                    ? 'border-rust/50 text-rust bg-rust/5'
+                    : 'border-forest/20 text-graphite/50 hover:border-forest/40 hover:text-graphite'
+                }`}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
-                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
-                </svg>
-                <span>Photo</span>
+                <ImagePlus size={14} strokeWidth={1.8} />
+                Photo{selectedRefs.length > 0 ? ` (${selectedRefs.length})` : ''}
               </button>
-
-              {/* Scene preset */}
-              <div className="flex items-center px-3 py-2.5 flex-1 min-w-0">
+              <div className="relative">
                 <select
                   value={selectedPreset}
                   onChange={(e) => {
@@ -425,382 +596,162 @@ export default function ProductMockupPage() {
                       if (preset) setSceneText(preset.description)
                     }
                   }}
-                  className="w-full font-mono text-xs text-gray-500 bg-transparent border-none focus:outline-none cursor-pointer uppercase truncate"
+                  className="appearance-none rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 pr-8 text-xs font-mono text-graphite/50 focus:outline-none focus:border-forest/50 cursor-pointer"
                 >
-                  <option value="">PRESET</option>
-                  {SCENE_PRESETS.map((preset) => (
-                    <option key={preset.name} value={preset.name}>{preset.name}</option>
+                  <option value="">Select Preset…</option>
+                  {SCENE_PRESETS.map((p) => (
+                    <option key={p.name} value={p.name}>{p.name}</option>
                   ))}
                 </select>
+                <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-graphite/30 pointer-events-none" />
               </div>
+            </div>
 
-              {/* Aspect ratio */}
-              <div className="flex items-center px-3 py-2.5">
-                <select
-                  value={aspectRatio}
-                  onChange={(e) => setAspectRatio(e.target.value)}
-                  className="font-mono text-xs text-gray-500 bg-transparent border-none focus:outline-none cursor-pointer"
-                >
-                  <option value="1:1">1:1</option>
-                  <option value="9:16">9:16</option>
-                  <option value="16:9">16:9</option>
-                  <option value="3:4">3:4</option>
-                  <option value="4:3">4:3</option>
-                </select>
-              </div>
-
-              {/* Quality */}
-              <div className="flex items-stretch">
-                {(['1K', '2K'] as const).map((q) => (
-                  <button
-                    key={q}
-                    onClick={() => setImageQuality(q)}
-                    className={`px-3 font-mono text-xs uppercase transition-colors ${
-                      imageQuality === q ? 'bg-rust text-white' : 'text-gray-400 hover:bg-gray-50'
-                    }`}
-                  >
-                    {q}
-                  </button>
+            {/* Active references */}
+            {selectedRefs.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {selectedRefs.map((ref) => (
+                  <div key={ref.id} className="relative group">
+                    <img src={ref.url} alt="Reference" className="w-12 h-12 object-cover rounded-lg border border-forest/15" />
+                    <button
+                      onClick={() => setSelectedRefs((prev) => prev.filter((r) => r.id !== ref.id))}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rust text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity leading-none"
+                    >
+                      ×
+                    </button>
+                  </div>
                 ))}
-              </div>
-
-              {/* Model */}
-              <div className="flex items-center px-3 py-2.5">
-                <select
-                  value={imageModel}
-                  onChange={(e) => setImageModel(e.target.value as 'gemini' | 'seedream')}
-                  className="font-mono text-xs text-gray-500 bg-transparent border-none focus:outline-none cursor-pointer uppercase"
-                >
-                  <option value="gemini">GEMINI</option>
-                  <option value="seedream">SEEDREAM</option>
-                </select>
-              </div>
-
-            </div>
-          </div>
-
-          {/* Mode toggle */}
-          <div className="flex mt-3 border border-outline overflow-hidden">
-            <button
-              onClick={() => {
-                setPhotoShootMode(false)
-                setShootResults([])
-                setSelectedShootAdId(null)
-                setSelectedShootLabel(null)
-              }}
-              className={`flex-1 py-2 font-mono text-xs uppercase tracking-widest transition-colors ${
-                !photoShootMode ? 'bg-rust text-white' : 'text-gray-400 hover:bg-gray-50'
-              }`}
-            >
-              Single Mockup
-            </button>
-            <button
-              onClick={() => {
-                setPhotoShootMode(true)
-                setGeneratedAd(null)
-              }}
-              className={`flex-1 py-2 font-mono text-xs uppercase tracking-widest border-l border-outline transition-colors ${
-                photoShootMode ? 'bg-rust text-white' : 'text-gray-400 hover:bg-gray-50'
-              }`}
-            >
-              Photo Shoot · 6×
-            </button>
-          </div>
-
-          {/* Generate button */}
-          <button
-            onClick={photoShootMode ? handlePhotoShoot : handleGenerate}
-            disabled={generating || photoShootGenerating || !imageTitle.trim()}
-            className="btn-primary w-full mt-3 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {photoShootMode
-              ? (photoShootGenerating ? 'GENERATING PHOTO SHOOT...' : 'GENERATE PHOTO SHOOT — 6 IMAGES')
-              : (generating ? 'GENERATING MOCKUP...' : 'GENERATE MOCKUP')}
-          </button>
-
-          {error && (
-            <div className="mt-3 border border-red-300 bg-red-50 p-3">
-              <p className="font-mono text-xs uppercase text-red-700 mb-1">Error</p>
-              <p className="font-mono text-xs text-red-600">{error}</p>
-            </div>
-          )}
-        </div>
-
-        {/* ── RIGHT COLUMN ── */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <p className="font-mono text-xs uppercase tracking-widest text-gray-500">
-              [ LIVE OUTPUT ENGINE ]
-            </p>
-            <span className="font-mono text-xs border border-rust text-rust px-2 py-0.5">
-              [ {imageModel === 'seedream' ? 'SEEDREAM 4' : 'GEMINI'}: READY ]
-            </span>
-          </div>
-
-          <div className="border border-outline flex flex-col">
-            <div className="bg-[#e4dcc8] border-b border-outline px-4 py-2">
-              <span className="font-mono text-xs uppercase tracking-widest">
-                {photoShootMode ? 'Photo Shoot' : 'Generated Mockup'}
-              </span>
-            </div>
-
-            {/* ── PHOTO SHOOT RESULTS ── */}
-            {photoShootMode && (
-              <div className="flex-1 bg-white">
-                {/* Empty state */}
-                {shootResults.length === 0 && !photoShootGenerating && (
-                  <div
-                    className="min-h-[480px] flex flex-col items-center justify-center"
-                    style={{
-                      backgroundImage: 'radial-gradient(circle, #d4cbb8 1px, transparent 1px)',
-                      backgroundSize: '20px 20px',
-                    }}
-                  >
-                    <p className="font-mono text-xs text-gray-500 text-center leading-relaxed">
-                      Awaiting input.<br />
-                      <span className="text-gray-400">
-                        Set your scene, click GENERATE PHOTO SHOOT<br />to produce 6 angles simultaneously.
-                      </span>
-                    </p>
-                  </div>
-                )}
-
-                {/* Grid */}
-                {shootResults.length > 0 && (
-                  <div className="p-4 space-y-4">
-
-                    {/* Progress / folder banner */}
-                    {photoShootGenerating ? (
-                      <div className="border border-outline bg-[#f7f4ef] px-4 py-2 flex items-center gap-3">
-                        <div className="animate-spin h-3.5 w-3.5 border-2 border-rust border-t-transparent shrink-0" />
-                        <span className="font-mono text-xs text-gray-600 uppercase tracking-wider">
-                          Generating photo shoot... {shootComplete} / 6 complete
-                        </span>
-                      </div>
-                    ) : shootDone && (
-                      <div className="border border-green-300 bg-green-50 px-4 py-2 flex items-center justify-between">
-                        <div>
-                          <span className="font-mono text-xs text-green-700 uppercase tracking-wider">
-                            Photo Shoot Complete
-                          </span>
-                          {shootFolderName && (
-                            <span className="font-mono text-xs text-green-600 ml-2">
-                              — saved to &quot;{shootFolderName}&quot;
-                            </span>
-                          )}
-                        </div>
-                        <a href="/library" className="font-mono text-xs text-green-600 underline">
-                          View Library →
-                        </a>
-                      </div>
-                    )}
-
-                    {/* 3×2 grid */}
-                    <div className="grid grid-cols-3 gap-2">
-                      {shootResults.map((slot, idx) => (
-                        <div key={idx} className="flex flex-col gap-1">
-                          {/* Slot */}
-                          {slot.loading ? (
-                            <div
-                              className="aspect-square border border-outline flex flex-col items-center justify-center gap-2"
-                              style={{
-                                backgroundImage: 'radial-gradient(circle, #d4cbb8 1px, transparent 1px)',
-                                backgroundSize: '14px 14px',
-                              }}
-                            >
-                              <div className="animate-spin h-4 w-4 border-2 border-rust border-t-transparent" />
-                            </div>
-                          ) : slot.error ? (
-                            <div className="aspect-square border border-red-200 bg-red-50 flex items-center justify-center p-2">
-                              <p className="font-mono text-[10px] text-red-500 text-center leading-snug">{slot.error}</p>
-                            </div>
-                          ) : slot.ad ? (
-                            <button
-                              onClick={() => {
-                                if (selectedShootAdId === slot.ad!.id) {
-                                  setSelectedShootAdId(null)
-                                  setSelectedShootLabel(null)
-                                  setGeneratedVideo(null)
-                                  setVideoError(null)
-                                } else {
-                                  setSelectedShootAdId(slot.ad!.id)
-                                  setSelectedShootLabel(slot.shot.label)
-                                  setGeneratedVideo(null)
-                                  setVideoError(null)
-                                  setVideoTitle(`${imageTitle.trim()} — ${slot.shot.label}`)
-                                }
-                              }}
-                              className={`aspect-square border overflow-hidden transition-all ${
-                                selectedShootAdId === slot.ad.id
-                                  ? 'border-rust ring-2 ring-rust ring-offset-1'
-                                  : 'border-outline hover:border-rust'
-                              }`}
-                            >
-                              <img
-                                src={slot.ad.generatedImageUrl}
-                                alt={slot.shot.label}
-                                className="w-full h-full object-cover"
-                              />
-                            </button>
-                          ) : null}
-                          {/* Shot label */}
-                          <p className="font-mono text-[10px] text-gray-500 uppercase tracking-wider text-center truncate">
-                            {slot.shot.label}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Animate selected shot */}
-                    {selectedShootAdId && (
-                      <div className="border border-outline">
-                        <div className="bg-[#e4dcc8] border-b border-outline px-4 py-2 flex items-center justify-between">
-                          <span className="font-mono text-xs uppercase tracking-widest">
-                            Animate — {selectedShootLabel}
-                          </span>
-                          <span className="font-mono text-xs text-gray-500 border border-outline px-2 py-0.5">
-                            [ GROK VIDEO · 5s ]
-                          </span>
-                        </div>
-
-                        {generatedVideo && (
-                          <div className="border-b border-outline">
-                            <video
-                              src={generatedVideo.videoUrl}
-                              controls
-                              autoPlay
-                              loop
-                              className="w-full h-auto"
-                            />
-                          </div>
-                        )}
-
-                        {generatingVideo && (
-                          <div className="p-6 flex flex-col items-center gap-3 bg-white">
-                            <div className="animate-spin h-5 w-5 border-2 border-rust border-t-transparent" />
-                            <p className="font-mono text-xs text-gray-500">Animating with Grok Video...</p>
-                            <p className="font-mono text-xs text-gray-400 text-center">
-                              This takes 60–120 seconds. Hang tight.
-                            </p>
-                          </div>
-                        )}
-
-                        {!generatingVideo && !generatedVideo && (
-                          <div className="p-4 bg-white space-y-3">
-                            <div className="border border-outline">
-                              <div className="px-3 py-1.5 border-b border-outline bg-[#f7f4ef] flex items-center justify-between">
-                                <p className="font-mono text-xs text-gray-400 uppercase tracking-widest">
-                                  Video Title
-                                </p>
-                                <span className="font-mono text-[10px] text-rust uppercase tracking-widest">Required</span>
-                              </div>
-                              <div className="px-3 pt-3 pb-2">
-                                <input
-                                  type="text"
-                                  value={videoTitle}
-                                  onChange={(e) => setVideoTitle(e.target.value)}
-                                  placeholder="e.g. Studio Shot Animation"
-                                  maxLength={80}
-                                  className="w-full text-sm font-mono bg-transparent focus:outline-none placeholder:text-gray-300 border-none p-0"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="border border-outline">
-                              <div className="px-3 py-1.5 border-b border-outline bg-[#f7f4ef]">
-                                <p className="font-mono text-xs text-gray-400 uppercase tracking-widest">
-                                  Motion (optional)
-                                </p>
-                              </div>
-                              <div className="px-3 pt-3 pb-2">
-                                <textarea
-                                  value={motionPrompt}
-                                  onChange={(e) => setMotionPrompt(e.target.value)}
-                                  placeholder="e.g. slow 360° product rotation · steam rising from the surface · camera slowly pulls back"
-                                  rows={2}
-                                  className="w-full text-sm font-mono bg-transparent resize-none focus:outline-none placeholder:text-gray-300 border-none p-0"
-                                />
-                              </div>
-                            </div>
-
-                            {videoError && (
-                              <div className="border border-red-300 bg-red-50 p-3">
-                                <p className="font-mono text-xs text-red-600">{videoError}</p>
-                              </div>
-                            )}
-
-                            <button
-                              onClick={() => handleGenerateVideo(selectedShootAdId)}
-                              disabled={!videoTitle.trim()}
-                              className="btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                              GENERATE VIDEO
-                            </button>
-                          </div>
-                        )}
-
-                        {generatedVideo && !generatingVideo && (
-                          <div className="p-3 bg-white border-t border-outline">
-                            <button
-                              onClick={() => {
-                                setGeneratedVideo(null)
-                                setVideoError(null)
-                                setVideoTitle('')
-                              }}
-                              className="font-mono text-xs text-gray-500 hover:text-rust transition-colors"
-                            >
-                              ← Generate another video
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Reset */}
-                    {shootDone && (
-                      <button
-                        onClick={() => {
-                          setShootResults([])
-                          setShootFolderName(null)
-                          setSelectedShootAdId(null)
-                          setSelectedShootLabel(null)
-                          setGeneratedVideo(null)
-                          setVideoError(null)
-                          setVideoTitle('')
-                          setMotionPrompt('')
-                          setImageTitle('')
-                          setSelectedRefs([])
-                        }}
-                        className="btn-secondary w-full"
-                      >
-                        GENERATE ANOTHER PHOTO SHOOT
-                      </button>
-                    )}
-                  </div>
-                )}
               </div>
             )}
 
-            {/* ── SINGLE MOCKUP RESULT ── */}
+            <div className="h-px bg-forest/10" />
+
+            {/* Aspect Ratio chips */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Aspect Ratio</label>
+              <div className="flex flex-wrap gap-1.5">
+                {aspectRatioOptions.map((r) => (
+                  <button
+                    key={r.value}
+                    onClick={() => setAspectRatio(r.value)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all border ${
+                      aspectRatio === r.value
+                        ? 'bg-sage border-forest/30 text-forest font-semibold'
+                        : 'border-forest/15 text-graphite/50 hover:border-forest/35 hover:text-graphite'
+                    }`}
+                  >
+                    {r.value}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Resolution + Model row */}
+            <div className="flex gap-6 items-start">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Resolution</label>
+                <div className="flex gap-1.5">
+                  {(['1K', '2K'] as const).map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => setImageQuality(q)}
+                      className={`px-5 py-1.5 rounded-lg text-xs font-mono transition-all border ${
+                        imageQuality === q
+                          ? 'bg-sage border-forest/30 text-forest font-semibold'
+                          : 'border-forest/15 text-graphite/50 hover:border-forest/35'
+                      }`}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Model</label>
+                <div className="relative">
+                  <select
+                    value={imageModel}
+                    onChange={(e) => setImageModel(e.target.value as 'gemini' | 'seedream')}
+                    className="appearance-none rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-1.5 pr-8 text-sm font-mono text-graphite focus:outline-none focus:border-forest/50 cursor-pointer"
+                  >
+                    <option value="gemini">Gemini</option>
+                    <option value="seedream">Seedream 4</option>
+                  </select>
+                  <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-graphite/30 pointer-events-none" />
+                </div>
+              </div>
+            </div>
+
+            {/* Generate CTA */}
+            <button
+              onClick={photoShootMode ? handlePhotoShoot : handleGenerate}
+              disabled={generating || photoShootGenerating || !imageTitle.trim()}
+              className="w-full bg-rust text-white rounded-xl py-4 font-mono font-semibold text-sm tracking-wide hover:bg-[#9a4429] active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {photoShootMode
+                ? (photoShootGenerating ? 'Generating Photo Shoot…' : 'Generate Photo Shoot — 6 Images')
+                : (generating ? 'Generating Mockup…' : 'Generate Mockup')}
+            </button>
+
+            {error && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                <p className="text-[11px] font-mono uppercase text-red-500 mb-1">Error</p>
+                <p className="text-sm text-red-500">{error}</p>
+              </div>
+            )}
+
+          </div>
+        </div>
+
+        {/* ── RIGHT COLUMN — Preview Canvas ────────────────────────────────── */}
+        <div
+          className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col"
+          style={{ minHeight: '640px' }}
+        >
+
+          {/* Canvas header */}
+          <div className="px-6 py-4 border-b border-forest/10 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <Monitor size={15} className="text-forest/35" strokeWidth={1.8} />
+              <span className="text-[11px] font-mono uppercase tracking-widest text-graphite/40">
+                {photoShootMode ? 'Photo Shoot' : 'Mockup Preview'}
+              </span>
+            </div>
+            <span className="text-[11px] font-mono bg-sage/20 text-forest/60 px-3 py-1 rounded-full border border-sage/30">
+              {imageModel === 'seedream' ? 'Seedream 4' : 'Gemini'} · Ready
+            </span>
+          </div>
+
+          {/* Canvas body */}
+          <div className="flex-1 relative overflow-auto">
+
+            {/* ── SINGLE MOCKUP ─────────────────────────────────────────────── */}
             {!photoShootMode && (
-              <div className="flex-1 min-h-[480px] relative bg-white">
+              <>
+                {/* Empty state */}
+                {!generating && !generatedAd && !error && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-5" style={dotGrid}>
+                    <StudioIllustration />
+                    <div className="text-center">
+                      <p className="text-sm font-mono text-graphite/40">Your mockup will appear here</p>
+                      <p className="text-[11px] font-mono text-graphite/25 mt-1">upload a photo · describe the scene · generate</p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Loading state */}
                 {generating && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-8"
-                    style={{
-                      backgroundImage: 'radial-gradient(circle, #d4cbb8 1px, transparent 1px)',
-                      backgroundSize: '20px 20px',
-                    }}
-                  >
-                    <div className="bg-white border border-outline p-6 text-center w-full max-w-xs">
-                      <div className="animate-spin h-6 w-6 border-2 border-rust border-t-transparent mx-auto mb-4" />
-                      <p className="font-mono text-xs text-gray-600 mb-4">{generationStage}</p>
-                      <div className="space-y-1.5 text-left">
-                        <p className="font-mono text-xs text-gray-500">✓ Loading brand profile</p>
-                        <p className="font-mono text-xs text-rust animate-pulse">→ Building scene prompt...</p>
-                        <p className="font-mono text-xs text-gray-300">→ Placing product in scene...</p>
-                        <p className="font-mono text-xs text-gray-300">→ Saving to library...</p>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-8" style={dotGrid}>
+                    <div className="bg-white rounded-2xl border border-forest/15 shadow-sm p-6 w-full max-w-xs">
+                      <div className="flex items-center gap-3 mb-5">
+                        <div className="w-5 h-5 border-2 border-rust border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                        <p className="text-sm font-mono text-graphite/60 leading-tight">{generationStage}</p>
+                      </div>
+                      <div className="space-y-2.5">
+                        <p className="text-xs font-mono text-graphite/40">✓ Brand profile loaded</p>
+                        <p className="text-xs font-mono text-rust animate-pulse">→ Building scene prompt…</p>
+                        <p className="text-xs font-mono text-graphite/20">→ Generating with {imageModel === 'seedream' ? 'Seedream 4' : 'Gemini'}…</p>
+                        <p className="text-xs font-mono text-graphite/20">→ Saving to library…</p>
                       </div>
                     </div>
                   </div>
@@ -808,130 +759,48 @@ export default function ProductMockupPage() {
 
                 {/* Result */}
                 {!generating && generatedAd && (
-                  <div className="p-4 space-y-3">
+                  <div className="p-5 space-y-4">
                     {generatedAd.generatedImageUrl && (
-                      <div className="border border-outline overflow-hidden">
-                        <img
-                          src={generatedAd.generatedImageUrl}
-                          alt="Product mockup"
-                          className="w-full h-auto"
-                        />
+                      <div className="relative group rounded-xl overflow-hidden border border-forest/15">
+                        <img src={generatedAd.generatedImageUrl} alt="Product mockup" className="w-full h-auto" />
+                        <button
+                          onClick={() => setPreviewUrl(generatedAd.generatedImageUrl)}
+                          className="absolute top-3 right-3 flex items-center gap-1.5 bg-white/90 backdrop-blur-sm border border-forest/20 rounded-lg px-3 py-1.5 text-xs font-mono text-graphite opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Maximize2 size={11} /> Expand
+                        </button>
                       </div>
                     )}
 
-                    <div className="border border-outline p-4 bg-white">
-                      <p className="font-mono text-xs text-gray-400 uppercase tracking-widest mb-2">Scene</p>
-                      <p className="text-sm text-gray-700 leading-relaxed">
-                        {sceneText || 'Lifestyle product placement'}
-                      </p>
-                    </div>
-
-                    <div className="border border-green-300 bg-green-50 p-3">
-                      <p className="font-mono text-xs uppercase text-green-700 mb-1">Saved to Library</p>
-                      <a href="/library" className="font-mono text-xs text-green-600 underline">View Library →</a>
-                    </div>
-
-                    {/* ── ANIMATE THIS ── */}
-                    <div className="border border-outline">
-                      <div className="bg-[#e4dcc8] border-b border-outline px-4 py-2 flex items-center justify-between">
-                        <span className="font-mono text-xs uppercase tracking-widest">Animate This</span>
-                        <span className="font-mono text-xs text-gray-500 border border-outline px-2 py-0.5">
-                          [ GROK VIDEO · 5s ]
-                        </span>
+                    {/* Saved banner */}
+                    <div className="flex items-center justify-between rounded-xl bg-sage/15 border border-sage/25 px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle size={14} className="text-forest" strokeWidth={2} />
+                        <span className="text-xs font-mono text-forest uppercase tracking-wide">Saved to Library</span>
                       </div>
+                      <a href="/library" className="text-xs font-mono text-rust hover:underline">View Library →</a>
+                    </div>
 
-                      {generatedVideo && (
-                        <div className="border-b border-outline">
-                          <video
-                            src={generatedVideo.videoUrl}
-                            controls
-                            autoPlay
-                            loop
-                            className="w-full h-auto"
-                          />
+                    {/* Animate section */}
+                    <div className="rounded-xl border border-forest/15 overflow-hidden">
+                      <div className="px-4 py-3 bg-paper/60 border-b border-forest/10 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Film size={13} className="text-forest/35" strokeWidth={1.8} />
+                          <span className="text-xs font-mono uppercase tracking-widest text-graphite/40">Animate This</span>
                         </div>
-                      )}
-
-                      {generatingVideo && (
-                        <div className="p-6 flex flex-col items-center gap-3 bg-white">
-                          <div className="animate-spin h-5 w-5 border-2 border-rust border-t-transparent" />
-                          <p className="font-mono text-xs text-gray-500">Animating with Grok Video...</p>
-                          <p className="font-mono text-xs text-gray-400 text-center">
-                            This takes 60–120 seconds. Hang tight.
-                          </p>
-                        </div>
-                      )}
-
-                      {!generatingVideo && !generatedVideo && (
-                        <div className="p-4 bg-white space-y-3">
-                          <div className="border border-outline">
-                            <div className="px-3 py-1.5 border-b border-outline bg-[#f7f4ef] flex items-center justify-between">
-                              <p className="font-mono text-xs text-gray-400 uppercase tracking-widest">
-                                Video Title
-                              </p>
-                              <span className="font-mono text-[10px] text-rust uppercase tracking-widest">Required</span>
-                            </div>
-                            <div className="px-3 pt-3 pb-2">
-                              <input
-                                type="text"
-                                value={videoTitle}
-                                onChange={(e) => setVideoTitle(e.target.value)}
-                                placeholder="e.g. Studio Shot Animation"
-                                maxLength={80}
-                                className="w-full text-sm font-mono bg-transparent focus:outline-none placeholder:text-gray-300 border-none p-0"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="border border-outline">
-                            <div className="px-3 py-1.5 border-b border-outline bg-[#f7f4ef]">
-                              <p className="font-mono text-xs text-gray-400 uppercase tracking-widest">
-                                Motion (optional)
-                              </p>
-                            </div>
-                            <div className="px-3 pt-3 pb-2">
-                              <textarea
-                                value={motionPrompt}
-                                onChange={(e) => setMotionPrompt(e.target.value)}
-                                placeholder={
-                                  'e.g. slow 360° product rotation · steam rising from the surface · camera slowly pulls back · subtle water ripples'
-                                }
-                                rows={2}
-                                className="w-full text-sm font-mono bg-transparent resize-none focus:outline-none placeholder:text-gray-300 border-none p-0"
-                              />
-                            </div>
-                          </div>
-
-                          {videoError && (
-                            <div className="border border-red-300 bg-red-50 p-3">
-                              <p className="font-mono text-xs text-red-600">{videoError}</p>
-                            </div>
-                          )}
-
-                          <button
-                            onClick={() => handleGenerateVideo()}
-                            disabled={!videoTitle.trim()}
-                            className="btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            GENERATE VIDEO
-                          </button>
-                        </div>
-                      )}
-
-                      {generatedVideo && !generatingVideo && (
-                        <div className="p-3 bg-white border-t border-outline">
-                          <button
-                            onClick={() => {
-                              setGeneratedVideo(null)
-                              setVideoError(null)
-                              setVideoTitle('')
-                            }}
-                            className="font-mono text-xs text-gray-500 hover:text-rust transition-colors"
-                          >
-                            ← Generate another video
-                          </button>
-                        </div>
-                      )}
+                        <span className="text-[10px] font-mono bg-forest/10 text-forest/50 px-2 py-0.5 rounded-full">Grok · 5s</span>
+                      </div>
+                      <VideoForm
+                        title={videoTitle}
+                        onTitleChange={setVideoTitle}
+                        motionPrompt={motionPrompt}
+                        onMotionChange={setMotionPrompt}
+                        onGenerate={handleGenerateVideo}
+                        generating={generatingVideo}
+                        generatedVideo={generatedVideo}
+                        videoError={videoError}
+                        onReset={() => { setGeneratedVideo(null); setVideoError(null); setVideoTitle('') }}
+                      />
                     </div>
 
                     <button
@@ -946,43 +815,190 @@ export default function ProductMockupPage() {
                         setSelectedRefs([])
                         setShowPhoto(false)
                       }}
-                      className="btn-secondary w-full"
+                      className="w-full rounded-xl border border-forest/20 py-3 text-sm font-mono text-graphite/50 hover:text-graphite hover:border-forest/40 transition-colors"
                     >
-                      GENERATE ANOTHER MOCKUP
+                      Generate Another Mockup
                     </button>
                   </div>
                 )}
-
-                {/* Empty state */}
-                {!generating && !generatedAd && !error && (
-                  <div
-                    className="absolute inset-0 flex flex-col items-center justify-center"
-                    style={{
-                      backgroundImage: 'radial-gradient(circle, #d4cbb8 1px, transparent 1px)',
-                      backgroundSize: '20px 20px',
-                    }}
-                  >
-                    <p className="font-mono text-xs text-gray-500 text-center leading-relaxed">
-                      Awaiting input.<br />
-                      <span className="text-gray-400">
-                        Upload a product photo, describe the scene,<br />and click GENERATE MOCKUP.
-                      </span>
-                    </p>
-                  </div>
-                )}
-              </div>
+              </>
             )}
 
-            {/* Status bar */}
-            <div className="border-t border-outline px-4 py-2 bg-[#e4dcc8]">
-              <span className="font-mono text-xs text-gray-500 tracking-wider">
-                FORMAT: {aspectRatio}&nbsp;&nbsp;|&nbsp;&nbsp;QUALITY: {imageQuality}&nbsp;&nbsp;|&nbsp;&nbsp;MODEL: {imageModel === 'seedream' ? 'SEEDREAM 4' : 'GEMINI'}&nbsp;&nbsp;|&nbsp;&nbsp;TYPE: {photoShootMode ? 'PHOTO SHOOT' : 'PRODUCT MOCKUP'}
-              </span>
-            </div>
+            {/* ── PHOTO SHOOT ───────────────────────────────────────────────── */}
+            {photoShootMode && (
+              <>
+                {/* Empty state */}
+                {shootResults.length === 0 && !photoShootGenerating && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-5" style={dotGrid}>
+                    <StudioIllustration />
+                    <div className="text-center">
+                      <p className="text-sm font-mono text-graphite/40">6 angles will generate simultaneously</p>
+                      <p className="text-[11px] font-mono text-graphite/25 mt-1">Front · Three-Quarter · Overhead · Close-Up · Wide · Low Angle</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Results */}
+                {shootResults.length > 0 && (
+                  <div className="p-5 space-y-4">
+
+                    {/* Status banner */}
+                    {photoShootGenerating ? (
+                      <div className="flex items-center gap-3 rounded-xl bg-paper border border-forest/15 px-4 py-3">
+                        <div className="w-4 h-4 border-2 border-rust border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                        <span className="text-xs font-mono text-graphite/50">Generating… {shootComplete} / 6 complete</span>
+                      </div>
+                    ) : shootDone ? (
+                      <div className="flex items-center justify-between rounded-xl bg-sage/15 border border-sage/25 px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle size={14} className="text-forest" strokeWidth={2} />
+                          <span className="text-xs font-mono text-forest uppercase tracking-wide">
+                            Complete{shootFolderName ? ` — "${shootFolderName}"` : ''}
+                          </span>
+                        </div>
+                        <a href="/library" className="text-xs font-mono text-rust hover:underline">View Library →</a>
+                      </div>
+                    ) : null}
+
+                    {/* 3×2 grid */}
+                    <div className="grid grid-cols-3 gap-3">
+                      {shootResults.map((slot, idx) => (
+                        <div key={idx} className="flex flex-col gap-1.5">
+                          {slot.loading ? (
+                            <div
+                              className="aspect-square rounded-xl border border-forest/10 flex items-center justify-center"
+                              style={{ backgroundImage: 'radial-gradient(circle, rgba(31,58,50,0.06) 1px, transparent 1px)', backgroundSize: '14px 14px' }}
+                            >
+                              <div className="w-5 h-5 border-2 border-rust border-t-transparent rounded-full animate-spin" />
+                            </div>
+                          ) : slot.error ? (
+                            <div className="aspect-square rounded-xl border border-red-200 bg-red-50 flex items-center justify-center p-2">
+                              <p className="text-[10px] font-mono text-red-400 text-center leading-snug">{slot.error}</p>
+                            </div>
+                          ) : slot.ad ? (
+                            <div className="relative group">
+                              <button
+                                onClick={() => {
+                                  if (selectedShootAdId === slot.ad!.id) {
+                                    setSelectedShootAdId(null)
+                                    setSelectedShootLabel(null)
+                                    setGeneratedVideo(null)
+                                    setVideoError(null)
+                                  } else {
+                                    setSelectedShootAdId(slot.ad!.id)
+                                    setSelectedShootLabel(slot.shot.label)
+                                    setGeneratedVideo(null)
+                                    setVideoError(null)
+                                    setVideoTitle(`${imageTitle.trim()} — ${slot.shot.label}`)
+                                  }
+                                }}
+                                className={`aspect-square rounded-xl overflow-hidden border-2 w-full block transition-all ${
+                                  selectedShootAdId === slot.ad.id
+                                    ? 'border-rust ring-2 ring-rust/20'
+                                    : 'border-transparent hover:border-forest/25'
+                                }`}
+                              >
+                                <img src={slot.ad.generatedImageUrl} alt={slot.shot.label} className="w-full h-full object-cover" />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setPreviewUrl(slot.ad!.generatedImageUrl) }}
+                                className="absolute top-2 right-2 bg-white/90 rounded-lg p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Expand"
+                              >
+                                <Maximize2 size={11} />
+                              </button>
+                            </div>
+                          ) : null}
+                          <p className="text-[10px] font-mono text-graphite/35 uppercase tracking-wider text-center truncate">
+                            {slot.shot.label}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Animate selected shot */}
+                    {selectedShootAdId && (
+                      <div className="rounded-xl border border-forest/15 overflow-hidden">
+                        <div className="px-4 py-3 bg-paper/60 border-b border-forest/10 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Film size={13} className="text-forest/35" strokeWidth={1.8} />
+                            <span className="text-xs font-mono uppercase tracking-widest text-graphite/40">
+                              Animate — {selectedShootLabel}
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono bg-forest/10 text-forest/50 px-2 py-0.5 rounded-full">Grok · 5s</span>
+                        </div>
+                        <VideoForm
+                          title={videoTitle}
+                          onTitleChange={setVideoTitle}
+                          motionPrompt={motionPrompt}
+                          onMotionChange={setMotionPrompt}
+                          onGenerate={() => handleGenerateVideo(selectedShootAdId)}
+                          generating={generatingVideo}
+                          generatedVideo={generatedVideo}
+                          videoError={videoError}
+                          onReset={() => { setGeneratedVideo(null); setVideoError(null); setVideoTitle('') }}
+                        />
+                      </div>
+                    )}
+
+                    {shootDone && (
+                      <button
+                        onClick={() => {
+                          setShootResults([])
+                          setShootFolderName(null)
+                          setSelectedShootAdId(null)
+                          setSelectedShootLabel(null)
+                          setGeneratedVideo(null)
+                          setVideoError(null)
+                          setVideoTitle('')
+                          setMotionPrompt('')
+                          setImageTitle('')
+                          setSelectedRefs([])
+                        }}
+                        className="w-full rounded-xl border border-forest/20 py-3 text-sm font-mono text-graphite/50 hover:text-graphite hover:border-forest/40 transition-colors"
+                      >
+                        Generate Another Photo Shoot
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Status bar */}
+          <div className="px-6 py-3 border-t border-forest/10 flex-shrink-0">
+            <span className="text-[11px] font-mono text-graphite/25 uppercase tracking-widest">
+              {aspectRatio} · {imageQuality} · {imageModel === 'seedream' ? 'Seedream 4' : 'Gemini'} · {photoShootMode ? 'Photo Shoot' : 'Single'}
+            </span>
           </div>
         </div>
 
       </div>
+
+      {/* Image preview modal */}
+      {previewUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60"
+          onClick={() => setPreviewUrl(null)}
+        >
+          <div
+            className="relative max-w-4xl w-full max-h-[90vh] flex flex-col rounded-2xl overflow-hidden bg-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-5 py-3.5 bg-paper border-b border-forest/10 flex items-center justify-between">
+              <span className="text-xs font-mono uppercase tracking-widest text-graphite/40">Preview</span>
+              <button onClick={() => setPreviewUrl(null)} className="text-graphite/40 hover:text-graphite transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="overflow-auto flex items-center justify-center">
+              <img src={previewUrl} alt="Preview" className="max-w-full max-h-[80vh] object-contain" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Reference image library modal */}
       <PhotoPicker
@@ -990,7 +1006,6 @@ export default function ProductMockupPage() {
         onClose={() => setShowPhoto(false)}
         onSelect={(id, url) => {
           setSelectedRefs((prev) => {
-            // Avoid duplicates
             if (prev.some((r) => r.id === id)) return prev
             return [...prev, { id, url }]
           })

@@ -15,6 +15,7 @@ export interface ScheduledPost {
   // Ad details joined from generated_ads
   adId?: string
   videoId?: string
+  title?: string
   hook?: string
   cta?: string
   positioning_angle?: string
@@ -38,8 +39,8 @@ type CalendarView = 'month' | 'week'
 const DAY_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 
 const MONTH_NAMES = [
-  'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
-  'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER',
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
 ]
 
 interface CalendarDay {
@@ -88,7 +89,6 @@ function buildCalendarGrid(year: number, month: number): CalendarDay[] {
   return cells
 }
 
-/** Returns the Sunday that starts the week containing `date`. */
 function getWeekStart(date: Date): Date {
   const d = new Date(date)
   d.setHours(0, 0, 0, 0)
@@ -106,14 +106,13 @@ function buildWeekDays(weekStart: Date): CalendarDay[] {
     return {
       date,
       dayNum: date.getDate(),
-      isCurrentMonth: true, // not used in week view
+      isCurrentMonth: true,
       isToday: date.getTime() === today.getTime(),
       dateStr: toDateStr(date),
     }
   })
 }
 
-/** Format a week range title, e.g. "FEB 16–22, 2026" or "JAN 30 – FEB 5, 2026" */
 function weekRangeTitle(weekStart: Date): string {
   const weekEnd = new Date(weekStart)
   weekEnd.setDate(weekStart.getDate() + 6)
@@ -128,19 +127,6 @@ function weekRangeTitle(weekStart: Date): string {
   return `${startMon} ${weekStart.getDate()} – ${endMon} ${weekEnd.getDate()}, ${year}`
 }
 
-const PLATFORM_CHIP_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
-  instagram: { bg: 'bg-rust/10 border-rust/30',        text: 'text-rust',      dot: 'bg-rust' },
-  tiktok:    { bg: 'bg-graphite/10 border-graphite/30', text: 'text-graphite',  dot: 'bg-graphite' },
-  facebook:  { bg: 'bg-forest/10 border-forest/30',    text: 'text-forest',    dot: 'bg-forest' },
-  linkedin:  { bg: 'bg-forest/10 border-forest/30',    text: 'text-forest',    dot: 'bg-forest' },
-  twitter:   { bg: 'bg-graphite/10 border-graphite/30', text: 'text-graphite',  dot: 'bg-graphite' },
-  x:         { bg: 'bg-graphite/10 border-graphite/30', text: 'text-graphite',  dot: 'bg-graphite' },
-}
-
-function platformChipStyle(platform: string) {
-  return PLATFORM_CHIP_COLORS[platform.toLowerCase()] ?? { bg: 'bg-gray-100 border-gray-300', text: 'text-gray-700', dot: 'bg-gray-500' }
-}
-
 const STATUS_DOT: Record<ScheduledPost['status'], string> = {
   scheduled:  'bg-forest',
   published:  'bg-green-600',
@@ -152,6 +138,7 @@ function postToAd(post: ScheduledPost): Ad | null {
   if (!post.adId) return null
   return {
     id: post.adId,
+    title: post.title ?? null,
     hook: post.hook ?? '',
     caption: post.caption,
     cta: post.cta ?? '',
@@ -178,41 +165,87 @@ function postToVideo(post: ScheduledPost): VideoItem | null {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
+/** Chevron left icon */
+function ChevronLeft() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  )
+}
+
+/** Chevron right icon */
+function ChevronRight() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  )
+}
+
+/** Small user icon for chips */
+function UserIcon() {
+  return (
+    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 text-forest/50">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  )
+}
+
+/** Empty state illustration */
+function EmptyIllustration() {
+  return (
+    <svg width="72" height="72" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Body */}
+      <ellipse cx="40" cy="57" rx="17" ry="11" fill="#B55233" fillOpacity="0.12" stroke="#B55233" strokeWidth="1.5" strokeLinecap="round" />
+      {/* Head */}
+      <circle cx="40" cy="30" r="12" fill="#B55233" fillOpacity="0.12" stroke="#B55233" strokeWidth="1.5" />
+      {/* Sparkle dots */}
+      <circle cx="63" cy="20" r="2.5" fill="#B55233" fillOpacity="0.35" />
+      <circle cx="17" cy="24" r="2" fill="#B55233" fillOpacity="0.25" />
+      <circle cx="66" cy="40" r="1.5" fill="#B55233" fillOpacity="0.25" />
+      <circle cx="15" cy="44" r="1.5" fill="#B55233" fillOpacity="0.2" />
+      {/* Sparkle lines */}
+      <line x1="59" y1="14" x2="63" y2="18" stroke="#B55233" strokeOpacity="0.35" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="67" y1="14" x2="63" y2="18" stroke="#B55233" strokeOpacity="0.35" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 /** Small chip used in the month grid */
 function MonthChip({ post, onClick }: { post: ScheduledPost; onClick: () => void }) {
-  const chip = platformChipStyle(post.platform)
   return (
     <button
       onClick={onClick}
       title={`${post.platform}: ${post.caption}`}
-      className={`flex items-center gap-1 w-full text-left px-1.5 py-0.5 rounded-sm border ${chip.bg} hover:opacity-80 transition-opacity cursor-pointer`}
+      className="flex items-center gap-1.5 w-full text-left px-2 py-1 rounded-md bg-sage/20 border border-sage/40 hover:bg-sage/30 transition-colors cursor-pointer"
     >
-      <span className={`inline-block w-1.5 h-1.5 flex-shrink-0 rounded-full ${chip.dot}`} />
-      <span className={`truncate text-[10px] font-mono font-medium uppercase tracking-wide ${chip.text}`}>
+      <span className="truncate text-[10px] font-mono font-medium text-forest leading-none">
         {post.hook || post.platform}
       </span>
+      <UserIcon />
     </button>
   )
 }
 
 /** Larger post card used in the week grid */
 function WeekPostCard({ post, onClick }: { post: ScheduledPost; onClick: () => void }) {
-  const chip = platformChipStyle(post.platform)
   return (
     <button
       onClick={onClick}
-      className="w-full text-left border border-outline bg-white hover:border-rust transition-colors group overflow-hidden"
+      className="w-full text-left rounded-xl border border-forest/20 bg-white hover:border-rust/40 hover:shadow-sm transition-all group overflow-hidden"
     >
-      {/* Thumbnail / placeholder */}
+      {/* Thumbnail */}
       {post.videoId ? (
-        <div className="w-full aspect-square bg-graphite/5 border-b border-outline flex items-center justify-center relative overflow-hidden">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" className="text-graphite/30">
+        <div className="w-full aspect-square bg-forest/5 border-b border-forest/10 flex items-center justify-center relative overflow-hidden">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-forest/30">
             <polygon points="5 3 19 12 5 21 5 3" />
           </svg>
-          <span className="absolute top-1.5 right-1.5 text-[8px] font-mono uppercase bg-graphite/10 text-graphite/50 px-1 py-0.5">VIDEO</span>
+          <span className="absolute top-1.5 right-1.5 text-[8px] font-mono uppercase bg-forest/10 text-forest/50 px-1 py-0.5 rounded">VIDEO</span>
         </div>
       ) : post.signedUrl ? (
-        <div className="w-full aspect-square overflow-hidden bg-gray-100 border-b border-outline">
+        <div className="w-full aspect-square overflow-hidden bg-paper border-b border-forest/10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={post.signedUrl}
@@ -221,23 +254,19 @@ function WeekPostCard({ post, onClick }: { post: ScheduledPost; onClick: () => v
           />
         </div>
       ) : (
-        <div className="w-full aspect-square bg-forest/5 border-b border-outline flex items-center justify-center">
+        <div className="w-full aspect-square bg-forest/5 border-b border-forest/10 flex items-center justify-center">
           <span className="text-xs font-mono text-forest/30 uppercase">No Image</span>
         </div>
       )}
 
-      {/* Card body */}
       <div className="p-2 flex flex-col gap-1.5">
-        {/* Platform badge + status dot */}
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className={`text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 border ${chip.bg} ${chip.text}`}>
+          <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 bg-sage/20 border border-sage/40 text-forest rounded-sm">
             {post.platform}
           </span>
           <span className={`inline-block w-1.5 h-1.5 rounded-full flex-shrink-0 ${STATUS_DOT[post.status]}`} />
-          <span className="text-[9px] font-mono text-gray-400 uppercase">{post.status}</span>
+          <span className="text-[9px] font-mono text-graphite/40 uppercase">{post.status}</span>
         </div>
-
-        {/* Hook */}
         {post.hook && (
           <p className="text-[11px] font-mono font-medium text-graphite line-clamp-2 leading-snug">
             {post.hook}
@@ -258,12 +287,9 @@ export default function Calendar({ posts = [] }: CalendarProps) {
   const [localPosts, setLocalPosts] = useState<ScheduledPost[]>(posts)
   const [selectedPost, setSelectedPost] = useState<ScheduledPost | null>(null)
 
-  // Month view state
   const year = currentMonth.getFullYear()
   const month = currentMonth.getMonth()
   const cells = buildCalendarGrid(year, month)
-
-  // Week view state
   const weekDays = buildWeekDays(currentWeekStart)
 
   const postsByDate: Record<string, ScheduledPost[]> = {}
@@ -293,7 +319,7 @@ export default function Calendar({ posts = [] }: CalendarProps) {
   const todayWeekStart = getWeekStart(now)
   const isCurrentWeekToday = currentWeekStart.getTime() === todayWeekStart.getTime()
 
-  // ── View switch handlers (sync the "other" view's position to today)
+  // ── View switch handlers
   const switchToMonth = () => {
     setCurrentMonth(new Date(now.getFullYear(), now.getMonth(), 1))
     setView('month')
@@ -303,7 +329,7 @@ export default function Calendar({ posts = [] }: CalendarProps) {
     setView('week')
   }
 
-  // ── Upcoming posts (month view only)
+  // ── Upcoming posts
   const todayStr = toDateStr(now)
   const upcomingPosts = localPosts
     .filter((p) => p.status === 'scheduled' && p.date >= todayStr)
@@ -312,16 +338,6 @@ export default function Calendar({ posts = [] }: CalendarProps) {
   const handleCaptionUpdate = (adId: string, newCaption: string) => {
     setLocalPosts((prev) => prev.map((p) => (p.adId === adId ? { ...p, caption: newCaption } : p)))
     setSelectedPost((prev) => prev?.adId === adId ? { ...prev, caption: newCaption } : prev)
-  }
-
-  const handleHookUpdate = (adId: string, newHook: string) => {
-    setLocalPosts((prev) => prev.map((p) => (p.adId === adId ? { ...p, hook: newHook } : p)))
-    setSelectedPost((prev) => prev?.adId === adId ? { ...prev, hook: newHook } : prev)
-  }
-
-  const handleCtaUpdate = (adId: string, newCta: string) => {
-    setLocalPosts((prev) => prev.map((p) => (p.adId === adId ? { ...p, cta: newCta } : p)))
-    setSelectedPost((prev) => prev?.adId === adId ? { ...prev, cta: newCta } : prev)
   }
 
   const [unschedulingId, setUnschedulingId] = useState<string | null>(null)
@@ -351,227 +367,263 @@ export default function Calendar({ posts = [] }: CalendarProps) {
     setSelectedPost(null)
   }
 
-  // ── Shared nav bar
-  const isToday = view === 'month' ? isCurrentMonthToday : isCurrentWeekToday
   const goToPrev = view === 'month' ? goToPrevMonth : goToPrevWeek
   const goToNext = view === 'month' ? goToNextMonth : goToNextWeek
-  const goToToday = view === 'month' ? goToTodayMonth : goToTodayWeek
+  const isToday = view === 'month' ? isCurrentMonthToday : isCurrentWeekToday
+  void isToday // used by goToToday logic
+  void goToTodayMonth
+  void goToTodayWeek
+
   const titleText = view === 'month'
     ? `${MONTH_NAMES[month]} ${year}`
     : weekRangeTitle(currentWeekStart)
 
   return (
     <>
-      <div className="flex flex-col gap-6">
-        {/* ── Navigation bar ── */}
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          {/* Prev / Next */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={goToPrev}
-              className="border border-outline px-4 py-2 font-mono text-sm hover:bg-gray-100 transition-colors"
-              aria-label="Previous"
-            >←</button>
-            <button
-              onClick={goToNext}
-              className="border border-outline px-4 py-2 font-mono text-sm hover:bg-gray-100 transition-colors"
-              aria-label="Next"
-            >→</button>
-          </div>
+      {/* ── Page header ── */}
+      <div className="flex items-center justify-between mb-3">
+        <h1 className="text-4xl font-bold text-graphite tracking-tight">Field Log</h1>
 
-          {/* Title */}
-          <h2 className="text-xl uppercase font-mono tracking-wider flex-1 text-center min-w-0">
-            {titleText}
-          </h2>
-
-          {/* Right controls: Today + view toggle */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={goToToday}
-              disabled={isToday}
-              className="border border-outline px-4 py-2 font-mono text-xs uppercase hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-default"
-            >
-              TODAY
-            </button>
-
-            {/* View toggle */}
-            <div className="flex border border-outline overflow-hidden">
-              <button
-                onClick={switchToMonth}
-                className={[
-                  'px-4 py-2 font-mono text-xs uppercase transition-colors',
-                  view === 'month' ? 'bg-forest text-paper' : 'hover:bg-gray-100',
-                ].join(' ')}
-              >
-                MONTH
-              </button>
-              <button
-                onClick={switchToWeek}
-                className={[
-                  'px-4 py-2 font-mono text-xs uppercase transition-colors border-l border-outline',
-                  view === 'week' ? 'bg-forest text-paper' : 'hover:bg-gray-100',
-                ].join(' ')}
-              >
-                WEEK
-              </button>
-            </div>
-          </div>
+        {/* View toggle pill */}
+        <div className="flex items-center gap-0.5 bg-white border border-forest/20 rounded-full p-1 shadow-sm">
+          <button
+            onClick={switchToMonth}
+            className={[
+              'px-4 py-1.5 rounded-full text-sm font-medium transition-colors',
+              view === 'month'
+                ? 'bg-rust text-white shadow-sm'
+                : 'text-graphite/60 hover:text-graphite hover:bg-forest/5',
+            ].join(' ')}
+          >
+            Month
+          </button>
+          <button
+            onClick={switchToWeek}
+            className={[
+              'px-4 py-1.5 rounded-full text-sm font-medium transition-colors',
+              view === 'week'
+                ? 'bg-rust text-white shadow-sm'
+                : 'text-graphite/60 hover:text-graphite hover:bg-forest/5',
+            ].join(' ')}
+          >
+            Week
+          </button>
         </div>
+      </div>
 
-        {/* ── Month view ── */}
-        {view === 'month' && (
-          <>
-            <div className="border border-outline">
-              {/* Day-of-week header */}
-              <div className="grid grid-cols-7">
-                {DAY_LABELS.map((day) => (
-                  <div key={day} className="text-xs uppercase font-mono text-gray-500 text-center py-2 bg-gray-50 border-b border-r border-outline last:border-r-0">
-                    {day}
-                  </div>
-                ))}
-              </div>
+      {/* Rust separator line */}
+      <div className="h-px bg-rust mb-6" />
 
-              {/* Day cells */}
-              <div className="grid grid-cols-7">
-                {cells.map((cell, i) => {
-                  const cellPosts = postsByDate[cell.dateStr] ?? []
-                  const isLastRow = i >= cells.length - 7
+      {/* ── Month view ── */}
+      {view === 'month' && (
+        <div className="flex flex-col gap-5">
 
-                  return (
-                    <div
-                      key={cell.dateStr + '-' + i}
-                      className={[
-                        'p-2 min-h-[88px] flex flex-col gap-1',
-                        'border-b border-r border-outline',
-                        (i + 1) % 7 === 0 ? 'border-r-0' : '',
-                        isLastRow ? 'border-b-0' : '',
-                        cell.isToday
-                          ? 'bg-white outline outline-2 outline-rust outline-offset-[-2px]'
-                          : cell.isCurrentMonth ? 'bg-white' : 'bg-gray-50',
-                      ].filter(Boolean).join(' ')}
-                    >
-                      <span className={[
-                        'text-sm font-mono leading-none',
-                        cell.isToday ? 'text-rust font-bold' : cell.isCurrentMonth ? 'text-graphite' : 'text-gray-400',
-                      ].join(' ')}>
-                        {cell.dayNum}
-                      </span>
+          {/* ── Calendar card ── */}
+          <div className="bg-white rounded-2xl border border-forest/20 shadow-sm p-5">
 
-                      {cellPosts.map((post) => (
-                        <MonthChip
-                          key={post.id}
-                          post={post}
-                          onClick={() => setSelectedPost(post)}
-                        />
-                      ))}
-                    </div>
-                  )
-                })}
-              </div>
+            {/* Month navigation */}
+            <div className="flex items-center justify-center gap-3 mb-5">
+              <button
+                onClick={goToPrev}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-forest/8 text-graphite/50 hover:text-graphite transition-colors"
+                aria-label="Previous month"
+              >
+                <ChevronLeft />
+              </button>
+              <h2 className="text-lg font-medium text-graphite min-w-[190px] text-center">
+                {titleText}
+              </h2>
+              <button
+                onClick={goToNext}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-forest/8 text-graphite/50 hover:text-graphite transition-colors"
+                aria-label="Next month"
+              >
+                <ChevronRight />
+              </button>
             </div>
 
-            {/* Upcoming posts panel */}
-            <div>
-              <h2 className="text-sm uppercase font-mono tracking-[0.25em] font-bold pb-4 mb-3 border-b border-outline">
-                Upcoming Posts
-              </h2>
-
-              {upcomingPosts.length === 0 ? (
-                <div className="py-8 text-center">
-                  <p className="text-sm font-mono text-gray-500 uppercase mb-4">No scheduled posts</p>
-                  <a href="/create" className="btn-secondary text-sm px-4 py-2 inline-block">Generate an Ad →</a>
+            {/* Day-of-week headers */}
+            <div className="grid grid-cols-7 mb-1.5">
+              {DAY_LABELS.map((day) => (
+                <div key={day} className="text-center text-[11px] font-mono uppercase tracking-widest text-graphite/40 py-1.5">
+                  {day}
                 </div>
-              ) : (
-                <div className="flex flex-col gap-2 max-w-[50%]">
-                  {upcomingPosts.map((post) => {
+              ))}
+            </div>
+
+            {/* Calendar grid */}
+            <div className="grid grid-cols-7 gap-1">
+              {cells.map((cell, i) => {
+                const cellPosts = postsByDate[cell.dateStr] ?? []
+                return (
+                  <div
+                    key={cell.dateStr + '-' + i}
+                    className={[
+                      'rounded-lg min-h-[82px] p-1.5 flex flex-col gap-1 transition-colors',
+                      cell.isToday
+                        ? 'bg-white ring-2 ring-rust ring-inset'
+                        : cell.isCurrentMonth
+                        ? 'bg-forest/[0.03] hover:bg-forest/[0.06]'
+                        : 'bg-forest/[0.015] opacity-60',
+                    ].filter(Boolean).join(' ')}
+                  >
+                    <span className={[
+                      'text-sm font-mono leading-none',
+                      cell.isToday
+                        ? 'text-rust font-semibold'
+                        : cell.isCurrentMonth
+                        ? 'text-graphite/80'
+                        : 'text-graphite/35',
+                    ].join(' ')}>
+                      {cell.dayNum}
+                    </span>
+
+                    {cellPosts.map((post) => (
+                      <MonthChip
+                        key={post.id}
+                        post={post}
+                        onClick={() => setSelectedPost(post)}
+                      />
+                    ))}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* ── Upcoming posts (below calendar) ── */}
+          <div className="bg-white rounded-2xl border border-forest/20 shadow-sm p-5">
+            <h3 className="text-base font-bold text-graphite mb-4">Upcoming Posts</h3>
+
+            {upcomingPosts.length === 0 ? (
+              <div className="flex flex-col items-center text-center gap-3 py-4">
+                <EmptyIllustration />
+                <p className="text-sm font-medium text-graphite/55">No Scheduled Posts</p>
+                <a
+                  href="/create"
+                  className="bg-rust text-white font-semibold px-4 py-2.5 rounded-xl text-sm inline-block text-center w-full max-w-[180px] hover:bg-[#9a4429] transition-colors"
+                >
+                  Generate an Ad →
+                </a>
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-row flex-wrap gap-3">
+                  {upcomingPosts.slice(0, 5).map((post) => {
                     const day = parseInt(post.date.slice(8, 10))
                     const monthAbbr = MONTH_NAMES[parseInt(post.date.slice(5, 7)) - 1].slice(0, 3)
                     const isUnscheduling = unschedulingId === post.id
                     return (
-                      <div
-                        key={post.id}
-                        className="flex items-stretch border border-outline border-t-4 border-t-rust w-full bg-paper"
-                      >
-                        {/* Clickable main area: date + content */}
+                      <div key={post.id} className="rounded-xl border border-rust/40 overflow-hidden bg-white w-[200px] flex-shrink-0 flex flex-col shadow-sm">
+                        <div className="h-1 bg-rust/70 w-full" />
                         <button
                           onClick={() => setSelectedPost(post)}
-                          className="flex items-stretch flex-1 min-w-0 text-left hover:bg-paper/60 transition-colors group"
+                          className="flex flex-col gap-2 w-full text-left p-3 hover:bg-rust/5 transition-colors flex-1"
                         >
-                          {/* Date column */}
-                          <div className="flex flex-col items-center justify-center px-6 py-4 border-r border-outline flex-shrink-0 min-w-[80px]">
-                            <span className="text-4xl font-mono font-bold text-graphite leading-none">{day}</span>
-                            <span className="text-xs font-mono font-bold uppercase tracking-[0.15em] text-graphite mt-1">{monthAbbr}</span>
-                          </div>
-
-                          {/* Content */}
-                          <div className="flex flex-col justify-center gap-0.5 min-w-0 px-5 py-4">
-                            <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-graphite/50">
-                              {post.platform.toUpperCase()} POST
-                            </span>
-                            {post.hook && (
-                              <p className="text-sm font-mono font-bold uppercase text-graphite truncate tracking-wide mt-0.5">
-                                {post.hook}
-                              </p>
+                          <div className="flex items-start gap-2">
+                            {post.signedUrl && (
+                              <img
+                                src={post.signedUrl}
+                                alt=""
+                                className="w-12 h-12 rounded-md object-cover flex-shrink-0"
+                              />
                             )}
-                            {post.caption && (
-                              <p className="text-xs font-mono text-graphite/50 truncate mt-0.5">
-                                {post.caption}
-                              </p>
-                            )}
+                            <div className="flex flex-col gap-1 min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-1">
+                                <div className="flex items-baseline gap-1">
+                                  <span className="text-lg font-bold text-graphite leading-none">{day}</span>
+                                  <span className="text-[9px] font-mono uppercase text-graphite/45">{monthAbbr}</span>
+                                </div>
+                                <span className="text-[9px] font-mono uppercase text-rust/70 tracking-wide">{post.platform}</span>
+                              </div>
+                              {post.title && (
+                                <p className="text-xs font-bold text-graphite leading-snug line-clamp-2">{post.title}</p>
+                              )}
+                              {post.hook && (
+                                <p className="text-xs font-medium text-graphite/70 leading-snug line-clamp-2">{post.hook}</p>
+                              )}
+                            </div>
                           </div>
                         </button>
-
-                        {/* Action buttons */}
-                        <div className="flex items-center gap-2 px-4 flex-shrink-0 border-l border-outline">
+                        <div className="flex border-t border-rust/20">
                           <button
                             onClick={() => setSelectedPost(post)}
-                            className="border border-outline px-4 py-2 text-xs font-mono uppercase text-graphite hover:bg-graphite hover:text-paper transition-colors"
+                            className="flex-1 py-1.5 text-[10px] font-mono uppercase text-graphite/45 hover:bg-rust/5 hover:text-rust transition-colors text-center"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleUnschedule(post.id)}
                             disabled={isUnscheduling}
-                            className="border border-outline px-4 py-2 text-xs font-mono uppercase text-graphite hover:bg-red-50 hover:border-red-300 hover:text-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            className="flex-1 py-1.5 text-[10px] font-mono uppercase text-graphite/45 hover:bg-red-50 hover:text-red-500 border-l border-rust/20 disabled:opacity-40 transition-colors text-center"
                           >
-                            {isUnscheduling ? '...' : 'Unschedule'}
+                            {isUnscheduling ? '...' : 'Remove'}
                           </button>
                         </div>
                       </div>
                     )
                   })}
                 </div>
-              )}
-            </div>
-          </>
-        )}
+                {upcomingPosts.length > 5 && (
+                  <p className="text-[10px] font-mono text-graphite/40 uppercase mt-3">
+                    +{upcomingPosts.length - 5} more
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
-        {/* ── Week view ── */}
-        {view === 'week' && (
-          <div className="border border-outline">
+      {/* ── Week view ── */}
+      {view === 'week' && (
+        <div className="flex flex-col gap-4">
+
+          {/* Week navigation */}
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={goToPrev}
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-forest/8 text-graphite/50 hover:text-graphite transition-colors"
+              aria-label="Previous week"
+            >
+              <ChevronLeft />
+            </button>
+            <h2 className="text-lg font-medium text-graphite min-w-[240px] text-center">
+              {titleText}
+            </h2>
+            <button
+              onClick={goToNext}
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-forest/8 text-graphite/50 hover:text-graphite transition-colors"
+              aria-label="Next week"
+            >
+              <ChevronRight />
+            </button>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-forest/20 shadow-sm overflow-hidden">
             {/* Day column headers */}
-            <div className="grid grid-cols-7 border-b border-outline">
+            <div className="grid grid-cols-7 border-b border-forest/15">
               {weekDays.map((day) => (
                 <div
                   key={day.dateStr}
                   className={[
-                    'py-3 px-2 text-center border-r border-outline last:border-r-0',
-                    day.isToday ? 'bg-white' : 'bg-gray-50',
+                    'py-3 px-2 text-center border-r border-forest/10 last:border-r-0',
+                    day.isToday ? 'bg-rust/5' : 'bg-forest/[0.02]',
                   ].join(' ')}
                 >
                   <p className={[
-                    'text-xs uppercase font-mono tracking-wider',
-                    day.isToday ? 'text-rust' : 'text-gray-500',
+                    'text-[11px] uppercase font-mono tracking-widest',
+                    day.isToday ? 'text-rust' : 'text-graphite/40',
                   ].join(' ')}>
                     {DAY_LABELS[day.date.getDay()]}
                   </p>
                   <p className={[
-                    'text-2xl font-mono font-bold leading-tight mt-0.5',
+                    'text-2xl font-bold leading-tight mt-0.5',
                     day.isToday ? 'text-rust' : 'text-graphite',
                   ].join(' ')}>
                     {day.dayNum}
                   </p>
-                  <p className="text-[10px] font-mono text-gray-400 uppercase tracking-wide">
+                  <p className="text-[10px] font-mono text-graphite/30 uppercase tracking-wide">
                     {MONTH_NAMES[day.date.getMonth()].slice(0, 3)}
                   </p>
                 </div>
@@ -586,13 +638,13 @@ export default function Calendar({ posts = [] }: CalendarProps) {
                   <div
                     key={day.dateStr}
                     className={[
-                      'border-r border-outline last:border-r-0 p-2 min-h-[220px] flex flex-col gap-2',
-                      day.isToday ? 'bg-white outline outline-2 outline-rust outline-offset-[-2px]' : 'bg-white',
+                      'border-r border-forest/10 last:border-r-0 p-2 min-h-[220px] flex flex-col gap-2',
+                      day.isToday ? 'bg-rust/[0.025]' : 'bg-white',
                     ].join(' ')}
                   >
                     {dayPosts.length === 0 ? (
                       <div className="flex-1 flex items-center justify-center">
-                        <span className="text-[10px] font-mono text-gray-300 uppercase">—</span>
+                        <span className="text-[10px] font-mono text-graphite/20 uppercase">—</span>
                       </div>
                     ) : (
                       dayPosts.map((post) => (
@@ -608,8 +660,8 @@ export default function Calendar({ posts = [] }: CalendarProps) {
               })}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Ad modal */}
       {selectedPost && selectedAd && (
@@ -617,8 +669,6 @@ export default function Calendar({ posts = [] }: CalendarProps) {
           ad={selectedAd}
           onClose={() => setSelectedPost(null)}
           onCaptionUpdate={handleCaptionUpdate}
-          onHookUpdate={handleHookUpdate}
-          onCtaUpdate={handleCtaUpdate}
           scheduledDate={selectedPost.date}
         />
       )}

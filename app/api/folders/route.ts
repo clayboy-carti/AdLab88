@@ -24,6 +24,14 @@ export async function POST(req: Request) {
   const { name } = await req.json()
   if (!name?.trim()) return NextResponse.json({ error: 'Name required' }, { status: 400 })
 
+  const { data: existing } = await supabase
+    .from('folders')
+    .select('id')
+    .eq('user_id', user.id)
+    .ilike('name', name.trim())
+    .maybeSingle()
+  if (existing) return NextResponse.json({ error: 'A campaign with that name already exists.' }, { status: 409 })
+
   const { data, error } = await supabase
     .from('folders')
     .insert({ user_id: user.id, name: name.trim() })

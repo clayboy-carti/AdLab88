@@ -148,7 +148,9 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
             <label className="block text-sm uppercase font-mono mb-2">
               What We Do <span className="text-rust">*</span>
             </label>
-            <p className="text-xs text-gray-600 mb-2">1-2 sentences about your business</p>
+            <p className="text-xs text-gray-600 mb-2">
+              Describe the specific products, solutions, and/or services you provide — not your mission statement
+            </p>
             <textarea {...register('what_we_do')} rows={3} className="w-full" />
             {errors.what_we_do && (
               <p className="text-red-600 text-sm mt-1">{errors.what_we_do.message}</p>

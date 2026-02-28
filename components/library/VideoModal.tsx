@@ -798,26 +798,10 @@ export default function VideoModal({ video, onClose, onDelete, onTitleUpdate, in
             )}
           </div>
 
-          {/* Motion Prompt (read-only + copy) */}
-          {video.motion_prompt && (
-            <div className="border border-outline p-4">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs uppercase font-mono text-gray-400 tracking-widest">Motion</p>
-                <button
-                  onClick={handleCopyMotion}
-                  className="flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 transition-colors"
-                >
-                  {motionCopiedState ? <><CheckIcon /><span>Copied</span></> : <><CopyIcon /><span>Copy</span></>}
-                </button>
-              </div>
-              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{video.motion_prompt}</p>
-            </div>
-          )}
-
-          {/* Post Caption — editable, used for social scheduling */}
+          {/* Caption — editable, used for social scheduling */}
           <div className="border border-outline p-4">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs uppercase font-mono text-gray-400 tracking-widest">Post Caption</p>
+              <p className="text-xs uppercase font-mono text-gray-400 tracking-widest">Caption</p>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleCopyCaption}

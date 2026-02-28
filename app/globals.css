@@ -6,42 +6,51 @@
 
 body {
   background-color: #F3ECDC;
+  background-image:
+    linear-gradient(rgba(31, 58, 50, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(31, 58, 50, 0.055) 1px, transparent 1px);
+  background-size: 28px 28px;
   color: #2A2A2A;
-  font-family: 'Inter', sans-serif;
-}
-
-/* Remove all rounded corners globally */
-* {
-  border-radius: 0 !important;
+  font-family: 'IBM Plex Mono', monospace;
 }
 
 /* Button base styles */
 .btn-primary {
-  @apply bg-rust border border-outline text-white uppercase font-mono px-6 py-3;
+  @apply bg-rust text-white font-mono font-semibold px-6 py-3 rounded-xl;
   @apply hover:bg-[#9a4429] transition-colors;
 }
 
 .btn-secondary {
-  @apply bg-transparent border border-outline uppercase font-mono px-6 py-3;
-  @apply hover:bg-gray-100 transition-colors;
-}
-
-/* Input base styles */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-textarea,
-select {
-  @apply border border-outline bg-white p-3 font-mono;
-  @apply focus:outline-none focus:border-2;
+  @apply bg-transparent border border-forest/25 text-graphite font-mono px-6 py-3 rounded-xl;
+  @apply hover:border-forest/50 transition-colors;
 }
 
 /* Card base styles */
 .card {
-  @apply border border-outline bg-white p-6;
+  @apply bg-white rounded-2xl border border-forest/20 shadow-sm p-6;
 }
 
 /* Header underline accent */
 .header-accent {
   @apply border-b-2 border-rust pb-2;
+}
+
+/* Brand configuration form inputs (legacy) */
+.config-input {
+  @apply w-full bg-transparent font-mono text-sm text-graphite outline-none placeholder:text-gray-400 placeholder:opacity-60;
+}
+
+/* Clearly visible edit-mode inputs */
+.field-input {
+  @apply w-full bg-white border border-forest/30 rounded px-2.5 py-2 font-mono text-sm text-graphite
+         focus:outline-none focus:border-forest focus:ring-1 focus:ring-forest/20
+         transition-colors placeholder:text-graphite/30;
+}
+
+/* Graph-paper grid background for brand page */
+.bg-grid-paper {
+  background-image:
+    linear-gradient(rgba(31, 58, 50, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(31, 58, 50, 0.055) 1px, transparent 1px);
+  background-size: 28px 28px;
 }
