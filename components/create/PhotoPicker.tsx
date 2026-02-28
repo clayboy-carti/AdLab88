@@ -105,31 +105,31 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="bg-white border border-outline w-full max-w-lg mx-4 flex flex-col max-h-[80vh]">
+      <div className="bg-white rounded-2xl border border-forest/50 shadow-lg w-full max-w-lg flex flex-col max-h-[80vh]">
 
         {/* Modal header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-outline shrink-0">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-gray-600">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-forest/15 shrink-0">
+          <h2 className="font-mono text-xs uppercase tracking-widest text-forest/70">
             Reference Image Library
-          </span>
+          </h2>
           <button
             onClick={onClose}
-            className="font-mono text-lg text-gray-400 hover:text-rust leading-none transition-colors"
+            className="text-graphite/40 hover:text-graphite transition-colors text-lg leading-none"
             title="Close"
           >
-            ×
+            ✕
           </button>
         </div>
 
         {/* Scrollable body */}
-        <div className="overflow-y-auto p-4 space-y-3">
+        <div className="overflow-y-auto p-6 space-y-4">
 
           {/* Upload row */}
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-gray-400">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-graphite/40">
               {images.length === 0 ? 'No photos saved' : `${images.length} in library`}
             </span>
 
@@ -143,22 +143,24 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: Props) {
             />
             <label
               htmlFor="photo-picker-upload"
-              className={`font-mono text-[10px] uppercase tracking-widest px-2.5 py-1.5 border transition-colors ${
+              className={`font-mono text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-lg border transition-colors ${
                 uploading
-                  ? 'text-gray-300 border-outline cursor-not-allowed'
-                  : 'text-gray-500 border-outline hover:text-rust hover:border-rust cursor-pointer'
+                  ? 'text-graphite/30 border-forest/15 cursor-not-allowed'
+                  : 'text-forest/70 border-forest/30 hover:border-forest hover:text-forest cursor-pointer'
               }`}
             >
-              {uploading ? 'Uploading...' : '+ Upload from Device'}
+              {uploading ? 'Uploading…' : '+ Upload from Device'}
             </label>
           </div>
 
-          {error && <p className="font-mono text-xs text-red-500">{error}</p>}
+          {error && (
+            <p className="font-mono text-[10px] uppercase tracking-widest text-rust">{error}</p>
+          )}
 
           {/* Empty state */}
           {images.length === 0 && !uploading && (
-            <div className="border border-dashed border-outline py-8 text-center">
-              <p className="font-mono text-xs text-gray-400">
+            <div className="border border-dashed border-forest/20 rounded-xl py-10 text-center">
+              <p className="font-mono text-xs text-graphite/40">
                 No saved photos yet — upload one above to get started.
               </p>
             </div>
@@ -167,7 +169,7 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: Props) {
           {/* Library grid */}
           {images.length > 0 && (
             <>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-gray-400">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-graphite/40">
                 Click a photo to use it as your reference
               </p>
               <div className="grid grid-cols-4 gap-2">
@@ -175,7 +177,7 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: Props) {
                   <div
                     key={img.id}
                     onClick={() => handleSelect(img.id, img.signedUrl)}
-                    className="relative aspect-square border border-outline cursor-pointer hover:border-rust transition-colors"
+                    className="relative aspect-square border border-forest/20 rounded-xl cursor-pointer hover:border-rust/60 hover:shadow-md transition-all duration-200 overflow-hidden"
                     title={img.file_name}
                   >
                     <img

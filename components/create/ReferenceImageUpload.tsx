@@ -112,20 +112,22 @@ export default function ReferenceImageUpload() {
       />
       <label
         htmlFor="image-upload"
-        className={`block w-full text-center font-mono text-xs uppercase py-2.5 border transition-colors cursor-pointer ${
+        className={`block w-full text-center font-mono text-xs uppercase tracking-widest py-2.5 rounded-xl border transition-colors cursor-pointer ${
           uploading
-            ? 'bg-gray-100 text-gray-400 border-outline cursor-not-allowed'
+            ? 'bg-forest/5 text-graphite/30 border-forest/15 cursor-not-allowed'
             : 'bg-rust text-white border-rust hover:bg-[#9a4429]'
         }`}
       >
-        {uploading ? 'UPLOADING...' : 'UPLOAD REFERENCE'}
+        {uploading ? 'Uploading…' : 'Upload Reference'}
       </label>
 
-      <p className="font-mono text-xs text-gray-400 text-center">
+      <p className="font-mono text-[10px] uppercase tracking-widest text-graphite/40 text-center">
         {images.length} {images.length === 1 ? 'image' : 'images'} · JPG / PNG · Max 5MB
       </p>
 
-      {error && <p className="font-mono text-xs text-red-500">{error}</p>}
+      {error && (
+        <p className="font-mono text-[10px] uppercase tracking-widest text-rust">{error}</p>
+      )}
 
       {/* Image slots */}
       {images.length > 0 && (
@@ -133,8 +135,8 @@ export default function ReferenceImageUpload() {
           {images.map((img, index) => (
             <div
               key={img.id}
-              className={`relative aspect-square border group ${
-                index === 0 ? 'border-rust' : 'border-outline'
+              className={`relative aspect-square border rounded-xl overflow-hidden group ${
+                index === 0 ? 'border-rust' : 'border-forest/20'
               }`}
             >
               <img
@@ -144,16 +146,16 @@ export default function ReferenceImageUpload() {
                 onClick={() => setPreviewImage(img)}
               />
               {index === 0 && (
-                <div className="absolute top-0 right-0 bg-rust text-white px-1 py-0.5 font-mono text-[9px] leading-none">
-                  ACTIVE
+                <div className="absolute top-1 left-1 bg-rust text-white px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-widest rounded-md leading-none">
+                  Active
                 </div>
               )}
               <button
                 onClick={() => handleDelete(img.id, img.storage_path)}
-                className="absolute bottom-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white p-0.5"
+                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-graphite/80 text-white p-1 rounded-lg"
                 title="Delete"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -165,39 +167,37 @@ export default function ReferenceImageUpload() {
       {/* Preview Modal */}
       {previewImage && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-8"
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-8"
           onClick={() => setPreviewImage(null)}
         >
           <div
-            className="relative max-w-4xl max-h-full bg-white border-2 border-outline"
+            className="relative max-w-4xl max-h-full bg-white rounded-2xl border border-forest/50 shadow-lg overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setPreviewImage(null)}
-              className="absolute top-2 right-2 bg-rust text-white p-2 hover:bg-[#9a4429] transition-colors z-10"
+              className="absolute top-3 right-3 text-graphite/40 hover:text-graphite transition-colors text-lg leading-none z-10 bg-white/80 rounded-lg p-1"
               title="Close preview"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              ✕
             </button>
 
             <img
               src={previewImage.signedUrl}
               alt={previewImage.file_name}
-              className="max-w-full max-h-[80vh] object-contain"
+              className="max-w-full max-h-[70vh] object-contain"
             />
 
-            <div className="p-4 border-t border-outline bg-paper">
-              <p className="font-mono text-xs mb-3">{previewImage.file_name}</p>
+            <div className="px-6 py-4 border-t border-forest/15 bg-paper flex items-center justify-between gap-4">
+              <p className="font-mono text-xs text-graphite/60 truncate">{previewImage.file_name}</p>
               <button
                 onClick={() => {
                   handleDelete(previewImage.id, previewImage.storage_path)
                   setPreviewImage(null)
                 }}
-                className="btn-secondary w-full"
+                className="btn-secondary text-xs px-4 py-2 shrink-0"
               >
-                DELETE
+                Delete
               </button>
             </div>
           </div>
