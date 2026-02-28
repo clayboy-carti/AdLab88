@@ -130,21 +130,21 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: Props) {
           {/* Upload row */}
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] uppercase tracking-widest text-gray-400">
-              {images.length === 0 ? 'No photos saved' : `${images.length} / 5 in library`}
+              {images.length === 0 ? 'No photos saved' : `${images.length} in library`}
             </span>
 
             <input
               type="file"
               accept="image/jpeg,image/png"
               onChange={handleUpload}
-              disabled={uploading || images.length >= 5}
+              disabled={uploading}
               className="hidden"
               id="photo-picker-upload"
             />
             <label
               htmlFor="photo-picker-upload"
               className={`font-mono text-[10px] uppercase tracking-widest px-2.5 py-1.5 border transition-colors ${
-                images.length >= 5 || uploading
+                uploading
                   ? 'text-gray-300 border-outline cursor-not-allowed'
                   : 'text-gray-500 border-outline hover:text-rust hover:border-rust cursor-pointer'
               }`}

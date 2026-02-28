@@ -15,20 +15,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // 2. Check if user already has 5 images
-    const { count } = await supabase
-      .from('reference_images')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-
-    if (count !== null && count >= 5) {
-      return NextResponse.json(
-        { error: 'Maximum 5 reference images allowed' },
-        { status: 400 }
-      )
-    }
-
-    // 3. Get the file from form data
+    // 2. Get the file from form data
     const formData = await request.formData()
     const file = formData.get('file') as File
 
@@ -36,7 +23,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    // 4. Validate file type
+    // 3. Validate file type
     const allowedTypes = ['image/jpeg', 'image/png']
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
@@ -45,7 +32,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // 5. Validate file size (5MB max)
+    // 4. Validate file size (5MB max)
     const maxSize = 5 * 1024 * 1024 // 5MB in bytes
     if (file.size > maxSize) {
       return NextResponse.json(
@@ -54,7 +41,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // 6. Upload to Supabase Storage
+    // 5. Upload to Supabase Storage
     const fileName = `${user.id}/${Date.now()}-${file.name}`
     const { error: uploadError } = await supabase.storage
       .from('reference-images')
@@ -68,7 +55,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
     }
 
-    // 7. Save metadata to database
+    // 6. Save metadata to database
     const { data: imageRecord, error: dbError } = await supabase
       .from('reference_images')
       .insert({

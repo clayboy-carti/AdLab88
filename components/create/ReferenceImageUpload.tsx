@@ -106,14 +106,14 @@ export default function ReferenceImageUpload() {
         type="file"
         accept="image/jpeg,image/png"
         onChange={handleUpload}
-        disabled={uploading || images.length >= 5}
+        disabled={uploading}
         className="hidden"
         id="image-upload"
       />
       <label
         htmlFor="image-upload"
         className={`block w-full text-center font-mono text-xs uppercase py-2.5 border transition-colors cursor-pointer ${
-          images.length >= 5 || uploading
+          uploading
             ? 'bg-gray-100 text-gray-400 border-outline cursor-not-allowed'
             : 'bg-rust text-white border-rust hover:bg-[#9a4429]'
         }`}
@@ -122,7 +122,7 @@ export default function ReferenceImageUpload() {
       </label>
 
       <p className="font-mono text-xs text-gray-400 text-center">
-        {images.length}/5 images · JPG / PNG · Max 5MB
+        {images.length} {images.length === 1 ? 'image' : 'images'} · JPG / PNG · Max 5MB
       </p>
 
       {error && <p className="font-mono text-xs text-red-500">{error}</p>}
