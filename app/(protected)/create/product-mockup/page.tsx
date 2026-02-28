@@ -201,88 +201,6 @@ function StudioIllustration() {
   )
 }
 
-// ── Reusable video generation form ───────────────────────────────────────────
-function VideoForm({
-  title, onTitleChange, motionPrompt, onMotionChange,
-  onGenerate, generating, generatedVideo, videoError, onReset,
-}: {
-  title: string
-  onTitleChange: (v: string) => void
-  motionPrompt: string
-  onMotionChange: (v: string) => void
-  onGenerate: () => void
-  generating: boolean
-  generatedVideo: { videoUrl: string } | null
-  videoError: string | null
-  onReset: () => void
-}) {
-  if (generating) {
-    return (
-      <div className="flex flex-col items-center gap-3 py-8 px-4">
-        <div className="w-6 h-6 border-2 border-rust border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-mono text-graphite/50">Animating with Grok Video…</p>
-        <p className="text-xs font-mono text-graphite/30 text-center">60–120 seconds. Hang tight.</p>
-      </div>
-    )
-  }
-
-  if (generatedVideo) {
-    return (
-      <div className="p-4 space-y-3">
-        <video src={generatedVideo.videoUrl} controls autoPlay loop className="w-full rounded-xl" />
-        <button
-          onClick={onReset}
-          className="text-xs font-mono text-graphite/40 hover:text-rust transition-colors"
-        >
-          ← Generate another video
-        </button>
-      </div>
-    )
-  }
-
-  return (
-    <div className="p-4 space-y-3">
-      <div className="flex flex-col gap-1.5">
-        <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
-          Video Title <span className="text-rust">*</span>
-        </label>
-        <input
-          type="text"
-          value={title}
-          onChange={e => onTitleChange(e.target.value)}
-          placeholder="e.g. Studio Shot Animation"
-          maxLength={80}
-          className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
-        />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
-          Motion <span className="text-graphite/40">(optional)</span>
-        </label>
-        <textarea
-          value={motionPrompt}
-          onChange={e => onMotionChange(e.target.value)}
-          placeholder="e.g. slow 360° rotation · steam rising · camera pulls back"
-          rows={2}
-          className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 text-sm font-mono resize-none focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
-        />
-      </div>
-      {videoError && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-          <p className="text-xs font-mono text-red-500">{videoError}</p>
-        </div>
-      )}
-      <button
-        onClick={onGenerate}
-        disabled={!title.trim()}
-        className="w-full bg-forest text-white rounded-xl py-2.5 text-sm font-mono font-medium hover:bg-forest/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        Generate Video
-      </button>
-    </div>
-  )
-}
-
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function ProductMockupPage() {
   const [sceneText, setSceneText] = useState('')
@@ -308,12 +226,6 @@ export default function ProductMockupPage() {
   const [imageTitle, setImageTitle] = useState('')
   const [showPhoto, setShowPhoto] = useState(false)
   const [selectedRefs, setSelectedRefs] = useState<{ id: string; url: string }[]>([])
-
-  const [videoTitle, setVideoTitle] = useState('')
-  const [motionPrompt, setMotionPrompt] = useState('')
-  const [generatingVideo, setGeneratingVideo] = useState(false)
-  const [generatedVideo, setGeneratedVideo] = useState<{ id: string; videoUrl: string } | null>(null)
-  const [videoError, setVideoError] = useState<string | null>(null)
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
@@ -374,8 +286,6 @@ export default function ProductMockupPage() {
     setShootResults(PHOTO_SHOOT_SHOTS.map((shot) => ({ shot, ad: null, error: null, loading: true })))
     setSelectedShootAdId(null)
     setSelectedShootLabel(null)
-    setGeneratedVideo(null)
-    setVideoError(null)
 
     let folderId: string
     const folderName = `${imageTitle.trim()} — Photo Shoot`
@@ -440,36 +350,6 @@ export default function ProductMockupPage() {
 
     await Promise.allSettled(promises)
     setPhotoShootGenerating(false)
-  }
-
-  const handleGenerateVideo = async (adId?: string) => {
-    const targetAdId = adId ?? generatedAd?.id
-    if (!targetAdId) return
-    setGeneratingVideo(true)
-    setVideoError(null)
-    setGeneratedVideo(null)
-
-    try {
-      const response = await fetch('/api/generate-video', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ad_id: targetAdId,
-          motion_prompt: motionPrompt.trim() || undefined,
-          aspect_ratio: aspectRatio,
-          title: videoTitle.trim(),
-        }),
-      })
-
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.error || 'Video generation failed')
-
-      setGeneratedVideo({ id: data.video.id, videoUrl: data.video.videoUrl })
-    } catch (err: any) {
-      setVideoError(err.message || 'Failed to generate video')
-    } finally {
-      setGeneratingVideo(false)
-    }
   }
 
   const shootDone = shootResults.length > 0 && shootResults.every((s) => !s.loading)
@@ -798,37 +678,20 @@ export default function ProductMockupPage() {
                       <a href="/library" className="text-xs font-mono text-rust hover:underline">View Library →</a>
                     </div>
 
-                    {/* Animate section */}
-                    <div className="rounded-xl border border-forest/15 overflow-hidden">
-                      <div className="px-4 py-3 bg-paper/60 border-b border-forest/10 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Film size={13} className="text-forest/35" strokeWidth={1.8} />
-                          <span className="text-xs font-mono uppercase tracking-widest text-graphite/40">Animate This</span>
-                        </div>
-                        <span className="text-[10px] font-mono bg-forest/10 text-forest/50 px-2 py-0.5 rounded-full">Grok · 5s</span>
-                      </div>
-                      <VideoForm
-                        title={videoTitle}
-                        onTitleChange={setVideoTitle}
-                        motionPrompt={motionPrompt}
-                        onMotionChange={setMotionPrompt}
-                        onGenerate={handleGenerateVideo}
-                        generating={generatingVideo}
-                        generatedVideo={generatedVideo}
-                        videoError={videoError}
-                        onReset={() => { setGeneratedVideo(null); setVideoError(null); setVideoTitle('') }}
-                      />
-                    </div>
+                    {/* Animate button */}
+                    <Link
+                      href={`/create/animate?adId=${generatedAd.id}`}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl border border-forest/20 bg-forest/5 py-3 text-sm font-mono text-forest/70 hover:bg-forest hover:text-white hover:border-forest transition-all"
+                    >
+                      <Film size={14} strokeWidth={1.8} />
+                      Animate This Image
+                    </Link>
 
                     <button
                       onClick={() => {
                         setGeneratedAd(null)
                         setError(null)
-                        setGeneratedVideo(null)
-                        setVideoError(null)
-                        setMotionPrompt('')
                         setImageTitle('')
-                        setVideoTitle('')
                         setSelectedRefs([])
                         setShowPhoto(false)
                       }}
@@ -925,14 +788,9 @@ export default function ProductMockupPage() {
                                   if (selectedShootAdId === slot.ad!.id) {
                                     setSelectedShootAdId(null)
                                     setSelectedShootLabel(null)
-                                    setGeneratedVideo(null)
-                                    setVideoError(null)
                                   } else {
                                     setSelectedShootAdId(slot.ad!.id)
                                     setSelectedShootLabel(slot.shot.label)
-                                    setGeneratedVideo(null)
-                                    setVideoError(null)
-                                    setVideoTitle(`${imageTitle.trim()} — ${slot.shot.label}`)
                                   }
                                 }}
                                 className={`aspect-square rounded-xl overflow-hidden border-2 w-full block transition-all ${
@@ -961,28 +819,13 @@ export default function ProductMockupPage() {
 
                     {/* Animate selected shot */}
                     {selectedShootAdId && (
-                      <div className="rounded-xl border border-forest/15 overflow-hidden">
-                        <div className="px-4 py-3 bg-paper/60 border-b border-forest/10 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Film size={13} className="text-forest/35" strokeWidth={1.8} />
-                            <span className="text-xs font-mono uppercase tracking-widest text-graphite/40">
-                              Animate — {selectedShootLabel}
-                            </span>
-                          </div>
-                          <span className="text-[10px] font-mono bg-forest/10 text-forest/50 px-2 py-0.5 rounded-full">Grok · 5s</span>
-                        </div>
-                        <VideoForm
-                          title={videoTitle}
-                          onTitleChange={setVideoTitle}
-                          motionPrompt={motionPrompt}
-                          onMotionChange={setMotionPrompt}
-                          onGenerate={() => handleGenerateVideo(selectedShootAdId)}
-                          generating={generatingVideo}
-                          generatedVideo={generatedVideo}
-                          videoError={videoError}
-                          onReset={() => { setGeneratedVideo(null); setVideoError(null); setVideoTitle('') }}
-                        />
-                      </div>
+                      <Link
+                        href={`/create/animate?adId=${selectedShootAdId}`}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl border border-forest/20 bg-forest/5 py-3 text-sm font-mono text-forest/70 hover:bg-forest hover:text-white hover:border-forest transition-all"
+                      >
+                        <Film size={14} strokeWidth={1.8} />
+                        Animate — {selectedShootLabel}
+                      </Link>
                     )}
 
                     {shootDone && (
@@ -992,10 +835,6 @@ export default function ProductMockupPage() {
                           setShootFolderName(null)
                           setSelectedShootAdId(null)
                           setSelectedShootLabel(null)
-                          setGeneratedVideo(null)
-                          setVideoError(null)
-                          setVideoTitle('')
-                          setMotionPrompt('')
                           setImageTitle('')
                           setSelectedRefs([])
                         }}

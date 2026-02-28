@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { Film, Upload, ImagePlus, X, CheckCircle, LayoutGrid } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -24,6 +25,8 @@ const dotGrid = {
 
 export default function AnimatePage() {
   const supabase = createClient()
+  const searchParams = useSearchParams()
+  const preselectedAdId = searchParams.get('adId')
 
   // Image selection
   const [source, setSource] = useState<'library' | 'upload'>('library')
@@ -63,17 +66,26 @@ export default function AnimatePage() {
           .from('generated-ads')
           .createSignedUrls(paths, 3600)
         const urlMap = new Map((signed ?? []).map((s) => [s.path, s.signedUrl]))
-        setLibraryImages(
-          data
-            .filter((d) => d.storage_path && urlMap.get(d.storage_path))
-            .map((d) => ({
-              id: d.id,
-              signedUrl: urlMap.get(d.storage_path)!,
-              storage_path: d.storage_path,
-              title: d.title,
-              created_at: d.created_at,
-            }))
-        )
+        const images = data
+          .filter((d) => d.storage_path && urlMap.get(d.storage_path))
+          .map((d) => ({
+            id: d.id,
+            signedUrl: urlMap.get(d.storage_path)!,
+            storage_path: d.storage_path,
+            title: d.title,
+            created_at: d.created_at,
+          }))
+        setLibraryImages(images)
+
+        // Auto-select if we came from product mockup with an adId
+        if (preselectedAdId) {
+          const match = images.find((img) => img.id === preselectedAdId)
+          if (match) {
+            setSelectedAdId(match.id)
+            setSelectedPreviewUrl(match.signedUrl)
+          }
+        }
+
         setLibraryLoading(false)
       })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
