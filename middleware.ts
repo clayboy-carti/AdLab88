@@ -38,8 +38,14 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protect all routes except /login
-  if (!user && !request.nextUrl.pathname.startsWith('/login')) {
+  // Public routes — accessible without authentication
+  const publicPaths = ['/', '/login']
+  const isPublic = publicPaths.some(p =>
+    p === '/' ? request.nextUrl.pathname === '/' : request.nextUrl.pathname.startsWith(p)
+  )
+
+  // Protect all non-public routes
+  if (!user && !isPublic) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
