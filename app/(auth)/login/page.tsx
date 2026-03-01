@@ -78,12 +78,12 @@ export default function LoginPage() {
       <div className="w-full max-w-sm flex flex-col items-center">
 
         {/* Logo */}
-        <div className="w-full mb-3">
+        <div className="w-full mb-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/AdLab_Logo2.png?v=2"
+            src="/AdLab_Logo2.png"
             alt="AdLab 88"
-            className="w-full h-auto object-contain"
+            className="w-full h-auto object-contain brightness-0 invert"
           />
         </div>
 
