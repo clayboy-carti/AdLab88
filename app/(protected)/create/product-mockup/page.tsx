@@ -633,7 +633,7 @@ export default function ProductMockupPage() {
                       {/* Video loading animation */}
                       <div className="rounded-xl overflow-hidden border border-forest/15 w-full aspect-video bg-paper">
                         <video
-                          src="/Generation_Loading.mp4"
+                          src="/Generate_labLoading.mp4"
                           autoPlay
                           loop
                           muted
@@ -724,7 +724,7 @@ export default function ProductMockupPage() {
                     <div className="bg-white rounded-2xl border border-forest/15 shadow-sm p-6 w-full max-w-xs flex flex-col items-center gap-5">
                       <div className="rounded-xl overflow-hidden border border-forest/15 w-full aspect-video bg-paper">
                         <video
-                          src="/Generation_Loading.mp4"
+                          src="/Generate_labLoading.mp4"
                           autoPlay
                           loop
                           muted
@@ -769,7 +769,7 @@ export default function ProductMockupPage() {
                           {slot.loading ? (
                             <div className="aspect-square rounded-xl border border-forest/15 overflow-hidden">
                               <video
-                                src="/Generation_Loading.mp4"
+                                src="/Generate_labLoading.mp4"
                                 autoPlay
                                 loop
                                 muted

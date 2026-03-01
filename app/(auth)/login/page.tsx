@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -10,8 +10,20 @@ export default function LoginPage() {
   const [isSignup, setIsSignup] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [showSplash, setShowSplash] = useState(false)
+  const [redirectTo, setRedirectTo] = useState('/create')
   const router = useRouter()
   const supabase = createClient()
+  const splashVideoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    if (!showSplash) return
+    splashVideoRef.current?.play().catch(() => {})
+    const timer = setTimeout(() => {
+      router.push(redirectTo)
+    }, 4000)
+    return () => clearTimeout(timer)
+  }, [showSplash, redirectTo, router])
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,62 +32,85 @@ export default function LoginPage() {
 
     try {
       if (isSignup) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-        })
+        const { error } = await supabase.auth.signUp({ email, password })
         if (error) throw error
-        router.push('/brand') // New users go to brand setup
+        setRedirectTo('/brand')
+        setShowSplash(true)
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
-        router.refresh() // Middleware handles redirect
+        setRedirectTo('/create')
+        setShowSplash(true)
       }
     } catch (err: any) {
       setError(err.message)
-    } finally {
       setLoading(false)
     }
   }
 
-  return (
-    <div className="min-h-screen bg-paper bg-grid-paper flex flex-col items-center justify-center px-4">
+  // Grid overlay style — subtle lighter lines on forest green
+  const forestGrid = {
+    backgroundImage: `linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)`,
+    backgroundSize: '32px 32px',
+  }
 
-      {/* Brand identity */}
-      <div className="mb-8 text-center">
-        <h1 className="text-2xl font-mono font-bold uppercase tracking-widest text-graphite">
-          ADLAB 88
-        </h1>
-        <div className="mt-1 h-px w-full bg-rust" />
-        <p className="mt-2 text-xs font-mono uppercase tracking-widest text-graphite/50">
-          Run Better Experiments.
-        </p>
+  // ── Post-login splash ─────────────────────────────────────────────────────
+  if (showSplash) {
+    return (
+      <div className="min-h-screen bg-forest flex flex-col items-center justify-center px-4" style={forestGrid}>
+        <div className="w-full max-w-md rounded-2xl border border-paper/20 overflow-hidden shadow-lg">
+          <video
+            ref={splashVideoRef}
+            src="/Login_Video.mp4"
+            autoPlay
+            muted
+            playsInline
+            className="w-full h-auto block"
+          />
+        </div>
       </div>
+    )
+  }
 
-      {/* Auth card */}
-      <div className="w-full max-w-sm border border-outline bg-paper">
+  // ── Login form ────────────────────────────────────────────────────────────
+  return (
+    <div className="min-h-screen bg-forest flex items-center justify-center px-4" style={forestGrid}>
+      <div className="w-full max-w-sm flex flex-col items-center">
 
-        {/* Card header */}
-        <div className="border-b border-outline px-6 py-3">
-          <span className="text-xs font-mono uppercase tracking-widest text-graphite/60">
-            {isSignup ? 'Create Account' : 'Sign In'}
-          </span>
+        {/* Logo */}
+        <div className="w-full mb-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/AdLab_Logo2.png?v=2"
+            alt="AdLab 88"
+            className="w-full h-auto object-contain"
+          />
         </div>
 
-        {/* Form body */}
+        {/* Card */}
+        <div className="w-full bg-white rounded-2xl border border-paper/10 shadow-xl overflow-hidden">
+
+        {/* Card header */}
+        <div className="px-6 pt-6 pb-4 border-b border-forest/10 text-center">
+          <h2 className="font-mono text-xl font-semibold text-graphite">
+            {isSignup ? 'Create your account' : 'Welcome back'}
+          </h2>
+          <p className="font-mono text-xs text-graphite/40 mt-1 uppercase tracking-widest">
+            {isSignup ? 'Start running better experiments' : 'Sign in to the lab bench'}
+          </p>
+        </div>
+
+        {/* Form */}
         <form onSubmit={handleAuth} className="px-6 py-6 flex flex-col gap-4">
 
           {error && (
-            <div className="border border-rust px-3 py-2">
-              <p className="text-xs font-mono text-rust">{error}</p>
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+              <p className="text-xs font-mono text-red-500">{error}</p>
             </div>
           )}
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-mono uppercase tracking-widest text-graphite/50">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
               Email
             </label>
             <input
@@ -83,13 +118,13 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full bg-white border border-outline px-3 py-2 font-mono text-sm text-graphite placeholder:text-graphite/30 focus:outline-none focus:ring-1 focus:ring-outline"
+              className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 text-sm font-mono text-graphite focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
               required
             />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-mono uppercase tracking-widest text-graphite/50">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
               Password
             </label>
             <input
@@ -97,7 +132,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full bg-white border border-outline px-3 py-2 font-mono text-sm text-graphite placeholder:text-graphite/30 focus:outline-none focus:ring-1 focus:ring-outline"
+              className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 text-sm font-mono text-graphite focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
               required
             />
           </div>
@@ -105,36 +140,32 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 w-full py-3 bg-rust border border-outline text-white uppercase font-mono text-xs tracking-widest hover:bg-[#9a4429] disabled:opacity-50 transition-colors"
+            className="mt-1 w-full py-3 bg-rust text-white rounded-xl font-mono text-xs uppercase tracking-widest hover:bg-rust/90 disabled:opacity-50 transition-colors"
           >
-            {loading ? '...' : isSignup ? 'Create Account' : 'Sign In'}
+            {loading ? '…' : isSignup ? 'Create Account' : 'Sign In'}
           </button>
+
         </form>
 
-        {/* Card footer */}
-        <div className="border-t border-outline px-6 py-3">
+        {/* Footer */}
+        <div className="px-6 pb-5 border-t border-forest/10 pt-4">
           <button
             type="button"
             onClick={() => { setIsSignup(!isSignup); setError(null) }}
-            className="text-xs font-mono text-graphite/50 hover:text-graphite transition-colors underline underline-offset-2"
+            className="text-xs font-mono text-graphite/40 hover:text-rust transition-colors"
           >
-            {isSignup ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+            {isSignup ? 'Already have an account? Sign in →' : "Don't have an account? Sign up →"}
           </button>
         </div>
-      </div>
 
-      {/* Video preview */}
-      <div className="w-full max-w-sm mt-4 rounded-xl overflow-hidden border border-forest/15 aspect-video bg-paper">
-        <video
-          src="/Login_Video.mp4"
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="w-full h-full object-cover"
-        />
-      </div>
+        </div>
 
+        {/* Tagline */}
+        <p className="mt-5 font-mono text-[10px] uppercase tracking-widest text-paper/30">
+          Run Better Experiments.
+        </p>
+
+      </div>
     </div>
   )
 }

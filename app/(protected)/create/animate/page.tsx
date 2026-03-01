@@ -430,7 +430,7 @@ function AnimateContent() {
                 <div className="bg-white rounded-2xl border border-forest/15 shadow-sm p-6 w-full max-w-xs flex flex-col items-center gap-5">
                   <div className="rounded-xl overflow-hidden border border-forest/15 w-full aspect-video bg-paper">
                     <video
-                      src="/Generation_Loading.mp4"
+                      src="/Generate_labLoading.mp4"
                       autoPlay
                       loop
                       muted
