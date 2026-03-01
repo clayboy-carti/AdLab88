@@ -123,6 +123,18 @@ export default function LoginPage() {
         </div>
       </div>
 
+      {/* Video preview */}
+      <div className="w-full max-w-sm mt-4 rounded-xl overflow-hidden border border-forest/15 aspect-video bg-paper">
+        <video
+          src="/Login_Video.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full h-full object-cover"
+        />
+      </div>
+
     </div>
   )
 }
