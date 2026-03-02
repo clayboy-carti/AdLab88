@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { BarChart2, Eye, Heart, MessageSquare, Share2, TrendingUp, ArrowUpRight, ArrowDownRight, Minus, RefreshCw } from 'lucide-react'
+import { BarChart2, Eye, Heart, MessageSquare, Share2, TrendingUp, ArrowUpRight, ArrowDownRight, Minus, RefreshCw, type LucideIcon } from 'lucide-react'
 
 export interface PostAnalytic {
   id: string
@@ -64,7 +64,7 @@ function engagementRate(post: PostAnalytic): string {
 interface StatCardProps {
   label: string
   value: number
-  Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>
+  Icon: LucideIcon
   sublabel?: string
 }
 
