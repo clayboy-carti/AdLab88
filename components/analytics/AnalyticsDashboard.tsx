@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { BarChart2, Eye, Heart, MessageSquare, Share2, TrendingUp, ArrowUpRight, ArrowDownRight, Minus, RefreshCw, type LucideIcon } from 'lucide-react'
+import { BarChart2, Eye, Heart, MessageSquare, Share2, TrendingUp, ArrowUpRight, ArrowDownRight, Minus, RefreshCw, Sparkles, Zap, ExternalLink, type LucideIcon } from 'lucide-react'
+import type { AnalyticsInsights, ContentSuggestion } from '@/app/api/analytics/insights/route'
 
 export interface PostAnalytic {
   id: string
@@ -260,6 +261,63 @@ function StatCard({ label, value, Icon, sublabel }: StatCardProps) {
   )
 }
 
+const PLATFORM_COLORS: Record<string, string> = {
+  instagram: 'bg-pink-50 text-pink-600 border-pink-200',
+  tiktok: 'bg-slate-50 text-slate-700 border-slate-200',
+  facebook: 'bg-blue-50 text-blue-600 border-blue-200',
+  linkedin: 'bg-sky-50 text-sky-700 border-sky-200',
+  youtube: 'bg-red-50 text-red-600 border-red-200',
+  twitter: 'bg-slate-50 text-slate-600 border-slate-200',
+  pinterest: 'bg-rose-50 text-rose-600 border-rose-200',
+}
+
+function SuggestionCard({ s, index }: { s: ContentSuggestion; index: number }) {
+  const platformColor = PLATFORM_COLORS[s.platform] ?? 'bg-paper text-graphite/60 border-forest/15'
+  return (
+    <div className="bg-white border border-forest/15 p-5 flex flex-col gap-3 relative">
+      {/* Card number */}
+      <span className="absolute top-4 right-4 text-[10px] font-mono text-graphite/20 uppercase tracking-widest">
+        #{index + 1}
+      </span>
+
+      {/* Badges */}
+      <div className="flex items-center gap-2 flex-wrap pr-6">
+        <span className={`text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 border ${platformColor}`}>
+          {PLATFORM_LABELS[s.platform] ?? s.platform}
+        </span>
+        <span className="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 border border-forest/15 bg-paper text-graphite/50">
+          {s.format}
+        </span>
+      </div>
+
+      {/* Hook */}
+      <p className="text-sm font-mono font-semibold text-graphite leading-snug">
+        &ldquo;{s.hook}&rdquo;
+      </p>
+
+      {/* Caption idea */}
+      <p className="text-xs font-sans text-graphite/60 leading-relaxed">{s.caption_idea}</p>
+
+      {/* Why it works */}
+      <div className="flex items-start gap-2 bg-forest/5 border border-forest/10 px-3 py-2">
+        <Zap size={11} strokeWidth={2} className="text-rust flex-shrink-0 mt-0.5" />
+        <p className="text-[11px] font-sans text-graphite/70 leading-relaxed">{s.why_it_will_work}</p>
+      </div>
+
+      {/* Angle + CTA */}
+      <div className="flex items-center justify-between mt-auto pt-1">
+        <span className="text-[10px] font-mono text-graphite/35 uppercase tracking-widest">{s.angle}</span>
+        <a
+          href={`/create?hook=${encodeURIComponent(s.hook)}`}
+          className="flex items-center gap-1 text-[10px] font-mono uppercase tracking-widest text-rust hover:text-rust/70 transition-colors"
+        >
+          Create this ad <ExternalLink size={9} />
+        </a>
+      </div>
+    </div>
+  )
+}
+
 export default function AnalyticsDashboard({ analytics }: AnalyticsDashboardProps) {
   const isSampleMode = analytics.length === 0
   const data = isSampleMode ? SAMPLE_ANALYTICS : analytics
@@ -267,6 +325,59 @@ export default function AnalyticsDashboard({ analytics }: AnalyticsDashboardProp
   const [platform, setPlatform] = useState('All')
   const [sortBy, setSortBy] = useState<'views' | 'likes' | 'comments' | 'shares' | 'reach' | 'scheduled_for'>('scheduled_for')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+
+  const [insights, setInsights] = useState<AnalyticsInsights | null>(null)
+  const [insightsLoading, setInsightsLoading] = useState(false)
+  const [insightsError, setInsightsError] = useState<string | null>(null)
+
+  async function fetchInsights() {
+    setInsightsLoading(true)
+    setInsightsError(null)
+
+    // Compute engagement rate for each post and pick top 5
+    const withEng = data.map((p) => {
+      const eng = p.reach > 0
+        ? (((p.likes + p.comments + p.shares + p.saves) / p.reach) * 100).toFixed(1) + '%'
+        : '0%'
+      return { ...p, engagement_rate: eng }
+    })
+
+    const top5 = [...withEng]
+      .sort((a, b) => parseFloat(b.engagement_rate) - parseFloat(a.engagement_rate))
+      .slice(0, 5)
+      .map((p) => ({
+        hook: p.ad_hook ?? null,
+        caption: p.caption ?? null,
+        platform: p.platform,
+        views: p.views,
+        likes: p.likes,
+        comments: p.comments,
+        shares: p.shares,
+        saves: p.saves,
+        reach: p.reach,
+        engagement_rate: p.engagement_rate,
+      }))
+
+    try {
+      const res = await fetch('/api/analytics/insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ posts: top5 }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'Failed to fetch insights')
+      }
+
+      const result: AnalyticsInsights = await res.json()
+      setInsights(result)
+    } catch (e: any) {
+      setInsightsError(e.message || 'Something went wrong')
+    } finally {
+      setInsightsLoading(false)
+    }
+  }
 
   const filtered = data.filter((a) => platform === 'All' || a.platform === platform)
 
@@ -385,6 +496,92 @@ export default function AnalyticsDashboard({ analytics }: AnalyticsDashboardProp
           </div>
           <p className="text-3xl font-mono font-semibold text-graphite tracking-tight">{avgEngagement}</p>
           <p className="text-[11px] font-mono text-graphite/40 mt-1 uppercase tracking-wide">(likes + comments + shares + saves) / reach</p>
+        </div>
+      </div>
+
+      {/* ── AI Creative Intelligence ── */}
+      <div className="mb-8 border border-forest/20 bg-white">
+        {/* Section header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-forest/10">
+          <div className="flex items-center gap-2">
+            <Sparkles size={14} strokeWidth={1.8} className="text-rust" />
+            <span className="text-[11px] font-mono uppercase tracking-widest text-graphite">AI Creative Intelligence</span>
+          </div>
+          {insights && (
+            <button
+              onClick={fetchInsights}
+              disabled={insightsLoading}
+              className="text-[10px] font-mono uppercase tracking-widest text-graphite/40 hover:text-graphite transition-colors flex items-center gap-1 disabled:opacity-40"
+            >
+              <RefreshCw size={9} className={insightsLoading ? 'animate-spin' : ''} />
+              Refresh
+            </button>
+          )}
+        </div>
+
+        <div className="p-5">
+          {/* Idle state */}
+          {!insights && !insightsLoading && !insightsError && (
+            <div className="flex flex-col items-center py-8 gap-4 text-center">
+              <p className="text-xs font-sans text-graphite/50 max-w-sm">
+                Analyze your top-performing posts and get AI-generated content suggestions designed to go viral.
+                {isSampleMode && ' (Currently using sample data for demonstration.)'}
+              </p>
+              <button
+                onClick={fetchInsights}
+                className="flex items-center gap-2 bg-rust text-white text-[11px] font-mono uppercase tracking-widest px-5 py-2.5 hover:bg-rust/90 transition-colors"
+              >
+                <Sparkles size={12} />
+                Analyze Top Performers
+              </button>
+            </div>
+          )}
+
+          {/* Loading */}
+          {insightsLoading && (
+            <div className="flex flex-col items-center py-10 gap-3 text-center">
+              <Sparkles size={20} strokeWidth={1.4} className="text-rust animate-pulse" />
+              <p className="text-[11px] font-mono uppercase tracking-widest text-graphite/40">
+                Analyzing your top performers…
+              </p>
+            </div>
+          )}
+
+          {/* Error */}
+          {insightsError && !insightsLoading && (
+            <div className="flex flex-col items-center py-8 gap-3 text-center">
+              <p className="text-xs font-sans text-rust/70">{insightsError}</p>
+              <button
+                onClick={fetchInsights}
+                className="text-[11px] font-mono uppercase tracking-widest text-graphite/50 hover:text-graphite transition-colors"
+              >
+                Try again
+              </button>
+            </div>
+          )}
+
+          {/* Results */}
+          {insights && !insightsLoading && (
+            <div className="flex flex-col gap-5">
+              {/* Summary */}
+              <div className="flex items-start gap-3 bg-rust/5 border border-rust/15 px-4 py-3">
+                <Sparkles size={13} strokeWidth={1.8} className="text-rust flex-shrink-0 mt-0.5" />
+                <p className="text-xs font-sans text-graphite/80 leading-relaxed">{insights.summary}</p>
+              </div>
+
+              {/* Suggestions */}
+              <div>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-graphite/35 mb-3">
+                  Content suggestions
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {insights.suggestions.map((s, i) => (
+                    <SuggestionCard key={i} s={s} index={i} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
