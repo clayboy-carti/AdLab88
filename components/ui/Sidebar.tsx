@@ -4,13 +4,14 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useRef, useState } from 'react'
-import { Tag, Wand2, LayoutGrid, Clock, User, CreditCard, LogOut, Menu, X } from 'lucide-react'
+import { Tag, Wand2, LayoutGrid, Clock, BarChart2, User, CreditCard, LogOut, Menu, X } from 'lucide-react'
 
 const links = [
-  { href: '/brand',    label: 'Brand',    Icon: Tag },
-  { href: '/create',   label: 'Create',   Icon: Wand2 },
-  { href: '/library',  label: 'Library',  Icon: LayoutGrid },
-  { href: '/schedule', label: 'Schedule', Icon: Clock },
+  { href: '/brand',     label: 'Brand',     Icon: Tag },
+  { href: '/create',    label: 'Create',    Icon: Wand2 },
+  { href: '/library',   label: 'Library',   Icon: LayoutGrid },
+  { href: '/schedule',  label: 'Schedule',  Icon: Clock },
+  { href: '/analytics', label: 'Analytics', Icon: BarChart2 },
 ]
 
 export default function Sidebar() {
