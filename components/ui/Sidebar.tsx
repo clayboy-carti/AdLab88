@@ -239,13 +239,13 @@ export default function Sidebar() {
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             title="Account"
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-paper/10 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl hover:bg-paper/10 transition-colors"
           >
-            <div className="w-8 h-8 rounded-full bg-rust flex items-center justify-center flex-shrink-0">
-              <span className="text-xs font-mono font-bold text-white leading-none">{initials}</span>
+            <div className="w-10 h-10 rounded-full bg-rust flex items-center justify-center flex-shrink-0">
+              <span className="text-sm font-mono font-bold text-white leading-none">{initials}</span>
             </div>
             <div className="flex flex-col items-start min-w-0">
-              <span className="text-sm font-mono text-paper/80 leading-tight">Account</span>
+              <span className="text-base font-mono text-paper/80 leading-tight">Account</span>
             </div>
             <span className="ml-auto text-paper/30 text-[10px]">▲</span>
           </button>

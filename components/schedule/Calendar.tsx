@@ -522,11 +522,21 @@ export default function Calendar({ posts = [] }: CalendarProps) {
                         >
                           <div className="flex items-start gap-2">
                             {post.signedUrl && (
-                              <img
-                                src={post.signedUrl}
-                                alt=""
-                                className="w-12 h-12 rounded-md object-cover flex-shrink-0"
-                              />
+                              post.videoId ? (
+                                <video
+                                  src={post.signedUrl}
+                                  preload="metadata"
+                                  muted
+                                  playsInline
+                                  className="w-12 h-12 rounded-md object-cover flex-shrink-0 bg-forest/10"
+                                />
+                              ) : (
+                                <img
+                                  src={post.signedUrl}
+                                  alt=""
+                                  className="w-12 h-12 rounded-md object-cover flex-shrink-0"
+                                />
+                              )
                             )}
                             <div className="flex flex-col gap-1 min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-1">

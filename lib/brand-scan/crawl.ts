@@ -73,6 +73,22 @@ function normalizeHex(hex: string): string {
   return hex
 }
 
+// Known framework/CMS default colors that are never brand colors
+const FRAMEWORK_COLOR_BLOCKLIST = new Set([
+  '#0099FF', // WordPress Gutenberg editor blue
+  '#FF2244', // WooCommerce validation red
+  '#FF0000', // Generic error red
+  '#00FF00', // Generic green
+  '#0000FF', // Pure blue
+  '#FF6900', // WordPress orange
+  '#FCB900', // WordPress yellow
+  '#00D084', // WordPress green
+  '#8ED1FC', // WordPress light blue
+  '#ABB8C3', // WordPress grey
+  '#EB144C', // WordPress red
+  '#9900EF', // WordPress purple
+])
+
 function isNeutral(hex: string): boolean {
   const r = parseInt(hex.slice(1, 3), 16)
   const g = parseInt(hex.slice(3, 5), 16)
@@ -86,6 +102,10 @@ function isNeutral(hex: string): boolean {
   // Very low saturation (grey)
   if (max - min < 30) return true
   return false
+}
+
+function isUsableColor(hex: string): boolean {
+  return !isNeutral(hex) && !FRAMEWORK_COLOR_BLOCKLIST.has(hex)
 }
 
 /** Extracts brand colors from <style> blocks and inline style attributes */
@@ -107,12 +127,12 @@ function extractCSSColors(html: string): string[] {
   const priorityColors: string[] = []
   const colorFreq: Map<string, number> = new Map()
 
-  // First pass: CSS custom properties with brand-related names
+  // First pass: CSS custom properties with brand-related names (highest signal)
   const brandVarRegex =
     /--(?:[a-z-]*(?:primary|brand|accent|main|color|theme)[a-z-]*)\s*:\s*(#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3})\b/gi
   while ((m = brandVarRegex.exec(cssText)) !== null) {
     const hex = normalizeHex(m[1])
-    if (!isNeutral(hex) && !priorityColors.includes(hex)) {
+    if (isUsableColor(hex) && !priorityColors.includes(hex)) {
       priorityColors.push(hex)
     }
   }
@@ -121,16 +141,17 @@ function extractCSSColors(html: string): string[] {
   const hexRegex = /#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})\b/g
   while ((m = hexRegex.exec(cssText)) !== null) {
     const hex = normalizeHex(m[0])
-    if (!isNeutral(hex)) {
+    if (isUsableColor(hex)) {
       colorFreq.set(hex, (colorFreq.get(hex) ?? 0) + 1)
     }
   }
 
-  const byFrequency = Array.from(colorFreq.entries())
-    .sort((a, b) => b[1] - a[1])
-    .map(([c]) => c)
+  const allCandidates = Array.from(colorFreq.entries()).sort((a, b) => b[1] - a[1])
+  console.log('[BrandScan] All color candidates (hex: count):', allCandidates.slice(0, 20))
 
-  // Merge: priority colors first, then most-frequent
+  const byFrequency = allCandidates.map(([c]) => c)
+
+  // Merge: priority CSS vars first, then most-frequent repeated colors
   const result: string[] = [...priorityColors]
   for (const c of byFrequency) {
     if (!result.includes(c)) result.push(c)
@@ -138,6 +159,39 @@ function extractCSSColors(html: string): string[] {
   }
 
   return result.slice(0, 5)
+}
+
+/** Fetches up to 3 external stylesheets linked in the HTML and returns their combined CSS text */
+async function fetchLinkedStylesheets(html: string, baseUrl: string): Promise<string> {
+  const linkRegex = /<link[^>]+rel=["']stylesheet["'][^>]*href=["']([^"']+)["']/gi
+  const hrefs: string[] = []
+  let m: RegExpExecArray | null
+  while ((m = linkRegex.exec(html)) !== null && hrefs.length < 3) {
+    hrefs.push(m[1])
+  }
+
+  const base = new URL(baseUrl)
+  const parts: string[] = []
+
+  await Promise.all(
+    hrefs.map(async (href) => {
+      try {
+        const absolute = href.startsWith('http') ? href : new URL(href, base).toString()
+        const controller = new AbortController()
+        const timer = setTimeout(() => controller.abort(), 5_000)
+        const res = await fetch(absolute, { signal: controller.signal, redirect: 'follow' })
+        clearTimeout(timer)
+        if (res.ok) {
+          const text = await res.text()
+          parts.push(text.slice(0, 50_000)) // cap per stylesheet
+        }
+      } catch {
+        // silently skip failed stylesheet fetches
+      }
+    })
+  )
+
+  return parts.join('\n')
 }
 
 export async function crawlURL(url: string): Promise<CrawledContent> {
@@ -169,6 +223,10 @@ export async function crawlURL(url: string): Promise<CrawledContent> {
     clearTimeout(timer)
   }
 
+  // Fetch external stylesheets and append to HTML for color extraction
+  const externalCss = await fetchLinkedStylesheets(html, url)
+  const htmlWithExternalCss = html + `<style>${externalCss}</style>`
+
   const title = extractTitle(html)
   const description = extractMeta(
     html,
@@ -178,7 +236,9 @@ export async function crawlURL(url: string): Promise<CrawledContent> {
   )
   const themeColor = extractMeta(html, 'theme-color') || undefined
   const bodyText = extractBodyText(html)
-  const cssColors = extractCSSColors(html)
+  const cssColors = extractCSSColors(htmlWithExternalCss)
+
+  console.log('[BrandScan] CSS colors extracted:', cssColors)
 
   return { url, title, description, bodyText, themeColor, cssColors: cssColors.length ? cssColors : undefined }
 }

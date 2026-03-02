@@ -22,29 +22,48 @@ export default async function ProfilePage() {
     created_at: user.created_at,
   }
 
+  const initials = profile.full_name
+    ? profile.full_name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+    : profile.email.slice(0, 2).toUpperCase()
+
   return (
-    <div className="max-w-2xl mx-auto p-8">
-      <div className="mb-8 border-b-2 border-rust pb-4">
-        <p className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-1">Settings</p>
-        <h1 className="text-3xl font-mono font-bold text-graphite uppercase">Profile</h1>
+    <div className="w-full p-4 lg:p-8 max-w-2xl">
+
+      {/* Page header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-mono header-accent">Profile</h1>
+        <p className="font-mono text-xs text-gray-500 uppercase tracking-widest mt-2">
+          Manage your account settings
+        </p>
       </div>
 
+      {/* Avatar + member since */}
+      <div className="card flex items-center gap-5 mb-6">
+        <div className="w-14 h-14 rounded-full bg-rust flex items-center justify-center flex-shrink-0">
+          <span className="text-lg font-mono font-bold text-white leading-none">{initials}</span>
+        </div>
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <p className="font-mono text-base font-semibold text-graphite">
+            {profile.full_name || profile.email}
+          </p>
+          <p className="font-mono text-xs text-graphite/50 uppercase tracking-widest">
+            Member since{' '}
+            {new Date(profile.created_at).toLocaleDateString('en-US', {
+              month: 'long',
+              year: 'numeric',
+            })}
+          </p>
+        </div>
+      </div>
+
+      {/* Account settings form */}
       <ProfileForm profile={profile} />
 
+      {/* Connected social accounts */}
       <Suspense fallback={null}>
         <ConnectedAccounts />
       </Suspense>
 
-      <div className="mt-8 p-4 bg-white border border-outline">
-        <p className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-1">Member Since</p>
-        <p className="font-mono text-graphite text-sm">
-          {new Date(profile.created_at).toLocaleDateString('en-US', {
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric',
-          })}
-        </p>
-      </div>
     </div>
   )
 }

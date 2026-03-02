@@ -92,13 +92,18 @@ export default function ProfileForm({ profile }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-0 border border-outline">
+    <div className="card flex flex-col gap-0 p-0 overflow-hidden mb-6">
+
+      {/* Section label */}
+      <div className="px-6 py-4 border-b border-forest/10 bg-forest/[0.02]">
+        <p className="text-xs font-mono uppercase tracking-widest text-graphite/50">Account Settings</p>
+      </div>
 
       {/* ── Display Name ── */}
-      <section className="border-b border-outline">
-        <div className="p-6 flex items-start justify-between gap-4">
+      <section className="border-b border-forest/10">
+        <div className="px-6 py-5 flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-1">Display Name</p>
+            <p className="text-[11px] font-mono uppercase tracking-widest text-graphite/45 mb-1">Display Name</p>
             {nameStatus === 'editing' || nameStatus === 'saving' || nameStatus === 'error' ? (
               <div className="flex flex-col gap-2 mt-2">
                 <input
@@ -106,12 +111,10 @@ export default function ProfileForm({ profile }: Props) {
                   value={nameValue}
                   onChange={(e) => setNameValue(e.target.value)}
                   placeholder="Your full name"
-                  className="w-full max-w-sm"
+                  className="field-input max-w-sm"
                   disabled={nameStatus === 'saving'}
                 />
-                {nameError && (
-                  <p className="text-xs font-mono text-rust">{nameError}</p>
-                )}
+                {nameError && <p className="text-xs font-mono text-rust">{nameError}</p>}
                 <div className="flex gap-2 mt-1">
                   <button
                     onClick={saveName}
@@ -131,8 +134,8 @@ export default function ProfileForm({ profile }: Props) {
               </div>
             ) : (
               <>
-                <p className="font-mono text-graphite text-base mt-1">
-                  {profile.full_name || <span className="text-gray-400 italic">Not set</span>}
+                <p className="font-mono text-graphite text-sm mt-1">
+                  {profile.full_name || <span className="text-graphite/35 italic">Not set</span>}
                 </p>
                 {nameStatus === 'success' && (
                   <p className="text-xs font-mono text-green-700 mt-1 uppercase tracking-wide">Saved.</p>
@@ -140,39 +143,37 @@ export default function ProfileForm({ profile }: Props) {
               </>
             )}
           </div>
-          {nameStatus === 'idle' || nameStatus === 'success' ? (
+          {(nameStatus === 'idle' || nameStatus === 'success') && (
             <button
               onClick={() => setNameStatus('editing')}
-              className="text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 transition-colors flex-shrink-0"
+              className="btn-secondary text-xs px-4 py-2 flex-shrink-0"
             >
               Edit
             </button>
-          ) : null}
+          )}
         </div>
       </section>
 
       {/* ── Email Address ── */}
-      <section className="border-b border-outline">
-        <div className="p-6 flex items-start justify-between gap-4">
+      <section className="border-b border-forest/10">
+        <div className="px-6 py-5 flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-1">Email Address</p>
-            <p className="font-mono text-graphite text-base mt-1 break-all">{profile.email}</p>
+            <p className="text-[11px] font-mono uppercase tracking-widest text-graphite/45 mb-1">Email Address</p>
+            <p className="font-mono text-graphite text-sm mt-1 break-all">{profile.email}</p>
 
-            {emailStatus === 'editing' || emailStatus === 'saving' || emailStatus === 'error' ? (
+            {(emailStatus === 'editing' || emailStatus === 'saving' || emailStatus === 'error') && (
               <div className="flex flex-col gap-2 mt-4">
-                <p className="text-xs font-mono text-gray-500 uppercase tracking-wide">New email address</p>
+                <p className="text-[11px] font-mono uppercase tracking-widest text-graphite/45">New email address</p>
                 <input
                   type="email"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   placeholder="new@example.com"
-                  className="w-full max-w-sm"
+                  className="field-input max-w-sm"
                   disabled={emailStatus === 'saving'}
                 />
-                {emailError && (
-                  <p className="text-xs font-mono text-rust">{emailError}</p>
-                )}
-                <p className="text-xs font-mono text-gray-400">
+                {emailError && <p className="text-xs font-mono text-rust">{emailError}</p>}
+                <p className="text-xs font-mono text-graphite/40">
                   A confirmation link will be sent to both your current and new email.
                 </p>
                 <div className="flex gap-2 mt-1">
@@ -192,47 +193,45 @@ export default function ProfileForm({ profile }: Props) {
                   </button>
                 </div>
               </div>
-            ) : emailStatus === 'success' ? (
-              <div className="mt-3 p-3 bg-green-50 border border-green-200">
+            )}
+
+            {emailStatus === 'success' && (
+              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-xl">
                 <p className="text-xs font-mono text-green-800 uppercase tracking-wide">
                   Confirmation emails sent. Check both inboxes to complete the change.
                 </p>
-                <button
-                  onClick={cancelEmail}
-                  className="text-xs font-mono underline text-green-700 mt-1"
-                >
+                <button onClick={cancelEmail} className="text-xs font-mono underline text-green-700 mt-1">
                   Dismiss
                 </button>
               </div>
-            ) : null}
+            )}
           </div>
-          {emailStatus === 'idle' ? (
+          {emailStatus === 'idle' && (
             <button
               onClick={() => setEmailStatus('editing')}
-              className="text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 transition-colors flex-shrink-0"
+              className="btn-secondary text-xs px-4 py-2 flex-shrink-0"
             >
               Change
             </button>
-          ) : null}
+          )}
         </div>
       </section>
 
       {/* ── Password ── */}
       <section>
-        <div className="p-6 flex items-start justify-between gap-4">
+        <div className="px-6 py-5 flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-1">Password</p>
-
+            <p className="text-[11px] font-mono uppercase tracking-widest text-graphite/45 mb-1">Password</p>
             {resetStatus === 'idle' && (
-              <p className="font-mono text-graphite text-sm mt-1">
-                Send a password reset link to <span className="text-rust">{profile.email}</span>.
+              <p className="font-mono text-sm text-graphite/60 mt-1">
+                Send a reset link to <span className="text-rust">{profile.email}</span>.
               </p>
             )}
             {resetStatus === 'saving' && (
-              <p className="font-mono text-gray-400 text-sm mt-1">Sending reset email...</p>
+              <p className="font-mono text-sm text-graphite/40 mt-1">Sending reset email...</p>
             )}
             {resetStatus === 'success' && (
-              <div className="mt-1 p-3 bg-green-50 border border-green-200">
+              <div className="mt-1 p-3 bg-green-50 border border-green-200 rounded-xl">
                 <p className="text-xs font-mono text-green-800 uppercase tracking-wide">
                   Reset link sent — check your inbox.
                 </p>
@@ -245,7 +244,7 @@ export default function ProfileForm({ profile }: Props) {
           {(resetStatus === 'idle' || resetStatus === 'error') && (
             <button
               onClick={sendPasswordReset}
-              className="text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 transition-colors flex-shrink-0"
+              className="btn-secondary text-xs px-4 py-2 flex-shrink-0"
             >
               Send Reset Email
             </button>

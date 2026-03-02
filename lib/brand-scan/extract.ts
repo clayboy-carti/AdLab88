@@ -37,7 +37,7 @@ Rules:
 - personality_traits: max 5 single words or short phrases
 - words_to_use: max 8 words/phrases that match their tone
 - words_to_avoid: max 5 words/phrases that conflict with their voice
-- brand_colors: Extract exactly 3 hex colors representing the brand's primary palette. ALWAYS use the colors listed under "CSS COLORS DETECTED FROM STYLESHEET" as your primary source — these are pulled directly from the site's CSS and are the most reliable signal. If fewer than 3 are provided, supplement with the THEME COLOR if present, then make reasonable inferences from the brand context. Use valid #RRGGBB hex format only. Always return exactly 3 colors when any CSS or theme color data is available.
+- brand_colors: Use ONLY the colors listed under "CSS COLORS DETECTED FROM STYLESHEET" and/or "THEME COLOR" as your source. Do NOT invent, guess, or infer colors. Pick the 1–3 most representative brand colors from the provided list. If no CSS colors or theme color are provided, omit brand_colors entirely. Never return colors that were not explicitly provided in the input.
 - If you cannot reliably extract a field, omit it entirely — do not guess.
 - Return ONLY the JSON object. No markdown fences, no explanation.`
 

@@ -454,14 +454,14 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
       )}
 
       {/* ── GRID ──────────────────────────────────────────────────── */}
-      <div
-        className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start"
-        style={{ gridTemplateRows: 'auto auto' }}
-      >
-        {/* ── Core Identity — row-span-2 ── */}
-        <div className="card lg:row-span-2 flex flex-col gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        {/* ── Row 1: What We Do (col 1) + Voice & Messaging (cols 2–3) ── */}
+
+        {/* What We Do */}
+        <div className="card flex flex-col gap-4">
           <CardHeader
-            label="Core Identity"
+            label="What We Do"
             editing={isEditing('core')}
             canEdit={canEdit}
             saving={saving}
@@ -469,7 +469,6 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
             onSave={() => saveSection('core')}
             onCancel={cancelEdit}
           />
-
           {isEditing('core') ? (
             <>
               <EditField label="Company Name" error={errors.company_name?.message}>
@@ -478,93 +477,27 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                   className="field-input text-base font-bold text-forest uppercase"
                 />
               </EditField>
-              <hr className="border-forest/15" />
               <EditField label="What We Do" error={errors.what_we_do?.message}>
                 <textarea
                   {...register('what_we_do')}
-                  rows={3}
+                  rows={4}
                   className="field-input resize-none text-sm"
                   placeholder="Describe your products, solutions, and/or services..."
-                />
-              </EditField>
-              <hr className="border-forest/15" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <EditField label="Target Audience" error={errors.target_audience?.message}>
-                  <textarea
-                    {...register('target_audience')}
-                    rows={3}
-                    className="field-input resize-none text-sm"
-                  />
-                </EditField>
-                <EditField label="Differentiator">
-                  <textarea
-                    {...register('unique_differentiator')}
-                    rows={3}
-                    className="field-input resize-none text-sm"
-                  />
-                </EditField>
-              </div>
-              <hr className="border-forest/15" />
-              <EditField label="Sample Copy" error={errors.sample_copy?.message}>
-                <textarea
-                  {...register('sample_copy')}
-                  rows={4}
-                  className="field-input resize-none text-xs"
                 />
               </EditField>
             </>
           ) : (
             <>
-              <h2 className="text-3xl sm:text-4xl font-bold font-mono text-forest uppercase leading-none tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-bold font-mono text-forest uppercase leading-none tracking-tight">
                 {brand.company_name}
               </h2>
-              <hr className="border-forest/15" />
-              <div>
-                <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
-                  What We Do
-                </p>
-                <p className="text-sm font-mono text-graphite leading-relaxed">{brand.what_we_do}</p>
-              </div>
-              <hr className="border-forest/15" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
-                    Target Audience
-                  </p>
-                  <p className="text-sm font-mono text-graphite leading-relaxed">
-                    {brand.target_audience}
-                  </p>
-                </div>
-                {brand.unique_differentiator && (
-                  <div>
-                    <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
-                      Differentiator
-                    </p>
-                    <p className="text-sm font-mono text-graphite leading-relaxed">
-                      {brand.unique_differentiator}
-                    </p>
-                  </div>
-                )}
-              </div>
-              {brand.sample_copy && (
-                <>
-                  <hr className="border-forest/15" />
-                  <div>
-                    <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
-                      Sample Copy
-                    </p>
-                    <p className="text-xs font-mono text-graphite leading-relaxed italic">
-                      {brand.sample_copy}
-                    </p>
-                  </div>
-                </>
-              )}
+              <p className="text-sm font-mono text-graphite leading-relaxed">{brand.what_we_do}</p>
             </>
           )}
         </div>
 
-        {/* ── Voice & Messaging ── */}
-        <div className="card flex flex-col gap-5">
+        {/* Voice & Messaging — spans cols 2–3 */}
+        <div className="card lg:col-span-2 flex flex-col gap-5">
           <CardHeader
             label="Voice &amp; Messaging"
             editing={isEditing('voice')}
@@ -574,7 +507,6 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
             onSave={() => saveSection('voice')}
             onCancel={cancelEdit}
           />
-
           {isEditing('voice') ? (
             <>
               <EditField label="Voice Summary">
@@ -652,46 +584,62 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
           )}
         </div>
 
-        {/* ── Brand Snapshot ── */}
-        <div className="card flex flex-col gap-3">
+        {/* ── Row 2: Audience (col 1) + Visual Identity (col 2) + Brand Snapshot (col 3) ── */}
+
+        {/* Audience & Differentiator */}
+        <div className="card flex flex-col gap-4">
           <CardHeader
-            label="Brand Snapshot"
-            editing={isEditing('snapshot')}
-            canEdit={canEdit}
+            label="Audience &amp; Differentiator"
+            editing={isEditing('core')}
+            canEdit={false}
             saving={saving}
-            onEdit={() => startEdit('snapshot')}
-            onSave={() => saveSection('snapshot')}
+            onEdit={() => startEdit('core')}
+            onSave={() => saveSection('core')}
             onCancel={cancelEdit}
           />
-
-          {isEditing('snapshot') ? (
-            <EditField label="Personality Traits">
-              <textarea
-                {...register('personality_traits')}
-                rows={4}
-                className="field-input resize-none text-xs"
-                placeholder="innovative, bold, direct..."
-              />
-              <p className="text-xs text-graphite/40 mt-1 font-mono">comma-separated</p>
-            </EditField>
+          {isEditing('core') ? (
+            <div className="flex flex-col gap-3">
+              <EditField label="Target Audience" error={errors.target_audience?.message}>
+                <textarea
+                  {...register('target_audience')}
+                  rows={3}
+                  className="field-input resize-none text-sm"
+                />
+              </EditField>
+              <EditField label="Differentiator">
+                <textarea
+                  {...register('unique_differentiator')}
+                  rows={3}
+                  className="field-input resize-none text-sm"
+                />
+              </EditField>
+            </div>
           ) : (
-            brand.personality_traits && brand.personality_traits.length > 0 && (
-              <div className="flex flex-col gap-2 mt-1">
-                {brand.personality_traits.map((trait) => (
-                  <span
-                    key={trait}
-                    className="bg-sage/20 text-forest border border-sage/50 text-xs font-mono px-3 py-1.5 rounded-full self-start capitalize"
-                  >
-                    {trait}
-                  </span>
-                ))}
+            <div className="flex flex-col gap-4">
+              <div>
+                <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
+                  Target Audience
+                </p>
+                <p className="text-sm font-mono text-graphite leading-relaxed">
+                  {brand.target_audience}
+                </p>
               </div>
-            )
+              {brand.unique_differentiator && (
+                <div>
+                  <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-2">
+                    Differentiator
+                  </p>
+                  <p className="text-sm font-mono text-graphite leading-relaxed">
+                    {brand.unique_differentiator}
+                  </p>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
-        {/* ── Visual Identity — col-span-2 ── */}
-        <div className="card lg:col-span-2 flex flex-col gap-5">
+        {/* Visual Identity */}
+        <div className="card flex flex-col gap-5">
           <CardHeader
             label="Visual Identity"
             editing={isEditing('visual')}
@@ -701,16 +649,15 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
             onSave={() => saveSection('visual')}
             onCancel={cancelEdit}
           />
-
           {isEditing('visual') ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-4">
               <EditField label="Brand Colors">
                 <div className="flex gap-2 mb-2 flex-wrap min-h-[2rem]">
                   {liveColors.map((c) => (
                     <div
                       key={c}
                       style={{ backgroundColor: c }}
-                      className="w-8 h-8 rounded border border-outline/20"
+                      className="w-8 h-8 border border-outline/20"
                       title={c}
                     />
                   ))}
@@ -725,27 +672,27 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
               <EditField label="Typography Notes">
                 <textarea
                   {...register('typography_notes')}
-                  rows={4}
+                  rows={3}
                   className="field-input resize-none text-xs"
                   placeholder="Font families, weights, usage notes..."
                 />
               </EditField>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-5">
               <div>
                 <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-3">
                   Brand Colors
                 </p>
                 {brand.brand_colors && brand.brand_colors.length > 0 ? (
-                  <div className="flex gap-4 flex-wrap">
+                  <div className="flex gap-2 flex-wrap items-end">
                     {brand.brand_colors.map((color) => (
-                      <div key={color} className="flex flex-col items-center gap-1.5">
+                      <div key={color} className="flex flex-col items-center gap-1">
                         <div
                           style={{ backgroundColor: color }}
-                          className="w-12 h-12 rounded border border-outline/10"
+                          className="w-10 h-10 border border-outline/10"
                         />
-                        <span className="text-xs font-mono text-graphite/40">{color}</span>
+                        <span className="text-[10px] font-mono text-graphite/40">{color}</span>
                       </div>
                     ))}
                   </div>
@@ -753,28 +700,83 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
                   <p className="text-xs font-mono text-graphite/40 italic">No colors defined</p>
                 )}
               </div>
-              <div>
-                <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-3">
-                  Typography
-                </p>
-                <p className="text-3xl font-bold font-mono text-graphite/10 leading-none select-none">
-                  The quick br
-                </p>
-                <p className="text-xs font-mono text-graphite/40 mt-1.5">
-                  Body copy — regular weight
-                </p>
-                {brand.typography_notes && (
-                  <>
-                    <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mt-4 mb-1">
-                      Font Stack
-                    </p>
-                    <p className="text-xs font-mono text-graphite">{brand.typography_notes}</p>
-                  </>
-                )}
-              </div>
+              {brand.typography_notes && (
+                <div>
+                  <p className="text-xs font-mono uppercase tracking-widest text-graphite/40 mb-1">
+                    Typography
+                  </p>
+                  <p className="text-xs font-mono text-graphite">{brand.typography_notes}</p>
+                </div>
+              )}
             </div>
           )}
         </div>
+
+        {/* Brand Snapshot — compact personality traits */}
+        <div className="card flex flex-col gap-4">
+          <CardHeader
+            label="Brand Snapshot"
+            editing={isEditing('snapshot')}
+            canEdit={canEdit}
+            saving={saving}
+            onEdit={() => startEdit('snapshot')}
+            onSave={() => saveSection('snapshot')}
+            onCancel={cancelEdit}
+          />
+          {isEditing('snapshot') ? (
+            <EditField label="Personality Traits">
+              <textarea
+                {...register('personality_traits')}
+                rows={4}
+                className="field-input resize-none text-xs"
+                placeholder="innovative, bold, direct..."
+              />
+              <p className="text-xs text-graphite/40 mt-1 font-mono">comma-separated</p>
+            </EditField>
+          ) : (
+            brand.personality_traits && brand.personality_traits.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {brand.personality_traits.map((trait) => (
+                  <span
+                    key={trait}
+                    className="bg-sage/20 text-forest border border-sage/50 text-xs font-mono px-2.5 py-1 rounded-full capitalize"
+                  >
+                    {trait}
+                  </span>
+                ))}
+              </div>
+            )
+          )}
+        </div>
+
+        {/* ── Row 3: Sample Copy — full width ── */}
+        {(brand.sample_copy || isEditing('core')) && (
+          <div className="card lg:col-span-3 flex flex-col gap-3">
+            <CardHeader
+              label="Sample Copy"
+              editing={isEditing('core')}
+              canEdit={false}
+              saving={saving}
+              onEdit={() => startEdit('core')}
+              onSave={() => saveSection('core')}
+              onCancel={cancelEdit}
+            />
+            {isEditing('core') ? (
+              <EditField label="Sample Copy" error={errors.sample_copy?.message}>
+                <textarea
+                  {...register('sample_copy')}
+                  rows={3}
+                  className="field-input resize-none text-xs w-full"
+                />
+              </EditField>
+            ) : (
+              <p className="text-sm font-mono text-graphite/60 leading-relaxed italic">
+                &ldquo;{brand.sample_copy}&rdquo;
+              </p>
+            )}
+          </div>
+        )}
+
       </div>
     </>
   )
