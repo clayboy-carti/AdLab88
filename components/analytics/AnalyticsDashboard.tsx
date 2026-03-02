@@ -32,6 +32,185 @@ interface AnalyticsDashboardProps {
   analytics: PostAnalytic[]
 }
 
+const SAMPLE_ANALYTICS: PostAnalytic[] = [
+  {
+    id: 'sample-1',
+    scheduled_post_id: 'sp-1',
+    late_post_id: 'lp-1',
+    platform: 'instagram',
+    views: 48200,
+    likes: 3140,
+    comments: 287,
+    shares: 412,
+    reach: 41800,
+    impressions: 61500,
+    clicks: 1920,
+    saves: 830,
+    fetched_at: '2026-02-28T10:00:00Z',
+    created_at: '2026-02-20T09:00:00Z',
+    caption: 'Introducing our new summer collection — crafted for you. ☀️',
+    scheduled_for: '2026-02-20T12:00:00Z',
+    status: 'published',
+    ad_title: 'Summer Collection Drop',
+    ad_hook: 'Your next favorite look is here',
+    signedUrl: null,
+  },
+  {
+    id: 'sample-2',
+    scheduled_post_id: 'sp-2',
+    late_post_id: 'lp-2',
+    platform: 'tiktok',
+    views: 192400,
+    likes: 14700,
+    comments: 1830,
+    shares: 5210,
+    reach: 175000,
+    impressions: 210000,
+    clicks: 7340,
+    saves: 3600,
+    fetched_at: '2026-02-28T10:00:00Z',
+    created_at: '2026-02-22T09:00:00Z',
+    caption: 'POV: you finally found the product you didn\'t know you needed 👀',
+    scheduled_for: '2026-02-22T18:00:00Z',
+    status: 'published',
+    ad_title: 'The Product You Didn\'t Know You Needed',
+    ad_hook: 'Wait until you see this…',
+    signedUrl: null,
+  },
+  {
+    id: 'sample-3',
+    scheduled_post_id: 'sp-3',
+    late_post_id: 'lp-3',
+    platform: 'instagram',
+    views: 22100,
+    likes: 1480,
+    comments: 94,
+    shares: 178,
+    reach: 19400,
+    impressions: 27300,
+    clicks: 840,
+    saves: 310,
+    fetched_at: '2026-02-28T10:00:00Z',
+    created_at: '2026-02-18T09:00:00Z',
+    caption: 'Behind the scenes: how we make every ad count.',
+    scheduled_for: '2026-02-18T14:00:00Z',
+    status: 'published',
+    ad_title: 'Behind the Brand',
+    ad_hook: 'Ever wondered what goes into one ad?',
+    signedUrl: null,
+  },
+  {
+    id: 'sample-4',
+    scheduled_post_id: 'sp-4',
+    late_post_id: 'lp-4',
+    platform: 'facebook',
+    views: 9800,
+    likes: 620,
+    comments: 143,
+    shares: 89,
+    reach: 8700,
+    impressions: 12100,
+    clicks: 470,
+    saves: 55,
+    fetched_at: '2026-02-28T10:00:00Z',
+    created_at: '2026-02-15T09:00:00Z',
+    caption: 'Limited time offer — don\'t miss out.',
+    scheduled_for: '2026-02-15T10:00:00Z',
+    status: 'published',
+    ad_title: 'Flash Sale — 48 Hours Only',
+    ad_hook: 'Our biggest discount yet',
+    signedUrl: null,
+  },
+  {
+    id: 'sample-5',
+    scheduled_post_id: 'sp-5',
+    late_post_id: 'lp-5',
+    platform: 'tiktok',
+    views: 84600,
+    likes: 7200,
+    comments: 920,
+    shares: 2100,
+    reach: 79000,
+    impressions: 98000,
+    clicks: 3150,
+    saves: 1800,
+    fetched_at: '2026-02-28T10:00:00Z',
+    created_at: '2026-02-25T09:00:00Z',
+    caption: 'This trend is not going anywhere — get ahead of it.',
+    scheduled_for: '2026-02-25T20:00:00Z',
+    status: 'published',
+    ad_title: 'Trend Ahead',
+    ad_hook: 'Everyone\'s doing it. Are you?',
+    signedUrl: null,
+  },
+  {
+    id: 'sample-6',
+    scheduled_post_id: 'sp-6',
+    late_post_id: 'lp-6',
+    platform: 'linkedin',
+    views: 5400,
+    likes: 310,
+    comments: 62,
+    shares: 44,
+    reach: 4900,
+    impressions: 7200,
+    clicks: 290,
+    saves: 38,
+    fetched_at: '2026-02-28T10:00:00Z',
+    created_at: '2026-02-12T09:00:00Z',
+    caption: 'Why great creative is the most underrated growth lever.',
+    scheduled_for: '2026-02-12T09:00:00Z',
+    status: 'published',
+    ad_title: 'Creative Is Your Growth Lever',
+    ad_hook: 'Most brands get this wrong',
+    signedUrl: null,
+  },
+  {
+    id: 'sample-7',
+    scheduled_post_id: 'sp-7',
+    late_post_id: 'lp-7',
+    platform: 'instagram',
+    views: 31700,
+    likes: 2050,
+    comments: 176,
+    shares: 295,
+    reach: 28400,
+    impressions: 38900,
+    clicks: 1120,
+    saves: 510,
+    fetched_at: '2026-02-28T10:00:00Z',
+    created_at: '2026-02-27T09:00:00Z',
+    caption: 'New drop. Same obsession.',
+    scheduled_for: '2026-02-27T16:00:00Z',
+    status: 'published',
+    ad_title: 'New Drop Alert',
+    ad_hook: 'You asked. We delivered.',
+    signedUrl: null,
+  },
+  {
+    id: 'sample-8',
+    scheduled_post_id: 'sp-8',
+    late_post_id: null,
+    platform: 'youtube',
+    views: 14300,
+    likes: 890,
+    comments: 204,
+    shares: 67,
+    reach: 12800,
+    impressions: 18400,
+    clicks: 630,
+    saves: 0,
+    fetched_at: '2026-02-28T10:00:00Z',
+    created_at: '2026-02-10T09:00:00Z',
+    caption: 'Full brand story — how we got here and where we\'re going.',
+    scheduled_for: '2026-02-10T15:00:00Z',
+    status: 'published',
+    ad_title: 'The Brand Story',
+    ad_hook: '3 years. One mission.',
+    signedUrl: null,
+  },
+]
+
 const PLATFORMS = ['All', 'instagram', 'tiktok', 'facebook', 'linkedin', 'youtube', 'twitter', 'pinterest']
 
 const PLATFORM_LABELS: Record<string, string> = {
@@ -82,11 +261,14 @@ function StatCard({ label, value, Icon, sublabel }: StatCardProps) {
 }
 
 export default function AnalyticsDashboard({ analytics }: AnalyticsDashboardProps) {
+  const isSampleMode = analytics.length === 0
+  const data = isSampleMode ? SAMPLE_ANALYTICS : analytics
+
   const [platform, setPlatform] = useState('All')
   const [sortBy, setSortBy] = useState<'views' | 'likes' | 'comments' | 'shares' | 'reach' | 'scheduled_for'>('scheduled_for')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
-  const filtered = analytics.filter((a) => platform === 'All' || a.platform === platform)
+  const filtered = data.filter((a) => platform === 'All' || a.platform === platform)
 
   const sorted = [...filtered].sort((a, b) => {
     if (sortBy === 'scheduled_for') {
@@ -139,10 +321,20 @@ export default function AnalyticsDashboard({ analytics }: AnalyticsDashboardProp
       : <ArrowUpRight size={10} className="text-rust" />
   }
 
-  const activePlatforms = ['All', ...Array.from(new Set(analytics.map((a) => a.platform))).filter(Boolean)]
+  const activePlatforms = ['All', ...Array.from(new Set(data.map((a) => a.platform))).filter(Boolean)]
 
   return (
     <div className="w-full">
+      {/* ── Sample data banner ── */}
+      {isSampleMode && (
+        <div className="mb-6 border border-rust/30 bg-rust/5 px-4 py-3 flex items-center gap-3">
+          <BarChart2 size={14} strokeWidth={1.6} className="text-rust flex-shrink-0" />
+          <p className="text-[11px] font-mono uppercase tracking-widest text-rust">
+            Sample data — connect Late API to see your real post metrics
+          </p>
+        </div>
+      )}
+
       {/* ── Page header ── */}
       <div className="flex items-start justify-between mb-8 gap-4 flex-wrap">
         <div>
@@ -326,10 +518,10 @@ export default function AnalyticsDashboard({ analytics }: AnalyticsDashboardProp
       )}
 
       {/* ── Last synced note ── */}
-      {analytics.length > 0 && (
+      {!isSampleMode && data.length > 0 && (
         <p className="text-[10px] font-mono text-graphite/25 uppercase tracking-widest mt-4 text-right">
-          {analytics[0].fetched_at
-            ? `Last synced ${formatDate(analytics[0].fetched_at)}`
+          {data[0].fetched_at
+            ? `Last synced ${formatDate(data[0].fetched_at)}`
             : 'Not yet synced with Late API'}
         </p>
       )}
