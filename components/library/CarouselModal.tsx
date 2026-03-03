@@ -11,7 +11,7 @@ interface CarouselModalProps {
   onScheduled: () => void
 }
 
-// ─── Accounts cache (shared with AdModal) ────────────────────────────────────
+// ─── Accounts cache (shared with ContentModal) ────────────────────────────────────
 const ACCOUNTS_CACHE_TTL = 5 * 60 * 1000
 let accountsCache: { accounts: LateAccount[]; configured: boolean; ts: number } | null = null
 

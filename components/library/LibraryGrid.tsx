@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from 'react'
 import AdCard, { type Ad } from './AdCard'
 import AdSetCard from './AdSetCard'
 import AdSetModal from './AdSetModal'
-import AdModal from './AdModal'
+import ContentModal from './ContentModal'
 import VideoCard, { type VideoItem } from './VideoCard'
 import VideoModal from './VideoModal'
 import CarouselModal from './CarouselModal'
@@ -765,7 +765,7 @@ export default function LibraryGrid({
       )}
 
       {selectedAd && (
-        <AdModal
+        <ContentModal
           ad={selectedAd}
           onClose={() => setSelectedAd(null)}
           onCaptionUpdate={handleCaptionUpdate}
