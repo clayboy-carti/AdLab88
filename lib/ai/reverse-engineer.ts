@@ -1,13 +1,15 @@
-import OpenAI from 'openai'
+import { GoogleGenAI } from '@google/genai'
 import type { Brand } from '@/types/database'
 
-let _openai: OpenAI | null = null
-function getOpenAI(): OpenAI {
-  if (!_openai) {
-    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+let _gemini: GoogleGenAI | null = null
+function getGemini(): GoogleGenAI {
+  if (!_gemini) {
+    _gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
   }
-  return _openai
+  return _gemini
 }
+
+const VISION_MODEL = 'gemini-2.0-flash'
 
 export interface ReverseEngineerResult {
   stylePrompt: string
@@ -18,7 +20,7 @@ export interface ReverseEngineerResult {
 /**
  * Analyze a winning ad image and extract its creative blueprint.
  * Returns a style prompt, copy structure formula, and 3 variant prompts adapted for the brand.
- * Uses gpt-4o vision.
+ * Uses Gemini vision.
  */
 export async function reverseEngineerAd(imageUrl: string, brand: Brand): Promise<ReverseEngineerResult> {
   console.log('[ReverseEngineer] Analyzing ad image...')
@@ -45,29 +47,42 @@ Do NOT reference or reproduce specific brand names, logos, or trademarked elemen
 
 Return ONLY valid JSON.`
 
-  const response = await getOpenAI().chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
+  // Build image part from data URL or fetch from URL
+  let mimeType = 'image/jpeg'
+  let base64Data: string
+
+  if (imageUrl.startsWith('data:')) {
+    const commaIdx = imageUrl.indexOf(',')
+    mimeType = imageUrl.slice(0, commaIdx).replace('data:', '').replace(';base64', '')
+    base64Data = imageUrl.slice(commaIdx + 1)
+  } else {
+    const res = await fetch(imageUrl)
+    if (!res.ok) throw new Error(`Failed to fetch image: ${res.statusText}`)
+    mimeType = res.headers.get('content-type') ?? 'image/jpeg'
+    base64Data = Buffer.from(await res.arrayBuffer()).toString('base64')
+  }
+
+  const result = await getGemini().models.generateContent({
+    model: VISION_MODEL,
+    contents: [
       {
         role: 'user',
-        content: [
-          { type: 'text', text: prompt },
-          { type: 'image_url', image_url: { url: imageUrl, detail: 'high' } },
+        parts: [
+          { inlineData: { mimeType, data: base64Data } },
+          { text: prompt },
         ],
       },
     ],
-    temperature: 0.7,
-    max_tokens: 2500,
-    response_format: { type: 'json_object' },
+    config: {
+      temperature: 0.7,
+      responseMimeType: 'application/json',
+    },
   })
 
-  const msg = response.choices[0]?.message
-  if (!msg) throw new Error('No response from OpenAI')
-  if (msg.refusal) throw new Error(`OpenAI refused: ${msg.refusal}`)
-  const content = msg.content
-  if (!content) throw new Error('No content from OpenAI')
+  const text = result.candidates?.[0]?.content?.parts?.[0]?.text
+  if (!text) throw new Error('No response from Gemini')
 
-  const parsed = JSON.parse(content)
+  const parsed = JSON.parse(text)
   console.log('[ReverseEngineer] ✅ Analysis complete')
 
   return {

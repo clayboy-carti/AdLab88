@@ -1,13 +1,15 @@
-import OpenAI from 'openai'
+import { GoogleGenAI } from '@google/genai'
 import type { Brand } from '@/types/database'
 
-let _openai: OpenAI | null = null
-function getOpenAI(): OpenAI {
-  if (!_openai) {
-    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+let _gemini: GoogleGenAI | null = null
+function getGemini(): GoogleGenAI {
+  if (!_gemini) {
+    _gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
   }
-  return _openai
+  return _gemini
 }
+
+const VISION_MODEL = 'gemini-2.0-flash'
 
 export interface ConceptDirection {
   type: string
@@ -25,17 +27,17 @@ export interface GenerateConceptsParams {
 
 /**
  * Generate 5 distinct creative concept directions for a campaign.
- * Uses gpt-4o (vision) when a reference image is provided, gpt-4o-mini otherwise.
+ * Uses Gemini vision when a reference image is provided, Gemini text otherwise.
  */
 export async function generateConcepts(params: GenerateConceptsParams): Promise<ConceptDirection[]> {
   const { referenceUrl, campaignContext, brand } = params
   const hasReference = !!referenceUrl
 
-  console.log(`[Concepts] Generating concepts (reference: ${hasReference}, model: ${hasReference ? 'gpt-4o' : 'gpt-4o-mini'})...`)
+  console.log(`[Concepts] Generating concepts (reference: ${hasReference}, model: ${VISION_MODEL})...`)
 
-  const systemPrompt = `You are a creative director specializing in performance advertising.`
+  const userText = `You are a creative director specializing in performance advertising.
 
-  const userText = `Generate 5 distinct creative concept directions for an ad campaign.
+Generate 5 distinct creative concept directions for an ad campaign.
 
 BRAND: ${brand.company_name}
 WHAT WE DO: ${brand.what_we_do}
@@ -55,31 +57,41 @@ Make each concept genuinely distinct — different emotion, different visual app
 
 Return ONLY valid JSON.`
 
-  const userContent: any = hasReference
-    ? [
-        { type: 'text', text: userText },
-        { type: 'image_url', image_url: { url: referenceUrl, detail: 'low' as const } },
-      ]
-    : userText
+  const parts: any[] = []
 
-  const response = await getOpenAI().chat.completions.create({
-    model: hasReference ? 'gpt-4o' : 'gpt-4o-mini',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userContent },
-    ],
-    temperature: 0.9,
-    max_tokens: 2500,
-    response_format: { type: 'json_object' },
+  if (hasReference) {
+    let mimeType = 'image/jpeg'
+    let base64Data: string
+
+    if (referenceUrl.startsWith('data:')) {
+      const commaIdx = referenceUrl.indexOf(',')
+      mimeType = referenceUrl.slice(0, commaIdx).replace('data:', '').replace(';base64', '')
+      base64Data = referenceUrl.slice(commaIdx + 1)
+    } else {
+      const res = await fetch(referenceUrl)
+      if (!res.ok) throw new Error(`Failed to fetch reference image: ${res.statusText}`)
+      mimeType = res.headers.get('content-type') ?? 'image/jpeg'
+      base64Data = Buffer.from(await res.arrayBuffer()).toString('base64')
+    }
+
+    parts.push({ inlineData: { mimeType, data: base64Data } })
+  }
+
+  parts.push({ text: userText })
+
+  const result = await getGemini().models.generateContent({
+    model: VISION_MODEL,
+    contents: [{ role: 'user', parts }],
+    config: {
+      temperature: 0.9,
+      responseMimeType: 'application/json',
+    },
   })
 
-  const msg = response.choices[0]?.message
-  if (!msg) throw new Error('No response from OpenAI')
-  if (msg.refusal) throw new Error(`OpenAI refused: ${msg.refusal}`)
-  const content = msg.content
-  if (!content) throw new Error('No content from OpenAI')
+  const text = result.candidates?.[0]?.content?.parts?.[0]?.text
+  if (!text) throw new Error('No response from Gemini')
 
-  const parsed = JSON.parse(content)
+  const parsed = JSON.parse(text)
   if (!Array.isArray(parsed.concepts)) throw new Error('Invalid response: expected concepts array')
 
   console.log(`[Concepts] ✅ Generated ${parsed.concepts.length} concepts`)
