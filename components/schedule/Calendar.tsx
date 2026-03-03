@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import AdModal from '@/components/library/AdModal'
+import ContentModal from '@/components/library/ContentModal'
 import VideoModal from '@/components/library/VideoModal'
 import type { Ad } from '@/components/library/AdCard'
 import type { VideoItem } from '@/components/library/VideoCard'
@@ -673,9 +673,9 @@ export default function Calendar({ posts = [] }: CalendarProps) {
         </div>
       )}
 
-      {/* Ad modal */}
+      {/* Content modal */}
       {selectedPost && selectedAd && (
-        <AdModal
+        <ContentModal
           ad={selectedAd}
           onClose={() => setSelectedPost(null)}
           onCaptionUpdate={handleCaptionUpdate}

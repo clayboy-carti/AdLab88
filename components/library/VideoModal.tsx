@@ -12,7 +12,7 @@ interface VideoModalProps {
   initialCaption?: string
 }
 
-// ─── Accounts cache (shared with AdModal — module-level) ─────────────────────
+// ─── Accounts cache (shared with ContentModal — module-level) ─────────────────────
 const ACCOUNTS_CACHE_TTL = 5 * 60 * 1000
 let accountsCache: { accounts: LateAccount[]; configured: boolean; ts: number } | null = null
 

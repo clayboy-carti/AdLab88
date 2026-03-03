@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Ad } from './AdCard'
 import type { LateAccount, LatePlatform } from '@/lib/late'
 
-interface AdModalProps {
+interface ContentModalProps {
   ad: Ad
   onClose: () => void
   onCaptionUpdate: (adId: string, newCaption: string) => void
@@ -15,7 +15,7 @@ interface AdModalProps {
 
 type EditableField = 'title' | 'caption'
 
-// ─── Accounts cache (module-level, persists across modal opens) ──────────────
+// ─── Accounts cache (module-level, persists across ContentModal opens) ──────────────
 const ACCOUNTS_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 let accountsCache: { accounts: LateAccount[]; configured: boolean; ts: number } | null = null
 
@@ -188,7 +188,7 @@ function PlatformIcon({ platform }: { platform: string }) {
 
 // ─── Main Modal ──────────────────────────────────────────────────────────────
 
-export default function AdModal({ ad, onClose, onCaptionUpdate, onTitleUpdate, onDelete, scheduledDate }: AdModalProps) {
+export default function ContentModal({ ad, onClose, onCaptionUpdate, onTitleUpdate, onDelete, scheduledDate }: ContentModalProps) {
   // Editable field values
   const [title, setTitle] = useState(ad.title ?? '')
   const [caption, setCaption] = useState(ad.caption)
