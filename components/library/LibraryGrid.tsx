@@ -785,6 +785,10 @@ export default function LibraryGrid({
           onCaptionUpdate={handleCaptionUpdate}
           onTitleUpdate={handleAdTitleUpdate}
           onDelete={handleDelete}
+          onIterationCreated={(newAd) => {
+            setAds((prev) => [{ ...newAd, signedUrl: newAd.generatedImageUrl }, ...prev])
+            setSelectedAd(null)
+          }}
         />
       )}
 

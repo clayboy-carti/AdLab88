@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Ad } from './AdCard'
 import type { LateAccount, LatePlatform } from '@/lib/late'
 import SaveAsTemplateModal from './SaveAsTemplateModal'
+import EditAdModal from './EditAdModal'
 
 interface ContentModalProps {
   ad: Ad
@@ -11,6 +12,7 @@ interface ContentModalProps {
   onCaptionUpdate: (adId: string, newCaption: string) => void
   onTitleUpdate?: (adId: string, newTitle: string) => void
   onDelete?: (adId: string) => void
+  onIterationCreated?: (newAd: Ad & { generatedImageUrl: string | null }) => void
   scheduledDate?: string | null
 }
 
@@ -189,7 +191,7 @@ function PlatformIcon({ platform }: { platform: string }) {
 
 // ─── Main Modal ──────────────────────────────────────────────────────────────
 
-export default function ContentModal({ ad, onClose, onCaptionUpdate, onTitleUpdate, onDelete, scheduledDate }: ContentModalProps) {
+export default function ContentModal({ ad, onClose, onCaptionUpdate, onTitleUpdate, onDelete, onIterationCreated, scheduledDate }: ContentModalProps) {
   // Editable field values
   const [title, setTitle] = useState(ad.title ?? '')
   const [caption, setCaption] = useState(ad.caption)
@@ -214,6 +216,7 @@ export default function ContentModal({ ad, onClose, onCaptionUpdate, onTitleUpda
   const [downloading, setDownloading] = useState(false)
   const [showFullPreview, setShowFullPreview] = useState(false)
   const [showSaveAsTemplate, setShowSaveAsTemplate] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
 
   // Delete state
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -485,6 +488,13 @@ export default function ContentModal({ ad, onClose, onCaptionUpdate, onTitleUpda
               className="flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-forest/5 hover:border-forest/40 hover:text-forest transition-colors"
             >
               <BookmarkIcon /><span>Template</span>
+            </button>
+            <button
+              onClick={() => setShowEditModal(true)}
+              title="Iterate on this ad"
+              className="flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-rust/5 hover:border-rust/40 hover:text-rust transition-colors"
+            >
+              <IterateIcon /><span>Iterate</span>
             </button>
             {!confirmDelete ? (
               <button
@@ -845,6 +855,17 @@ export default function ContentModal({ ad, onClose, onCaptionUpdate, onTitleUpda
       <TemplatePortal ad={ad} onClose={() => setShowSaveAsTemplate(false)} />
     )}
 
+    {showEditModal && onIterationCreated && (
+      <EditAdModal
+        ad={ad}
+        onClose={() => setShowEditModal(false)}
+        onIterationCreated={(newAd) => {
+          onIterationCreated(newAd)
+          setShowEditModal(false)
+        }}
+      />
+    )}
+
     {/* Full-size image lightbox */}
     {showFullPreview && ad.signedUrl && (
       <div
@@ -958,6 +979,17 @@ function BookmarkIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
       <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+    </svg>
+  )
+}
+
+function IterateIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
+      <polyline points="17 1 21 5 17 9" />
+      <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+      <polyline points="7 23 3 19 7 15" />
+      <path d="M21 13v2a4 4 0 0 1-4 4H3" />
     </svg>
   )
 }
