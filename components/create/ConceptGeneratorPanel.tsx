@@ -32,7 +32,7 @@ export default function ConceptGeneratorPanel() {
       const res = await fetch('/api/upload-library-image', { method: 'POST', body: fd })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Upload failed')
-      setUploadedUrl(json.signedUrl ?? json.url ?? null)
+      setUploadedUrl(json.ad?.signedUrl ?? json.signedUrl ?? json.url ?? null)
     } catch (err: any) {
       setError(err.message)
     } finally {

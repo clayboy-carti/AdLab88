@@ -25,7 +25,7 @@ export default function ReverseEngineerPanel() {
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Upload failed')
       // Get a signed URL for the uploaded image
-      setUploadedUrl(json.signedUrl ?? json.url ?? null)
+      setUploadedUrl(json.ad?.signedUrl ?? json.signedUrl ?? json.url ?? null)
     } catch (err: any) {
       setError(err.message)
     } finally {
