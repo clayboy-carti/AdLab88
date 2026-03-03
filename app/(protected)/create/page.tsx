@@ -25,6 +25,30 @@ const CONTENT_TYPES = [
       'Pick any image from your library or upload a new one. Add a motion prompt and Grok Video turns it into a 5-second cinematic clip.',
     badge: 'Grok Video · 5s',
   },
+  {
+    href: '/create/compose',
+    tag: '[ PROMPT COMPOSER ]',
+    title: 'Prompt Composer',
+    description:
+      'Combine your brand intelligence profile, brand assets, and campaign goal into a precise image generation prompt — ready to use in Ad Generation.',
+    badge: 'AI · Brand-aware',
+  },
+  {
+    href: '/create/reverse',
+    tag: '[ REVERSE ENGINEER ]',
+    title: 'Reverse Engineer',
+    description:
+      'Upload or link a winning ad. Extract its style DNA, copy formula, and 3 ready-to-use variant prompts — then apply them to your brand.',
+    badge: 'Vision · 3+ Variants',
+  },
+  {
+    href: '/create/campaign',
+    tag: '[ CAMPAIGN BUILDER ]',
+    title: 'Campaign Builder',
+    description:
+      'Select intelligence profiles and brand assets, set a campaign goal, and generate a full batch of strategic ads — one per persona angle.',
+    badge: 'Multi-ad · Batch',
+  },
 ]
 
 export default function CreatePage() {
