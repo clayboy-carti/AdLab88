@@ -9,7 +9,7 @@ function getGemini(): GoogleGenAI {
   return _gemini
 }
 
-const VISION_MODEL = 'gemini-2.0-flash-001'
+const VISION_MODEL = 'gemini-2.5-flash'
 
 export interface ConceptDirection {
   type: string
