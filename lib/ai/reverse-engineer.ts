@@ -61,7 +61,10 @@ Return ONLY valid JSON.`
     response_format: { type: 'json_object' },
   })
 
-  const content = response.choices[0]?.message?.content
+  const msg = response.choices[0]?.message
+  if (!msg) throw new Error('No response from OpenAI')
+  if (msg.refusal) throw new Error(`OpenAI refused: ${msg.refusal}`)
+  const content = msg.content
   if (!content) throw new Error('No content from OpenAI')
 
   const parsed = JSON.parse(content)

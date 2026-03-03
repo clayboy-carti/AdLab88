@@ -38,6 +38,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'image_url or ad_id is required' }, { status: 400 })
     }
 
+    // Convert to base64 data URL so OpenAI doesn't need to fetch from an
+    // external URL (Supabase signed URLs can be unreachable from OpenAI servers).
+    try {
+      const imgRes = await fetch(imageUrl)
+      if (imgRes.ok) {
+        const mime = imgRes.headers.get('content-type') ?? 'image/jpeg'
+        const buf = await imgRes.arrayBuffer()
+        imageUrl = `data:${mime};base64,${Buffer.from(buf).toString('base64')}`
+      }
+    } catch {
+      // If fetch fails, fall through with the original URL
+    }
+
     // Fetch brand
     const { data: brand, error: brandError } = await supabase
       .from('brands')

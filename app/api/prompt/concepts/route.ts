@@ -38,6 +38,21 @@ export async function POST(request: Request) {
       }
     }
 
+    // Convert to base64 data URL so OpenAI doesn't need to fetch from an
+    // external URL (Supabase signed URLs can be unreachable from OpenAI servers).
+    if (referenceUrl) {
+      try {
+        const imgRes = await fetch(referenceUrl)
+        if (imgRes.ok) {
+          const mime = imgRes.headers.get('content-type') ?? 'image/jpeg'
+          const buf = await imgRes.arrayBuffer()
+          referenceUrl = `data:${mime};base64,${Buffer.from(buf).toString('base64')}`
+        }
+      } catch {
+        // If fetch fails, fall through with the original URL
+      }
+    }
+
     // Fetch brand
     const { data: brand, error: brandError } = await supabase
       .from('brands')
