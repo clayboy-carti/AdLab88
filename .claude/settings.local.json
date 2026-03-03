@@ -22,7 +22,12 @@
       "Bash(done)",
       "WebFetch(domain:replicate.com)",
       "WebFetch(domain:docs.getlate.dev)",
-      "WebFetch(domain:getlate.dev)"
+      "WebFetch(domain:getlate.dev)",
+      "mcp__Vercel__deploy_to_vercel",
+      "mcp__Vercel__list_teams",
+      "mcp__Vercel__list_projects",
+      "mcp__Vercel__list_deployments",
+      "mcp__Vercel__get_access_to_vercel_url"
     ]
   },
   "enableAllProjectMcpServers": true,
