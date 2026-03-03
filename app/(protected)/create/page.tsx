@@ -42,6 +42,14 @@ const CONTENT_TYPES = [
     badge: 'Vision · 3+ Variants',
   },
   {
+    href: '/create/concepts',
+    tag: '[ CONCEPT GENERATOR ]',
+    title: 'Concept Generator',
+    description:
+      'Describe your campaign context and get 5 distinct creative directions — each with a format type, audience stage, strategic angle, and a ready-to-use prompt.',
+    badge: '5 Concepts · AI',
+  },
+  {
     href: '/create/campaign',
     tag: '[ CAMPAIGN BUILDER ]',
     title: 'Campaign Builder',
