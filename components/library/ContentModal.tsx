@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Ad } from './AdCard'
 import type { LateAccount, LatePlatform } from '@/lib/late'
+import SaveAsTemplateModal from './SaveAsTemplateModal'
 
 interface ContentModalProps {
   ad: Ad
@@ -212,6 +213,7 @@ export default function ContentModal({ ad, onClose, onCaptionUpdate, onTitleUpda
 
   const [downloading, setDownloading] = useState(false)
   const [showFullPreview, setShowFullPreview] = useState(false)
+  const [showSaveAsTemplate, setShowSaveAsTemplate] = useState(false)
 
   // Delete state
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -476,6 +478,13 @@ export default function ContentModal({ ad, onClose, onCaptionUpdate, onTitleUpda
               className="flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {downloading ? <span className="font-mono">...</span> : <><DownloadIcon /><span>Download</span></>}
+            </button>
+            <button
+              onClick={() => setShowSaveAsTemplate(true)}
+              title="Save as template"
+              className="flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-forest/5 hover:border-forest/40 hover:text-forest transition-colors"
+            >
+              <BookmarkIcon /><span>Template</span>
             </button>
             {!confirmDelete ? (
               <button
@@ -832,6 +841,11 @@ export default function ContentModal({ ad, onClose, onCaptionUpdate, onTitleUpda
     </div>
 
     {/* Full-size image lightbox */}
+    {showSaveAsTemplate && (
+      <TemplatePortal ad={ad} onClose={() => setShowSaveAsTemplate(false)} />
+    )}
+
+    {/* Full-size image lightbox */}
     {showFullPreview && ad.signedUrl && (
       <div
         className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4 cursor-zoom-out"
@@ -854,6 +868,19 @@ export default function ContentModal({ ad, onClose, onCaptionUpdate, onTitleUpda
       </div>
     )}
     </>
+  )
+}
+
+// ─── Save as Template Modal ────────────────────────────────────────────────────
+
+function TemplatePortal({ ad, onClose }: { ad: Ad; onClose: () => void }) {
+  return (
+    <SaveAsTemplateModal
+      adId={ad.id}
+      defaultName={ad.title ?? ad.hook ?? ''}
+      onSaved={() => {}}
+      onClose={onClose}
+    />
   )
 }
 
@@ -923,6 +950,14 @@ function TrashIcon() {
       <path d="M10 11v6" />
       <path d="M14 11v6" />
       <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+    </svg>
+  )
+}
+
+function BookmarkIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
     </svg>
   )
 }
