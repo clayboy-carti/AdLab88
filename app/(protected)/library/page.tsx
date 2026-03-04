@@ -67,7 +67,7 @@ export default async function LibraryPage() {
       .createSignedUrls(stalePaths, 604800)
 
     if (signedUrlData) {
-      freshUrlMap = new Map(signedUrlData.map((item) => [item.path, item.signedUrl]))
+      freshUrlMap = new Map(signedUrlData.filter((item) => item.path != null).map((item) => [item.path!, item.signedUrl]))
 
       // Persist fresh URLs back to DB so next load reuses them
       const newExpiry = new Date(Date.now() + 604800 * 1000).toISOString()
