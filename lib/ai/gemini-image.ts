@@ -159,7 +159,7 @@ export async function generateImageWithGemini(
       const supabase = createClient()
       const { data: signedUrlData } = await supabase.storage
         .from('generated-ads')
-        .createSignedUrl(storagePath, 3600)
+        .createSignedUrl(storagePath, 604800)
 
       return {
         storagePath,

@@ -58,7 +58,7 @@ export async function POST(request: Request) {
         const paths = assets.map((a) => a.storage_path)
         const { data: signedUrls } = await supabase.storage
           .from('brand-assets')
-          .createSignedUrls(paths, 3600)
+          .createSignedUrls(paths, 604800)
 
         assetUrls = signedUrls?.map((s) => s.signedUrl).filter(Boolean) ?? []
       }

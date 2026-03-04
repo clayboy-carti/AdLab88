@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     // Create a signed URL valid for 1 hour so the client can play the video immediately
     const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from('generated-ads')
-      .createSignedUrl(storagePath, 3600)
+      .createSignedUrl(storagePath, 604800)
 
     if (signedUrlError || !signedUrlData?.signedUrl) {
       console.error('[generate-video] Signed URL error:', signedUrlError)

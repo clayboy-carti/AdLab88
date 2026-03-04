@@ -54,7 +54,7 @@ export default async function LibraryPage() {
   const allPaths = [...adPaths, ...videoPaths]
 
   const { data: signedUrlData } = allPaths.length > 0
-    ? await supabase.storage.from('generated-ads').createSignedUrls(allPaths, 3600)
+    ? await supabase.storage.from('generated-ads').createSignedUrls(allPaths, 604800)
     : { data: [] }
 
   const urlMap = new Map(

@@ -58,7 +58,7 @@ export default async function AnalyticsPage() {
     .filter(Boolean) as string[]
 
   const { data: signedUrlData } = storagePaths.length > 0
-    ? await supabase.storage.from('generated-ads').createSignedUrls(storagePaths, 3600)
+    ? await supabase.storage.from('generated-ads').createSignedUrls(storagePaths, 604800)
     : { data: [] }
 
   const urlMap = new Map(

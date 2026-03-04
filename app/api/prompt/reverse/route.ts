@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       if (ad?.storage_path) {
         const { data: signedUrlData } = await supabase.storage
           .from('generated-ads')
-          .createSignedUrl(ad.storage_path, 3600)
+          .createSignedUrl(ad.storage_path, 604800)
         imageUrl = signedUrlData?.signedUrl ?? null
       }
     }

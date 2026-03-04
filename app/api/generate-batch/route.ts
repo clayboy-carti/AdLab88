@@ -89,7 +89,7 @@ export async function POST(request: Request) {
     if (hasReference) {
       const { data: signedUrlData, error: urlError } = await supabase.storage
         .from('reference-images')
-        .createSignedUrl(referenceImage!.storage_path, 3600)
+        .createSignedUrl(referenceImage!.storage_path, 604800)
 
       if (urlError || !signedUrlData?.signedUrl) {
         return NextResponse.json({ error: 'Failed to access reference image' }, { status: 500 })
@@ -216,7 +216,7 @@ export async function POST(request: Request) {
         if (!v.storagePath) return Promise.resolve(null)
         return supabase.storage
           .from('generated-ads')
-          .createSignedUrl(v.storagePath, 3600)
+          .createSignedUrl(v.storagePath, 604800)
       })
     )
 

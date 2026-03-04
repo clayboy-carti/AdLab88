@@ -33,7 +33,7 @@ export async function GET() {
     const paths = assets.map((a) => a.storage_path)
     const { data: signedUrls, error: urlError } = await supabase.storage
       .from('brand-assets')
-      .createSignedUrls(paths, 3600)
+      .createSignedUrls(paths, 604800)
 
     if (urlError) {
       console.error('[BrandAssets] Signed URL error:', urlError)
@@ -111,7 +111,7 @@ export async function POST(request: Request) {
 
     const { data: signedUrlData } = await supabase.storage
       .from('brand-assets')
-      .createSignedUrl(storagePath, 3600)
+      .createSignedUrl(storagePath, 604800)
 
     return NextResponse.json(
       { asset: { ...asset, url: signedUrlData?.signedUrl ?? null } },

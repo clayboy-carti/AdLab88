@@ -28,7 +28,7 @@ export async function GET() {
     const paths = templates.map((t) => t.storage_path)
     const { data: signedUrls, error: urlError } = await supabase.storage
       .from('generated-ads')
-      .createSignedUrls(paths, 3600)
+      .createSignedUrls(paths, 604800)
 
     if (urlError) {
       console.error('[Templates] Signed URL error:', urlError)

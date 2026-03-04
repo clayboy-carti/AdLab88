@@ -78,7 +78,7 @@ export async function POST(request: Request) {
         const paths = assets.map((a) => a.storage_path)
         const { data: signedUrls } = await supabase.storage
           .from('brand-assets')
-          .createSignedUrls(paths, 3600)
+          .createSignedUrls(paths, 604800)
 
         if (signedUrls) {
           const urlMap = new Map(signedUrls.map((su) => [su.path, su.signedUrl]))
@@ -146,7 +146,7 @@ export async function POST(request: Request) {
         // Get signed URL for preview
         const { data: signedUrlData } = await supabase.storage
           .from('generated-ads')
-          .createSignedUrl(generatedImage.storagePath, 3600)
+          .createSignedUrl(generatedImage.storagePath, 604800)
 
         return {
           adId: adRecord.id,

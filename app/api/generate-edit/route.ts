@@ -78,7 +78,7 @@ export async function POST(request: Request) {
     if (sourceAd.storage_path) {
       const { data: signedUrlData } = await supabase.storage
         .from('generated-ads')
-        .createSignedUrl(sourceAd.storage_path, 3600)
+        .createSignedUrl(sourceAd.storage_path, 604800)
       referenceUrl = signedUrlData?.signedUrl ?? null
     }
 
@@ -127,7 +127,7 @@ export async function POST(request: Request) {
 
     const { data: signedUrlData } = await supabase.storage
       .from('generated-ads')
-      .createSignedUrl(generatedImage.storagePath, 3600)
+      .createSignedUrl(generatedImage.storagePath, 604800)
 
     return NextResponse.json(
       {

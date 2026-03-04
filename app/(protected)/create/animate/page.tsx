@@ -64,7 +64,7 @@ function AnimateContent() {
         if (paths.length === 0) { setLibraryLoading(false); return }
         const { data: signed } = await supabase.storage
           .from('generated-ads')
-          .createSignedUrls(paths, 3600)
+          .createSignedUrls(paths, 604800)
         const urlMap = new Map((signed ?? []).map((s) => [s.path, s.signedUrl]))
         const images = data
           .filter((d) => d.storage_path && urlMap.get(d.storage_path))

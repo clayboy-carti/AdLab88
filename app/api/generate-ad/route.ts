@@ -95,7 +95,7 @@ export async function POST(request: Request) {
           const paths = refImgs.map((img) => img.storage_path)
           const { data: signedUrlData, error: urlError } = await supabase.storage
             .from('reference-images')
-            .createSignedUrls(paths, 3600)
+            .createSignedUrls(paths, 604800)
 
           if (urlError || !signedUrlData) {
             console.error('[Generate] Failed to create signed URLs:', urlError)
@@ -127,7 +127,7 @@ export async function POST(request: Request) {
       if (referenceImage) {
         const { data: signedUrlData, error: urlError } = await supabase.storage
           .from('reference-images')
-          .createSignedUrl(referenceImage.storage_path, 3600)
+          .createSignedUrl(referenceImage.storage_path, 604800)
 
         if (urlError || !signedUrlData?.signedUrl) {
           console.error('[Generate] Failed to create signed URL:', urlError)
@@ -289,7 +289,7 @@ export async function POST(request: Request) {
     // 10. Generate signed URL for the generated image (for immediate preview)
     const { data: generatedSignedUrl } = await supabase.storage
       .from('generated-ads')
-      .createSignedUrl(generatedImage.storagePath, 3600)
+      .createSignedUrl(generatedImage.storagePath, 604800)
 
     // 11. Return complete ad record with signed URL
     console.log('[Generate] === GENERATION COMPLETE ===')
