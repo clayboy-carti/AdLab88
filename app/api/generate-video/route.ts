@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     if (sourceAd.storage_path) {
       const { data: signedData, error: signedError } = await supabase.storage
         .from('generated-ads')
-        .createSignedUrl(sourceAd.storage_path, 600) // 10-min window
+        .createSignedUrl(sourceAd.storage_path, 604800)
       if (signedError || !signedData?.signedUrl) {
         console.warn('[generate-video] Could not create signed URL, falling back to text-to-video:', signedError?.message)
       } else {
