@@ -286,10 +286,18 @@ export async function POST(request: Request) {
     console.log('[Generate] ✅ Ad saved to database')
     console.log(`[Generate] Ad ID: ${adRecord.id}`)
 
-    // 10. Generate signed URL for the generated image (for immediate preview)
+    // 10. Generate signed URL for the generated image (for immediate preview) and persist it
     const { data: generatedSignedUrl } = await supabase.storage
       .from('generated-ads')
       .createSignedUrl(generatedImage.storagePath, 604800)
+
+    if (generatedSignedUrl?.signedUrl) {
+      const expiresAt = new Date(Date.now() + 604800 * 1000).toISOString()
+      await supabase.from('generated_ads').update({
+        signed_url: generatedSignedUrl.signedUrl,
+        signed_url_expires_at: expiresAt,
+      }).eq('id', adRecord.id)
+    }
 
     // 11. Return complete ad record with signed URL
     console.log('[Generate] === GENERATION COMPLETE ===')
