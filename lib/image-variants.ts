@@ -30,7 +30,6 @@ const VARIANTS = [
  */
 function tryLoadSharp(): typeof import('sharp') | null {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     return require('sharp')
   } catch {
     return null
