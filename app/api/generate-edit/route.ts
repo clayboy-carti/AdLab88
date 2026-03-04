@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/ai/gemini-image'
 import { buildReplicatePrompt } from '@/lib/ai/image-prompt-builder-replicate'
+import { generateImageVariants } from '@/lib/image-variants'
 import type { Brand } from '@/types/database'
 import type { GeneratedAd } from '@/lib/validations/generation'
 
@@ -128,6 +129,20 @@ export async function POST(request: Request) {
     const { data: signedUrlData } = await supabase.storage
       .from('generated-ads')
       .createSignedUrl(generatedImage.storagePath, 604800)
+
+    if (signedUrlData?.signedUrl) {
+      const expiresAt = new Date(Date.now() + 604800 * 1000).toISOString()
+      await supabase.from('generated_ads').update({
+        signed_url: signedUrlData.signedUrl,
+        signed_url_expires_at: expiresAt,
+      }).eq('id', adRecord.id)
+    }
+
+    // Generate image variants (no-op if sharp not installed)
+    const variants = await generateImageVariants(generatedImage.storagePath, user.id)
+    if (variants.thumb_path || variants.preview_512_path || variants.preview_1024_path) {
+      await supabase.from('generated_ads').update(variants).eq('id', adRecord.id)
+    }
 
     return NextResponse.json(
       {
