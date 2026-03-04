@@ -19,7 +19,7 @@ export default async function LibraryPage() {
   const [adsResult, videosResult, foldersResult] = await Promise.all([
     supabase
       .from('generated_ads')
-      .select('id, user_id, batch_id, positioning_angle, hook, caption, cta, storage_path, framework_applied, target_platform, created_at, image_quality, aspect_ratio, folder_id, title, signed_url, signed_url_expires_at')
+      .select('id, user_id, batch_id, positioning_angle, hook, caption, cta, storage_path, framework_applied, target_platform, created_at, image_quality, aspect_ratio, folder_id, title, signed_url, signed_url_expires_at, thumb_path, preview_1024_path')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false }),
     supabase
@@ -86,11 +86,20 @@ export default async function LibraryPage() {
     }
   }
 
+  // Build stable public URLs for variant images (no signing required)
+  function publicVariantUrl(path: string | null | undefined): string | null {
+    if (!path) return null
+    const { data } = supabase.storage.from('generated-ads-public').getPublicUrl(path)
+    return data.publicUrl
+  }
+
   const adsWithUrls = adList.map((ad) => ({
     ...ad,
     signedUrl: ad.storage_path
       ? (freshUrlMap.get(ad.storage_path) ?? ad.signed_url ?? null)
       : null,
+    thumbUrl: publicVariantUrl(ad.thumb_path),
+    previewUrl: publicVariantUrl(ad.preview_1024_path),
   }))
 
   const videosWithUrls = videoList.map((video) => ({

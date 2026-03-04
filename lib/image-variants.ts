@@ -1,8 +1,10 @@
 /**
  * image-variants.ts
  *
- * Generates resized variants (thumb, 512, 1024) of a generated ad and stores
- * them in the `generated-ads` bucket under the same user folder.
+ * Generates resized variants (thumb, 512, 1024) of a generated ad.
+ * Originals stay in the private `generated-ads` bucket.
+ * Variants are uploaded to the PUBLIC `generated-ads-public` bucket so the
+ * grid and modal can use stable, CDN-cacheable public URLs — no signing needed.
  *
  * Requires `sharp` to be installed. If sharp is not available (e.g. on dev
  * machines without native binaries), this module silently no-ops and returns
@@ -93,7 +95,7 @@ export async function generateImageVariants(
       const variantPath = `${basePath}_${suffix}.webp`
 
       const { error: uploadError } = await supabase.storage
-        .from('generated-ads')
+        .from('generated-ads-public')
         .upload(variantPath, resized, {
           contentType: 'image/webp',
           upsert: true,

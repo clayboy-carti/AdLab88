@@ -476,7 +476,7 @@ export default function ContentModal({ ad, onClose, onCaptionUpdate, onTitleUpda
           <div className="flex items-center gap-2">
             <button
               onClick={handleDownload}
-              disabled={downloading || !ad.signedUrl}
+              disabled={downloading || !ad.storage_path}
               title="Download image"
               className="flex items-center gap-1.5 text-xs font-mono uppercase border border-outline px-3 py-1.5 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
@@ -538,11 +538,11 @@ export default function ContentModal({ ad, onClose, onCaptionUpdate, onTitleUpda
         {/* Image + Publish To + Calendar — 3 columns */}
         <div className="flex border-b border-outline flex-shrink-0 min-h-[280px]">
 
-          {/* Left: image preview */}
+          {/* Left: image preview — prefer 1024 public variant; fall back to signed URL */}
           <div className="flex-1 border-r border-outline flex items-center justify-center bg-gray-50 relative group">
-            {ad.signedUrl ? (
+            {(ad.previewUrl ?? ad.signedUrl) ? (
               <>
-                <img src={ad.signedUrl} alt={ad.hook} className="max-h-[45vh] w-auto max-w-full object-contain" />
+                <img src={(ad.previewUrl ?? ad.signedUrl)!} alt={ad.hook} className="max-h-[45vh] w-auto max-w-full object-contain" />
                 <button
                   onClick={() => setShowFullPreview(true)}
                   className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 border border-outline p-1.5 hover:border-graphite hover:bg-white"
@@ -866,8 +866,8 @@ export default function ContentModal({ ad, onClose, onCaptionUpdate, onTitleUpda
       />
     )}
 
-    {/* Full-size image lightbox */}
-    {showFullPreview && ad.signedUrl && (
+    {/* Full-size image lightbox — prefer 1024 public variant; fall back to signed URL */}
+    {showFullPreview && (ad.previewUrl ?? ad.signedUrl) && (
       <div
         className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4 cursor-zoom-out"
         onClick={() => setShowFullPreview(false)}
@@ -881,7 +881,7 @@ export default function ContentModal({ ad, onClose, onCaptionUpdate, onTitleUpda
         </button>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={ad.signedUrl}
+          src={(ad.previewUrl ?? ad.signedUrl)!}
           alt={ad.hook}
           className="max-h-full max-w-full object-contain"
           onClick={(e) => e.stopPropagation()}
