@@ -7,6 +7,7 @@ import {
   buildReplicatePrompt,
   detectMemeTemplate,
 } from '@/lib/ai'
+import { generateImageVariants } from '@/lib/image-variants'
 import type { MemeContext } from '@/lib/ai/meme-detector'
 import type { Brand } from '@/types/database'
 import type { GeneratedAd } from '@/lib/validations/generation'
@@ -95,7 +96,7 @@ export async function POST(request: Request) {
           const paths = refImgs.map((img) => img.storage_path)
           const { data: signedUrlData, error: urlError } = await supabase.storage
             .from('reference-images')
-            .createSignedUrls(paths, 3600)
+            .createSignedUrls(paths, 604800)
 
           if (urlError || !signedUrlData) {
             console.error('[Generate] Failed to create signed URLs:', urlError)
@@ -127,7 +128,7 @@ export async function POST(request: Request) {
       if (referenceImage) {
         const { data: signedUrlData, error: urlError } = await supabase.storage
           .from('reference-images')
-          .createSignedUrl(referenceImage.storage_path, 3600)
+          .createSignedUrl(referenceImage.storage_path, 604800)
 
         if (urlError || !signedUrlData?.signedUrl) {
           console.error('[Generate] Failed to create signed URL:', urlError)
@@ -286,10 +287,28 @@ export async function POST(request: Request) {
     console.log('[Generate] ✅ Ad saved to database')
     console.log(`[Generate] Ad ID: ${adRecord.id}`)
 
-    // 10. Generate signed URL for the generated image (for immediate preview)
+    // 10. Generate signed URL for the generated image (for immediate preview) and persist it
     const { data: generatedSignedUrl } = await supabase.storage
       .from('generated-ads')
-      .createSignedUrl(generatedImage.storagePath, 3600)
+      .createSignedUrl(generatedImage.storagePath, 604800)
+
+    if (generatedSignedUrl?.signedUrl) {
+      const expiresAt = new Date(Date.now() + 604800 * 1000).toISOString()
+      await supabase.from('generated_ads').update({
+        signed_url: generatedSignedUrl.signedUrl,
+        signed_url_expires_at: expiresAt,
+      }).eq('id', adRecord.id)
+    }
+
+    // 10b. Generate image variants (thumb / 512 / 1024) — no-op if sharp not installed
+    console.log('[Generate] === PHASE 4b: Generating image variants ===')
+    const variants = await generateImageVariants(generatedImage.storagePath, user.id)
+    if (variants.thumb_path || variants.preview_512_path || variants.preview_1024_path) {
+      await supabase.from('generated_ads').update(variants).eq('id', adRecord.id)
+      console.log('[Generate] ✅ Variants saved')
+    } else {
+      console.log('[Generate] Variants skipped (sharp not available or processing failed)')
+    }
 
     // 11. Return complete ad record with signed URL
     console.log('[Generate] === GENERATION COMPLETE ===')

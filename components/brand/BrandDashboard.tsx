@@ -11,7 +11,10 @@ import {
   parseColors,
 } from '@/lib/validations/brand'
 import type { Brand, BrandDNA } from '@/types/database'
+import BrandAssetsTab from './BrandAssetsTab'
+import BrandIntelligenceTab from './BrandIntelligenceTab'
 
+type Tab = 'dna' | 'assets' | 'intelligence'
 type Section = 'core' | 'voice' | 'snapshot' | 'visual'
 type RescanStep = 'input' | 'scanning' | 'review'
 
@@ -47,6 +50,7 @@ function formatDate(dateStr: string) {
 }
 
 export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
+  const [activeTab, setActiveTab] = useState<Tab>('dna')
   const [brand, setBrand] = useState(initial)
   const [editingSection, setEditingSection] = useState<Section | null>(null)
   const [saving, setSaving] = useState(false)
@@ -250,6 +254,35 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
           )}
         </div>
       </div>
+
+      {/* ── TAB BAR ───────────────────────────────────────────────── */}
+      <div className="flex gap-0 border-b border-forest/15 mb-6">
+        {([
+          { key: 'dna', label: 'Brand DNA' },
+          { key: 'assets', label: 'Assets' },
+          { key: 'intelligence', label: 'Intelligence' },
+        ] as { key: Tab; label: string }[]).map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveTab(tab.key)}
+            className={`font-mono text-xs uppercase tracking-widest px-4 py-2.5 border-b-2 transition-colors ${
+              activeTab === tab.key
+                ? 'border-forest text-forest'
+                : 'border-transparent text-graphite/40 hover:text-forest'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── NON-DNA TABS ──────────────────────────────────────────── */}
+      {activeTab === 'assets' && <BrandAssetsTab />}
+      {activeTab === 'intelligence' && <BrandIntelligenceTab />}
+
+      {/* ── DNA TAB CONTENT ───────────────────────────────────────── */}
+      {activeTab === 'dna' && <>
 
       {saveError && <p className="text-xs text-rust font-mono mb-4">{saveError}</p>}
 
@@ -778,6 +811,8 @@ export default function BrandDashboard({ brand: initial }: { brand: Brand }) {
         )}
 
       </div>
+
+      </>}
     </>
   )
 }

@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     if (sourceAd.storage_path) {
       const { data: signedData, error: signedError } = await supabase.storage
         .from('generated-ads')
-        .createSignedUrl(sourceAd.storage_path, 600) // 10-min window
+        .createSignedUrl(sourceAd.storage_path, 604800)
       if (signedError || !signedData?.signedUrl) {
         console.warn('[generate-video] Could not create signed URL, falling back to text-to-video:', signedError?.message)
       } else {
@@ -67,7 +67,19 @@ export async function POST(req: NextRequest) {
 
     const { storagePath, videoUrl } = await generateVideoWithGrok(videoPrompt, user.id, sourceImageUrl, aspect_ratio)
 
-    // Save record to generated_videos table
+    // Create signed URL before insert so it can be persisted immediately
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+      .from('generated-ads')
+      .createSignedUrl(storagePath, 604800)
+
+    if (signedUrlError || !signedUrlData?.signedUrl) {
+      console.error('[generate-video] Signed URL error:', signedUrlError)
+      return NextResponse.json({ error: 'Failed to create video URL' }, { status: 500 })
+    }
+
+    const signedUrlExpiresAt = new Date(Date.now() + 604800 * 1000).toISOString()
+
+    // Save record to generated_videos table (including signed URL for caching)
     const { data: videoRecord, error: insertError } = await supabase
       .from('generated_videos')
       .insert({
@@ -77,6 +89,8 @@ export async function POST(req: NextRequest) {
         storage_path: storagePath,
         content_type: 'product_video',
         title: title?.trim() || null,
+        signed_url: signedUrlData.signedUrl,
+        signed_url_expires_at: signedUrlExpiresAt,
       })
       .select()
       .single()
@@ -84,16 +98,6 @@ export async function POST(req: NextRequest) {
     if (insertError) {
       console.error('[generate-video] DB insert error:', insertError)
       return NextResponse.json({ error: 'Failed to save video record' }, { status: 500 })
-    }
-
-    // Create a signed URL valid for 1 hour so the client can play the video immediately
-    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-      .from('generated-ads')
-      .createSignedUrl(storagePath, 3600)
-
-    if (signedUrlError || !signedUrlData?.signedUrl) {
-      console.error('[generate-video] Signed URL error:', signedUrlError)
-      return NextResponse.json({ error: 'Failed to create video URL' }, { status: 500 })
     }
 
     console.log('[generate-video] ✅ Complete')

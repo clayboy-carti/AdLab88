@@ -19,12 +19,12 @@ export default async function LibraryPage() {
   const [adsResult, videosResult, foldersResult] = await Promise.all([
     supabase
       .from('generated_ads')
-      .select('id, user_id, batch_id, positioning_angle, hook, caption, cta, storage_path, framework_applied, target_platform, created_at, image_quality, aspect_ratio, folder_id, title')
+      .select('id, user_id, batch_id, positioning_angle, hook, caption, cta, storage_path, framework_applied, target_platform, created_at, image_quality, aspect_ratio, folder_id, title, signed_url, signed_url_expires_at, thumb_path, preview_1024_path')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false }),
     supabase
       .from('generated_videos')
-      .select('id, source_ad_id, motion_prompt, storage_path, created_at, folder_id, title')
+      .select('id, source_ad_id, motion_prompt, storage_path, created_at, folder_id, title, signed_url, signed_url_expires_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false }),
     supabase
@@ -48,27 +48,65 @@ export default async function LibraryPage() {
   const videoList = videosResult.data ?? []
   const folderList = foldersResult.data ?? []
 
-  // Generate signed URLs for ads and videos in parallel
-  const adPaths = adList.map((ad) => ad.storage_path).filter(Boolean) as string[]
-  const videoPaths = videoList.map((v) => v.storage_path).filter(Boolean) as string[]
-  const allPaths = [...adPaths, ...videoPaths]
+  // Only regenerate signed URLs that are missing or expiring within 1 day
+  const refreshThreshold = new Date(Date.now() + 24 * 60 * 60 * 1000)
+  const isStale = (item: { signed_url?: string | null; signed_url_expires_at?: string | null }) =>
+    !item.signed_url || !item.signed_url_expires_at || new Date(item.signed_url_expires_at) < refreshThreshold
 
-  const { data: signedUrlData } = allPaths.length > 0
-    ? await supabase.storage.from('generated-ads').createSignedUrls(allPaths, 3600)
-    : { data: [] }
+  const staleAds = adList.filter((ad) => ad.storage_path && isStale(ad))
+  const staleVideos = videoList.filter((v) => v.storage_path && isStale(v))
+  const stalePaths = [
+    ...staleAds.map((ad) => ad.storage_path as string),
+    ...staleVideos.map((v) => v.storage_path as string),
+  ]
 
-  const urlMap = new Map(
-    (signedUrlData ?? []).map((item) => [item.path, item.signedUrl])
-  )
+  let freshUrlMap = new Map<string, string>()
+  if (stalePaths.length > 0) {
+    const { data: signedUrlData } = await supabase.storage
+      .from('generated-ads')
+      .createSignedUrls(stalePaths, 604800)
+
+    if (signedUrlData) {
+      freshUrlMap = new Map(signedUrlData.filter((item) => item.path != null).map((item) => [item.path!, item.signedUrl]))
+
+      // Persist fresh URLs back to DB so next load reuses them
+      const newExpiry = new Date(Date.now() + 604800 * 1000).toISOString()
+      await Promise.all([
+        ...staleAds.map((ad) => {
+          const url = freshUrlMap.get(ad.storage_path!)
+          if (!url) return Promise.resolve()
+          return supabase.from('generated_ads').update({ signed_url: url, signed_url_expires_at: newExpiry }).eq('id', ad.id)
+        }),
+        ...staleVideos.map((v) => {
+          const url = freshUrlMap.get(v.storage_path!)
+          if (!url) return Promise.resolve()
+          return supabase.from('generated_videos').update({ signed_url: url, signed_url_expires_at: newExpiry }).eq('id', v.id)
+        }),
+      ])
+    }
+  }
+
+  // Build stable public URLs for variant images (no signing required)
+  function publicVariantUrl(path: string | null | undefined): string | null {
+    if (!path) return null
+    const { data } = supabase.storage.from('generated-ads-public').getPublicUrl(path)
+    return data.publicUrl
+  }
 
   const adsWithUrls = adList.map((ad) => ({
     ...ad,
-    signedUrl: ad.storage_path ? (urlMap.get(ad.storage_path) ?? null) : null,
+    signedUrl: ad.storage_path
+      ? (freshUrlMap.get(ad.storage_path) ?? ad.signed_url ?? null)
+      : null,
+    thumbUrl: publicVariantUrl(ad.thumb_path),
+    previewUrl: publicVariantUrl(ad.preview_1024_path),
   }))
 
   const videosWithUrls = videoList.map((video) => ({
     ...video,
-    signedUrl: video.storage_path ? (urlMap.get(video.storage_path) ?? null) : null,
+    signedUrl: video.storage_path
+      ? (freshUrlMap.get(video.storage_path) ?? video.signed_url ?? null)
+      : null,
   }))
 
   const totalCount = adsWithUrls.length + videosWithUrls.length

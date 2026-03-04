@@ -42,7 +42,7 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: Props) {
       const paths = data.map((img) => img.storage_path)
       const { data: urlData } = await supabase.storage
         .from('reference-images')
-        .createSignedUrls(paths, 3600)
+        .createSignedUrls(paths, 604800)
 
       const urlMap = new Map(
         (urlData ?? []).map((item) => [item.path, item.signedUrl])
@@ -80,7 +80,7 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: Props) {
 
       const { data: signedUrlData } = await supabase.storage
         .from('reference-images')
-        .createSignedUrl(result.image.storage_path, 3600)
+        .createSignedUrl(result.image.storage_path, 604800)
 
       e.target.value = ''
       await loadImages()

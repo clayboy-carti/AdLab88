@@ -27,7 +27,10 @@
       "mcp__Vercel__list_teams",
       "mcp__Vercel__list_projects",
       "mcp__Vercel__list_deployments",
-      "mcp__Vercel__get_access_to_vercel_url"
+      "mcp__Vercel__get_access_to_vercel_url",
+      "mcp__Supabase__list_projects",
+      "mcp__Supabase__apply_migration",
+      "mcp__Supabase__restore_project"
     ]
   },
   "enableAllProjectMcpServers": true,

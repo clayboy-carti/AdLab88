@@ -505,13 +505,13 @@ export default function LandingPage() {
             <span className="font-mono font-bold text-paper text-sm tracking-widest uppercase">AdLab 88</span>
           </div>
           <div className="flex items-center gap-5">
-            <Link href="#how-it-works" className="hidden md:block font-mono text-[10px] uppercase tracking-widest text-paper/50 hover:text-paper/80 transition-colors">
+            <Link href="#how-it-works" className="hidden md:block font-mono text-xs uppercase tracking-widest text-rust hover:text-rust/80 transition-colors">
               How It Works
             </Link>
-            <Link href="#pricing" className="hidden md:block font-mono text-[10px] uppercase tracking-widest text-paper/50 hover:text-paper/80 transition-colors">
+            <Link href="#pricing" className="hidden md:block font-mono text-xs uppercase tracking-widest text-rust hover:text-rust/80 transition-colors">
               Pricing
             </Link>
-            <Link href="/login" className="font-mono text-[10px] uppercase tracking-widest text-paper/55 hover:text-paper transition-colors">
+            <Link href="/login" className="font-mono text-xs uppercase tracking-widest text-rust hover:text-rust/80 transition-colors">
               Sign In
             </Link>
             <Link

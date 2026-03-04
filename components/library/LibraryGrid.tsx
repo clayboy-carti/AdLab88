@@ -9,6 +9,7 @@ import VideoCard, { type VideoItem } from './VideoCard'
 import VideoModal from './VideoModal'
 import CarouselModal from './CarouselModal'
 import UploadImageModal from './UploadImageModal'
+import TemplatesGrid from './TemplatesGrid'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -80,7 +81,7 @@ function buildUnifiedFeed(adFeed: FeedItem[], videos: VideoItem[]): UnifiedItem[
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-type Filter = 'all' | 'images' | 'videos'
+type Filter = 'all' | 'images' | 'videos' | 'templates'
 type DragPayload = { adIds: string[]; videoIds: string[] }
 
 export default function LibraryGrid({
@@ -466,6 +467,16 @@ export default function LibraryGrid({
                 </button>
               )
             })}
+            <button
+              onClick={() => setFilter('templates')}
+              className={`text-xs font-mono uppercase px-3 py-1.5 rounded-xl transition-all ${
+                filter === 'templates'
+                  ? 'bg-rust text-white shadow-sm'
+                  : 'text-graphite/50 hover:text-graphite hover:bg-sage/20'
+              }`}
+            >
+              Templates
+            </button>
           </div>
 
           {/* Active folder badge */}
@@ -537,8 +548,11 @@ export default function LibraryGrid({
           </div>
         )}
 
+        {/* ── Templates tab ── */}
+        {filter === 'templates' && <TemplatesGrid />}
+
         {/* ── Grid ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {filter !== 'templates' && <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 
           {filter === 'all' && unifiedFeed.map((item) => {
             if (item.kind === 'video') {
@@ -718,7 +732,7 @@ export default function LibraryGrid({
             )
           })}
 
-        </div>
+        </div>}
 
         {/* ── Carousel sticky bar ── */}
         {carouselMode && (
@@ -771,6 +785,10 @@ export default function LibraryGrid({
           onCaptionUpdate={handleCaptionUpdate}
           onTitleUpdate={handleAdTitleUpdate}
           onDelete={handleDelete}
+          onIterationCreated={(newAd) => {
+            setAds((prev) => [{ ...newAd, signedUrl: newAd.generatedImageUrl }, ...prev])
+            setSelectedAd(null)
+          }}
         />
       )}
 

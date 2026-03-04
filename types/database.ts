@@ -94,3 +94,70 @@ export type GeneratedVideo = {
   content_type: 'product_video'
   created_at: string
 }
+
+export type AssetCategory = 'product' | 'packaging' | 'lifestyle' | 'logo' | 'other'
+
+export type BrandAsset = {
+  id: string
+  user_id: string
+  storage_path: string
+  file_name: string
+  file_size: number
+  mime_type: string
+  category: AssetCategory
+  created_at: string
+}
+
+export type IntelligenceSource = 'generated' | 'manual'
+
+export type BrandIntelligence = {
+  id: string
+  user_id: string
+  brand_id: string
+  persona: string | null
+  pain_point: string | null
+  angle: string | null
+  visual_direction: string | null
+  emotion: string | null
+  copy_hook: string | null
+  source: IntelligenceSource
+  created_at: string
+  updated_at: string
+}
+
+export type AdTemplate = {
+  id: string
+  user_id: string
+  source_ad_id: string | null
+  name: string
+  category: string | null
+  tags: string[] | null
+  storage_path: string
+  hook: string | null
+  positioning_angle: string | null
+  created_at: string
+}
+
+export type CampaignStatus = 'planned' | 'generating' | 'complete' | 'partial'
+
+export type CampaignItem = {
+  intelligenceId: string
+  persona: string
+  angle: string
+  goal: string
+  assetId?: string
+  adId?: string
+  status: 'pending' | 'success' | 'failed'
+  error?: string
+}
+
+export type Campaign = {
+  id: string
+  user_id: string
+  name: string
+  brief: string | null
+  plan: CampaignItem[] | null
+  status: CampaignStatus
+  created_at: string
+  updated_at: string
+}

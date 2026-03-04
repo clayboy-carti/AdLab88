@@ -14,6 +14,10 @@ export interface Ad {
   created_at: string
   storage_path: string | null
   signedUrl: string | null
+  /** Public URL for the 256px thumbnail variant (no signing required). Falls back to signedUrl if missing. */
+  thumbUrl?: string | null
+  /** Public URL for the 1024px preview variant. Used by the detail modal. Falls back to signedUrl if missing. */
+  previewUrl?: string | null
   batch_id?: string | null
   folder_id?: string | null
 }
@@ -30,11 +34,11 @@ export default function AdCard({ ad, onClick }: { ad: Ad; onClick: () => void })
       onClick={onClick}
       className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col text-left w-full hover:border-rust/50 hover:shadow-md transition-all duration-200 group cursor-pointer overflow-hidden"
     >
-      {/* Image */}
+      {/* Image — prefer public thumb variant; fall back to signed URL for older ads */}
       <div className="overflow-hidden bg-sage/10 aspect-video w-full">
-        {ad.signedUrl ? (
+        {(ad.thumbUrl ?? ad.signedUrl) ? (
           <img
-            src={ad.signedUrl}
+            src={(ad.thumbUrl ?? ad.signedUrl)!}
             alt={ad.title ?? ''}
             className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
             loading="lazy"

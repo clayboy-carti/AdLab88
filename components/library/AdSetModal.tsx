@@ -65,11 +65,11 @@ export default function AdSetModal({ ads, onClose, onVariantClick }: AdSetModalP
                 onClick={() => onVariantClick(ad)}
                 className="border border-outline bg-white text-left flex flex-col hover:border-rust transition-colors group cursor-pointer"
               >
-                {/* Image */}
+                {/* Image — prefer public thumb variant; fall back to signed URL */}
                 <div className="border-b border-outline overflow-hidden bg-gray-100 aspect-video w-full">
-                  {ad.signedUrl ? (
+                  {(ad.thumbUrl ?? ad.signedUrl) ? (
                     <img
-                      src={ad.signedUrl}
+                      src={(ad.thumbUrl ?? ad.signedUrl)!}
                       alt={ad.hook}
                       className="w-full h-full object-cover group-hover:opacity-95 transition-opacity"
                       loading="lazy"

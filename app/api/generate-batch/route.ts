@@ -89,7 +89,7 @@ export async function POST(request: Request) {
     if (hasReference) {
       const { data: signedUrlData, error: urlError } = await supabase.storage
         .from('reference-images')
-        .createSignedUrl(referenceImage!.storage_path, 3600)
+        .createSignedUrl(referenceImage!.storage_path, 604800)
 
       if (urlError || !signedUrlData?.signedUrl) {
         return NextResponse.json({ error: 'Failed to access reference image' }, { status: 500 })
@@ -177,12 +177,30 @@ export async function POST(request: Request) {
       imageError: result.status === 'rejected' ? String(result.reason?.message ?? 'Unknown') : null,
     }))
 
-    // 10. Save successful variants to DB in parallel
-    console.log('[Batch] === PHASE 4: Saving to database ===')
+    // 10. Generate signed URLs first so they can be persisted with the DB insert
+    console.log('[Batch] === PHASE 4: Generating signed URLs ===')
+    const signedUrlExpiry = 604800
+    const signedUrlExpiresAt = new Date(Date.now() + signedUrlExpiry * 1000).toISOString()
+    const signedUrlResults = await Promise.allSettled(
+      variantResults.map((v) => {
+        if (!v.storagePath) return Promise.resolve(null)
+        return supabase.storage
+          .from('generated-ads')
+          .createSignedUrl(v.storagePath, signedUrlExpiry)
+      })
+    )
+
+    // 11. Save successful variants to DB in parallel (including signed URLs)
+    console.log('[Batch] === PHASE 5: Saving to database ===')
     const batchId = crypto.randomUUID()
     const dbInserts = await Promise.allSettled(
       variantResults.map((v, i) => {
         if (!v.storagePath) return Promise.resolve(null)
+        const urlResult = signedUrlResults[i]
+        const signedUrl =
+          urlResult.status === 'fulfilled' && urlResult.value !== null
+            ? (urlResult.value as any).data?.signedUrl ?? null
+            : null
         return supabase
           .from('generated_ads')
           .insert({
@@ -204,19 +222,11 @@ export async function POST(request: Request) {
             aspect_ratio: imageAspectRatio,
             batch_id: batchId,
             title: title?.trim() || null,
+            signed_url: signedUrl,
+            signed_url_expires_at: signedUrl ? signedUrlExpiresAt : null,
           })
           .select()
           .single()
-      })
-    )
-
-    // 11. Generate signed URLs for previews
-    const signedUrlResults = await Promise.allSettled(
-      variantResults.map((v) => {
-        if (!v.storagePath) return Promise.resolve(null)
-        return supabase.storage
-          .from('generated-ads')
-          .createSignedUrl(v.storagePath, 3600)
       })
     )
 

@@ -36,7 +36,7 @@ export default function ReferenceImageUpload() {
       const paths = data.map((img) => img.storage_path)
       const { data: urlData } = await supabase.storage
         .from('reference-images')
-        .createSignedUrls(paths, 3600)
+        .createSignedUrls(paths, 604800)
 
       const urlMap = new Map(
         (urlData ?? []).map((item) => [item.path, item.signedUrl])

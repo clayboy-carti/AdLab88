@@ -90,7 +90,7 @@ export async function POST(request: Request) {
     // Generate a signed URL for immediate display
     const { data: signed } = await supabase.storage
       .from('generated-ads')
-      .createSignedUrl(storagePath, 3600)
+      .createSignedUrl(storagePath, 604800)
 
     return NextResponse.json({
       ad: { ...adRow, signedUrl: signed?.signedUrl ?? null },
