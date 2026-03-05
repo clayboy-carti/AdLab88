@@ -24,10 +24,10 @@ export default function Sidebar() {
   const [initials, setInitials] = useState('U')
   const [credits, setCredits] = useState<number | null>(null)
   const [displayCredits, setDisplayCredits] = useState<number | null>(null)
-  const [glowing, setGlowing] = useState(false)
-  const [ticking, setTicking] = useState(false)
+  // animKey increments on each decrease — using it as `key` on badge remounts
+  // the element so CSS animations always restart cleanly (no batching issues)
+  const [animKey, setAnimKey] = useState(0)
   const prevCreditsRef = useRef<number | null>(null)
-  const glowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
   const fetchCredits = () => {
@@ -50,19 +50,11 @@ export default function Sidebar() {
       return
     }
 
-    // Trigger tick + glow when credits decrease
     if (credits < prev) {
-      setGlowing(false)
-      setTicking(false)
-      // Double rAF to reset animations before restarting
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        setTicking(true)
-        setGlowing(true)
-        setTimeout(() => setDisplayCredits(credits), 175)
-        setTimeout(() => setTicking(false), 350)
-        if (glowTimerRef.current) clearTimeout(glowTimerRef.current)
-        glowTimerRef.current = setTimeout(() => setGlowing(false), 1400)
-      }))
+      // Tick the displayed number midway through the slide animation
+      setTimeout(() => setDisplayCredits(credits), 175)
+      // Increment key to force badge remount → animations restart reliably
+      setAnimKey(k => k + 1)
     } else {
       setDisplayCredits(credits)
     }
@@ -174,11 +166,11 @@ export default function Sidebar() {
                   credits === 0
                     ? 'bg-rust/20 text-rust border border-rust/30'
                     : 'bg-paper/10 text-paper/70',
-                  glowing ? 'animate-credits-glow' : '',
+                  animKey > 0 ? 'animate-credits-glow' : '',
                 ].join(' ')}>
-                  <Zap size={12} strokeWidth={2} className={glowing ? 'text-green-400' : ''} />
+                  <Zap size={12} strokeWidth={2} />
                   <span>
-                    <span className={ticking ? 'animate-credits-tick' : ''}>{displayCredits}</span>
+                    <span key={animKey} className={animKey > 0 ? 'animate-credits-tick' : ''}>{displayCredits}</span>
                     {' '}credit{displayCredits === 1 ? '' : 's'} remaining
                   </span>
                 </div>
@@ -261,11 +253,11 @@ export default function Sidebar() {
               credits === 0
                 ? 'bg-rust/20 text-rust border border-rust/30'
                 : 'bg-paper/10 text-paper/70',
-              glowing ? 'animate-credits-glow' : '',
+              animKey > 0 ? 'animate-credits-glow' : '',
             ].join(' ')}>
-              <Zap size={12} strokeWidth={2} className={glowing ? 'text-green-400' : ''} />
+              <Zap size={12} strokeWidth={2} />
               <span>
-                <span className={ticking ? 'animate-credits-tick' : ''}>{displayCredits}</span>
+                <span key={animKey} className={animKey > 0 ? 'animate-credits-tick' : ''}>{displayCredits}</span>
                 {' '}credit{displayCredits === 1 ? '' : 's'} remaining
               </span>
             </div>
