@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useRef, useState } from 'react'
-import { Tag, Wand2, LayoutGrid, Clock, BarChart2, User, CreditCard, LogOut, Menu, X } from 'lucide-react'
+import { Tag, Wand2, LayoutGrid, Clock, BarChart2, User, CreditCard, LogOut, Menu, X, Zap } from 'lucide-react'
 
 const links = [
   { href: '/brand',     label: 'Brand',     Icon: Tag },
@@ -21,9 +21,11 @@ export default function Sidebar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [initials, setInitials] = useState('U')
+  const [credits, setCredits] = useState<number | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    fetch('/api/credits').then(r => r.ok ? r.json() : null).then(d => { if (d) setCredits(d.credits_remaining) })
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
       const name = user.user_metadata?.full_name as string | undefined
@@ -123,6 +125,17 @@ export default function Sidebar() {
 
             {/* Account links — shown directly in drawer (no sub-dropdown) */}
             <div className="px-3 pb-8 pt-3 flex-shrink-0 border-t border-paper/10 flex flex-col gap-1">
+              {credits !== null && (
+                <div className={[
+                  'flex items-center gap-2 px-3 py-2 mb-1 rounded-xl font-mono text-xs',
+                  credits === 0
+                    ? 'bg-rust/20 text-rust border border-rust/30'
+                    : 'bg-paper/10 text-paper/70',
+                ].join(' ')}>
+                  <Zap size={12} strokeWidth={2} />
+                  <span>{credits} credit{credits === 1 ? '' : 's'} remaining</span>
+                </div>
+              )}
               <Link
                 href="/profile"
                 onClick={() => setMobileOpen(false)}
@@ -192,6 +205,21 @@ export default function Sidebar() {
             )
           })}
         </nav>
+
+        {/* Credits badge */}
+        {credits !== null && (
+          <div className="px-4 pb-3 flex-shrink-0">
+            <div className={[
+              'flex items-center gap-2 px-3 py-2 rounded-xl font-mono text-xs',
+              credits === 0
+                ? 'bg-rust/20 text-rust border border-rust/30'
+                : 'bg-paper/10 text-paper/70',
+            ].join(' ')}>
+              <Zap size={12} strokeWidth={2} />
+              <span>{credits} credit{credits === 1 ? '' : 's'} remaining</span>
+            </div>
+          </div>
+        )}
 
         {/* User / Account */}
         <div className="px-3 pb-6 flex-shrink-0 relative" ref={menuRef}>
