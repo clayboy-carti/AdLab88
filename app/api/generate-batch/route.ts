@@ -45,7 +45,17 @@ export async function POST(request: Request) {
 
     console.log(`[Batch] User authenticated: ${user.id}`)
 
-    // 2. Parse request body
+    // 2. Spend 5 credits upfront (1 per ad in the batch)
+    const { error: creditError } = await supabase.rpc('spend_credit', { p_user_id: user.id, p_amount: 5 })
+    if (creditError) {
+      const insufficient = creditError.message?.includes('insufficient_credits')
+      return NextResponse.json(
+        { error: insufficient ? 'You need at least 5 credits to run a batch generation.' : 'Failed to process credit' },
+        { status: insufficient ? 402 : 500 }
+      )
+    }
+
+    // 3. Parse request body
     const body = await request.json()
     const { user_context, image_quality, aspect_ratio, creativity, title } = body
     const userContext: string | undefined = user_context?.trim() || undefined
@@ -261,6 +271,13 @@ export async function POST(request: Request) {
     const savedCount = ads.filter((a) => !a.imageGenerationFailed).length
     console.log(`[Batch] ✅ Complete — ${savedCount}/5 ads saved to library`)
 
+    // Refund credits for any ads that failed to generate
+    const failedCount = 5 - savedCount
+    if (failedCount > 0) {
+      await supabase.rpc('refund_credit', { p_user_id: user.id, p_amount: failedCount })
+      console.log(`[Batch] Refunded ${failedCount} credit(s) for failed generations`)
+    }
+
     return NextResponse.json(
       {
         message:
@@ -276,6 +293,11 @@ export async function POST(request: Request) {
     )
   } catch (error: any) {
     console.error('[Batch] ERROR:', error)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) await supabase.rpc('refund_credit', { p_user_id: user.id, p_amount: 5 })
+    } catch (_) {}
     return NextResponse.json(
       {
         error: error.message || 'Failed to generate batch',

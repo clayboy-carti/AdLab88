@@ -30,7 +30,17 @@ export async function POST(request: Request) {
 
     console.log(`[Generate] User authenticated: ${user.id}`)
 
-    // 2. Parse request body
+    // 2. Spend 1 credit (raises if insufficient)
+    const { error: creditError } = await supabase.rpc('spend_credit', { p_user_id: user.id, p_amount: 1 })
+    if (creditError) {
+      const insufficient = creditError.message?.includes('insufficient_credits')
+      return NextResponse.json(
+        { error: insufficient ? 'You have no credits remaining.' : 'Failed to process credit' },
+        { status: insufficient ? 402 : 500 }
+      )
+    }
+
+    // 3. Parse request body
     const body = await request.json()
     const { user_context, image_quality, aspect_ratio, creativity, post_type, image_model, title, reference_image_id, reference_image_ids, folder_id } = body
     const userContext: string | undefined = user_context?.trim() || undefined
@@ -328,6 +338,12 @@ export async function POST(request: Request) {
     )
   } catch (error: any) {
     console.error('[Generate] ERROR:', error)
+    // Refund the credit since generation failed
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) await supabase.rpc('refund_credit', { p_user_id: user.id, p_amount: 1 })
+    } catch (_) {}
     return NextResponse.json(
       {
         error: error.message || 'Failed to generate ad',
