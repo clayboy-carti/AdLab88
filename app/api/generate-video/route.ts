@@ -12,6 +12,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
     }
 
+    // Spend 1 credit before generation
+    const { error: creditError } = await supabase.rpc('spend_credit', { p_user_id: user.id, p_amount: 1 })
+    if (creditError) {
+      const insufficient = creditError.message?.includes('insufficient_credits')
+      return NextResponse.json(
+        { error: insufficient ? 'You have no credits remaining.' : 'Failed to process credit' },
+        { status: insufficient ? 402 : 500 }
+      )
+    }
+
     const body = await req.json()
     const { ad_id, motion_prompt, aspect_ratio, title } = body as { ad_id: string; motion_prompt?: string; aspect_ratio?: string; title?: string }
 
@@ -111,6 +121,12 @@ export async function POST(req: NextRequest) {
     })
   } catch (err: any) {
     console.error('[generate-video] Unhandled error:', err)
+    // Refund credit since generation failed
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) await supabase.rpc('refund_credit', { p_user_id: user.id, p_amount: 1 })
+    } catch (_) {}
     return NextResponse.json(
       { error: err.message || 'Video generation failed' },
       { status: 500 }

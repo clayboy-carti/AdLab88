@@ -1,5 +1,7 @@
 'use client'
 
+import { emitCreditsUpdated } from '@/lib/credits-event'
+
 import { useState } from 'react'
 import Link from 'next/link'
 import ReferenceImageUpload from '@/components/create/ReferenceImageUpload'
@@ -74,6 +76,7 @@ export default function AdPage() {
 
       clearAll()
       setGeneratedAd(data.ad)
+      emitCreditsUpdated()
       setGenerationStage('Complete!')
     } catch (err: any) {
       clearAll()
@@ -117,6 +120,7 @@ export default function AdPage() {
 
       clearAll()
       setGeneratedBatch(data.ads)
+      emitCreditsUpdated()
       setGenerationStage(`Batch complete — ${data.succeeded}/5 generated!`)
     } catch (err: any) {
       clearAll()

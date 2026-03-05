@@ -3,8 +3,9 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { onCreditsUpdated } from '@/lib/credits-event'
 import { useEffect, useRef, useState } from 'react'
-import { Tag, Wand2, LayoutGrid, Clock, BarChart2, User, CreditCard, LogOut, Menu, X } from 'lucide-react'
+import { Tag, Wand2, LayoutGrid, Clock, BarChart2, User, CreditCard, LogOut, Menu, X, Zap } from 'lucide-react'
 
 const links = [
   { href: '/brand',     label: 'Brand',     Icon: Tag },
@@ -21,7 +22,43 @@ export default function Sidebar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [initials, setInitials] = useState('U')
+  const [credits, setCredits] = useState<number | null>(null)
+  const [displayCredits, setDisplayCredits] = useState<number | null>(null)
+  // animKey increments on each decrease — using it as `key` on badge remounts
+  // the element so CSS animations always restart cleanly (no batching issues)
+  const [animKey, setAnimKey] = useState(0)
+  const prevCreditsRef = useRef<number | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  const fetchCredits = () => {
+    fetch('/api/credits').then(r => r.ok ? r.json() : null).then(d => { if (d) setCredits(d.credits_remaining) })
+  }
+
+  useEffect(() => {
+    fetchCredits()
+    return onCreditsUpdated(fetchCredits)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (credits === null) return
+    const prev = prevCreditsRef.current
+    prevCreditsRef.current = credits
+
+    if (prev === null) {
+      setDisplayCredits(credits)
+      return
+    }
+
+    if (credits < prev) {
+      // Tick the displayed number midway through the slide animation
+      setTimeout(() => setDisplayCredits(credits), 175)
+      // Increment key to force badge remount → animations restart reliably
+      setAnimKey(k => k + 1)
+    } else {
+      setDisplayCredits(credits)
+    }
+  }, [credits])
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -123,6 +160,21 @@ export default function Sidebar() {
 
             {/* Account links — shown directly in drawer (no sub-dropdown) */}
             <div className="px-3 pb-8 pt-3 flex-shrink-0 border-t border-paper/10 flex flex-col gap-1">
+              {credits !== null && (
+                <div className={[
+                  'flex items-center gap-2 px-3 py-2 mb-1 rounded-xl font-mono text-xs',
+                  credits === 0
+                    ? 'bg-rust/20 text-rust border border-rust/30'
+                    : 'bg-paper/10 text-paper/70',
+                  animKey > 0 ? 'animate-credits-glow' : '',
+                ].join(' ')}>
+                  <Zap size={12} strokeWidth={2} />
+                  <span>
+                    <span key={animKey} className={animKey > 0 ? 'animate-credits-tick' : ''}>{displayCredits}</span>
+                    {' '}credit{displayCredits === 1 ? '' : 's'} remaining
+                  </span>
+                </div>
+              )}
               <Link
                 href="/profile"
                 onClick={() => setMobileOpen(false)}
@@ -192,6 +244,25 @@ export default function Sidebar() {
             )
           })}
         </nav>
+
+        {/* Credits badge */}
+        {credits !== null && (
+          <div className="px-4 pb-3 flex-shrink-0">
+            <div className={[
+              'flex items-center gap-2 px-3 py-2 rounded-xl font-mono text-xs',
+              credits === 0
+                ? 'bg-rust/20 text-rust border border-rust/30'
+                : 'bg-paper/10 text-paper/70',
+              animKey > 0 ? 'animate-credits-glow' : '',
+            ].join(' ')}>
+              <Zap size={12} strokeWidth={2} />
+              <span>
+                <span key={animKey} className={animKey > 0 ? 'animate-credits-tick' : ''}>{displayCredits}</span>
+                {' '}credit{displayCredits === 1 ? '' : 's'} remaining
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* User / Account */}
         <div className="px-3 pb-6 flex-shrink-0 relative" ref={menuRef}>

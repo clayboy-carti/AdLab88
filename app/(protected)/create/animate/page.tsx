@@ -1,5 +1,7 @@
 'use client'
 
+import { emitCreditsUpdated } from '@/lib/credits-event'
+
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useRef, Suspense } from 'react'
@@ -160,6 +162,7 @@ function AnimateContent() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Video generation failed')
       setGeneratedVideo({ id: data.video.id, videoUrl: data.video.videoUrl })
+      emitCreditsUpdated()
     } catch (err: any) {
       setVideoError(err.message || 'Failed to generate video')
     } finally {

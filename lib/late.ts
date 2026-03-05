@@ -121,6 +121,7 @@ export async function getLateConnectUrl(params: {
   const url = new URL(`${LATE_API_BASE}/connect/${params.platform}`)
   url.searchParams.set('profileId', params.profileId)
   url.searchParams.set('redirect_url', params.redirectUrl)
+  url.searchParams.set('headless', 'true')
 
   const res = await fetch(url.toString(), { headers: authHeaders() })
   if (!res.ok) {

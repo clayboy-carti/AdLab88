@@ -1,5 +1,7 @@
 'use client'
 
+import { emitCreditsUpdated } from '@/lib/credits-event'
+
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import PhotoPicker from '@/components/create/PhotoPicker'
@@ -270,6 +272,7 @@ export default function ProductMockupPage() {
 
       clearAll()
       setGeneratedAd(data.ad)
+      emitCreditsUpdated()
       setGenerationStage('Complete!')
     } catch (err: any) {
       clearAll()
@@ -349,6 +352,7 @@ export default function ProductMockupPage() {
     })
 
     await Promise.allSettled(promises)
+    emitCreditsUpdated()
     setPhotoShootGenerating(false)
   }
 
