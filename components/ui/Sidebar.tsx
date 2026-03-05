@@ -23,6 +23,11 @@ export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [initials, setInitials] = useState('U')
   const [credits, setCredits] = useState<number | null>(null)
+  const [displayCredits, setDisplayCredits] = useState<number | null>(null)
+  const [glowing, setGlowing] = useState(false)
+  const [ticking, setTicking] = useState(false)
+  const prevCreditsRef = useRef<number | null>(null)
+  const glowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
   const fetchCredits = () => {
@@ -34,6 +39,34 @@ export default function Sidebar() {
     return onCreditsUpdated(fetchCredits)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (credits === null) return
+    const prev = prevCreditsRef.current
+    prevCreditsRef.current = credits
+
+    if (prev === null) {
+      setDisplayCredits(credits)
+      return
+    }
+
+    // Trigger tick + glow when credits decrease
+    if (credits < prev) {
+      setGlowing(false)
+      setTicking(false)
+      // Double rAF to reset animations before restarting
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        setTicking(true)
+        setGlowing(true)
+        setTimeout(() => setDisplayCredits(credits), 175)
+        setTimeout(() => setTicking(false), 350)
+        if (glowTimerRef.current) clearTimeout(glowTimerRef.current)
+        glowTimerRef.current = setTimeout(() => setGlowing(false), 1400)
+      }))
+    } else {
+      setDisplayCredits(credits)
+    }
+  }, [credits])
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -141,9 +174,13 @@ export default function Sidebar() {
                   credits === 0
                     ? 'bg-rust/20 text-rust border border-rust/30'
                     : 'bg-paper/10 text-paper/70',
+                  glowing ? 'animate-credits-glow' : '',
                 ].join(' ')}>
-                  <Zap size={12} strokeWidth={2} />
-                  <span>{credits} credit{credits === 1 ? '' : 's'} remaining</span>
+                  <Zap size={12} strokeWidth={2} className={glowing ? 'text-green-400' : ''} />
+                  <span>
+                    <span className={ticking ? 'animate-credits-tick' : ''}>{displayCredits}</span>
+                    {' '}credit{displayCredits === 1 ? '' : 's'} remaining
+                  </span>
                 </div>
               )}
               <Link
@@ -224,9 +261,13 @@ export default function Sidebar() {
               credits === 0
                 ? 'bg-rust/20 text-rust border border-rust/30'
                 : 'bg-paper/10 text-paper/70',
+              glowing ? 'animate-credits-glow' : '',
             ].join(' ')}>
-              <Zap size={12} strokeWidth={2} />
-              <span>{credits} credit{credits === 1 ? '' : 's'} remaining</span>
+              <Zap size={12} strokeWidth={2} className={glowing ? 'text-green-400' : ''} />
+              <span>
+                <span className={ticking ? 'animate-credits-tick' : ''}>{displayCredits}</span>
+                {' '}credit{displayCredits === 1 ? '' : 's'} remaining
+              </span>
             </div>
           </div>
         )}
