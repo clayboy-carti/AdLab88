@@ -13,8 +13,8 @@ export async function GET(req: NextRequest) {
     )
   }
 
-  // Late may pass ?platform= or ?account= — capture anything useful for the toast
-  const platform = searchParams.get('platform') ?? searchParams.get('account') ?? 'account'
+  // Late headless mode passes ?connected=, other modes may pass ?platform= or ?account=
+  const platform = searchParams.get('connected') ?? searchParams.get('platform') ?? searchParams.get('account') ?? 'account'
 
   return NextResponse.redirect(
     new URL(`/profile?connected=${encodeURIComponent(platform)}`, origin)
