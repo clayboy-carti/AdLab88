@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { onCreditsUpdated } from '@/lib/credits-event'
 import { useEffect, useRef, useState } from 'react'
 import { Tag, Wand2, LayoutGrid, Clock, BarChart2, User, CreditCard, LogOut, Menu, X, Zap } from 'lucide-react'
 
@@ -24,8 +25,17 @@ export default function Sidebar() {
   const [credits, setCredits] = useState<number | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
+  const fetchCredits = () => {
     fetch('/api/credits').then(r => r.ok ? r.json() : null).then(d => { if (d) setCredits(d.credits_remaining) })
+  }
+
+  useEffect(() => {
+    fetchCredits()
+    return onCreditsUpdated(fetchCredits)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
       const name = user.user_metadata?.full_name as string | undefined
