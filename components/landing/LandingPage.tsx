@@ -38,11 +38,11 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
       title: 'Your Product Photo',
       sub: 'Drop in any image — product, lifestyle, or brand asset',
       content: (
-        <div className="flex flex-col gap-3">
-          <div className="w-full rounded-xl overflow-hidden aspect-[4/5] relative border border-paper/15 bg-paper/5">
+        <div className="h-full flex flex-col gap-3">
+          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-paper/15 bg-paper/5">
             <img src="/gooseoriginal.jpg" alt="Product photo" className="w-full h-full object-contain" />
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 shrink-0">
             <div className="flex-1 h-8 rounded-lg bg-paper/8 border border-paper/15 flex items-center px-3">
               <span className="font-mono text-[9px] text-paper/30 uppercase tracking-widest">gooseoriginal.jpg</span>
             </div>
@@ -58,22 +58,22 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
       title: 'AI Creates Mockup',
       sub: 'Pick a scene, watch Gemini place your product in',
       content: (
-        <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-3 gap-1.5">
+        <div className="h-full flex flex-col gap-3">
+          <div className="grid grid-cols-3 gap-1.5 shrink-0">
             {['Studio', 'Lifestyle', 'Luxury', 'Golden Hr', 'Minimal', 'Outdoor'].map((s, i) => (
               <button key={i} className={`py-1.5 rounded-lg font-mono text-[8px] uppercase tracking-widest transition-all ${i === 0 ? 'bg-sage/40 border border-sage/60 text-paper' : 'bg-paper/5 border border-paper/10 text-paper/30'}`}>
                 {s}
               </button>
             ))}
           </div>
-          <div className="w-full aspect-[4/5] rounded-xl overflow-hidden relative border border-paper/15 bg-paper/5">
+          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-paper/15 bg-paper/5">
             <img src="/goosegenerated.png" alt="AI generated mockup" className="w-full h-full object-contain" />
             <div className="absolute bottom-2 right-2 flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full bg-sage animate-pulse-dot" />
               <span className="font-mono text-[8px] text-paper/80 bg-black/40 px-1.5 py-0.5 rounded">Gemini generating…</span>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 shrink-0">
             {['Gemini Vision', 'Claude 3.5', '2K Quality'].map((m, i) => (
               <span key={i} className="flex-1 text-center py-1 rounded-lg bg-paper/5 border border-paper/10 font-mono text-[7px] uppercase tracking-widest text-paper/40">{m}</span>
             ))}
@@ -86,14 +86,14 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
       title: 'Schedule & Post',
       sub: 'Set a date, pick platforms, let AdLab handle the rest',
       content: (
-        <div className="flex flex-col gap-3">
-          <div className="w-full aspect-[4/5] rounded-xl overflow-hidden relative border border-paper/15 bg-paper/5">
+        <div className="h-full flex flex-col gap-3">
+          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-paper/15 bg-paper/5">
             <img src="/goosegenerated.png" alt="Scheduled ad" className="w-full h-full object-contain" />
             <div className="absolute top-2 right-2">
               <span className="bg-sage/80 text-forest font-mono text-[8px] uppercase tracking-widest px-2 py-0.5 rounded-full">✓ Ready</span>
             </div>
           </div>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5 shrink-0">
             {['IG', 'TW', 'FB'].map((p, i) => (
               <div key={i} className={`flex-1 py-2 rounded-lg flex flex-col items-center gap-0.5 border transition-all ${i === 0 ? 'bg-rust/20 border-rust/40' : 'bg-paper/5 border-paper/10'}`}>
                 <span className="font-mono text-[9px] text-paper/60 uppercase">{p}</span>
@@ -101,7 +101,7 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
               </div>
             ))}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 shrink-0">
             <div className="flex-1 py-2 rounded-xl bg-rust/80 text-center font-mono text-[9px] uppercase tracking-widest text-white">
               Schedule for Mar 17
             </div>
@@ -123,7 +123,7 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
       </div>
 
       {/* App window */}
-      <div className="rounded-2xl border border-paper/15 bg-forest/60 backdrop-blur-md overflow-hidden shadow-2xl">
+      <div className="rounded-2xl border border-paper/15 bg-forest/60 backdrop-blur-md overflow-hidden shadow-2xl flex flex-col h-[540px]">
         {/* Title bar */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-paper/10 bg-forest/40">
           <div className="flex gap-1.5">
@@ -153,14 +153,16 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
         </div>
 
         {/* Content */}
-        <div className="p-5">
-          <p className="font-mono text-xs font-semibold text-paper/80 mb-0.5">{steps[activeStep].title}</p>
-          <p className="font-sans text-[10px] text-paper/40 mb-4">{steps[activeStep].sub}</p>
-          {steps[activeStep].content}
+        <div className="p-5 flex-1 min-h-0 flex flex-col">
+          <p className="font-mono text-xs font-semibold text-paper/80 mb-0.5 shrink-0">{steps[activeStep].title}</p>
+          <p className="font-sans text-[10px] text-paper/40 mb-4 shrink-0">{steps[activeStep].sub}</p>
+          <div className="flex-1 min-h-0">
+            {steps[activeStep].content}
+          </div>
         </div>
 
         {/* Progress indicator */}
-        <div className="flex justify-center gap-2 pb-4 pt-1">
+        <div className="flex justify-center gap-2 pb-4 pt-1 shrink-0">
           {steps.map((_, i) => (
             <div key={i} className={`rounded-full transition-all duration-400 ${i === activeStep ? 'w-5 h-1.5 bg-rust' : 'w-1.5 h-1.5 bg-paper/20'}`} />
           ))}
