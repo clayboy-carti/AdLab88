@@ -185,13 +185,13 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
       {/* App window */}
       <div className="rounded-2xl border border-forest/15 bg-paper overflow-hidden shadow-2xl flex flex-col h-[540px]">
         {/* Title bar */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-forest/10 bg-forest/8">
+        <div className="relative flex items-center gap-3 px-4 py-3 border-b border-forest/10 bg-forest/8">
           <div className="flex gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full bg-red-400/70" />
             <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/70" />
             <div className="w-2.5 h-2.5 rounded-full bg-green-400/70" />
           </div>
-          <div className="flex-1 text-center font-mono text-xs uppercase tracking-widest text-forest/60">
+          <div className="absolute inset-0 flex items-center justify-center font-mono text-xs uppercase tracking-widest text-forest/60 pointer-events-none">
             The Lab Bench
           </div>
         </div>
