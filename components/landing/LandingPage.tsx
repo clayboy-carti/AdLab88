@@ -120,12 +120,8 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
                 ].map(({ label, active, bg, icon }, i) => (
                   <div
                     key={i}
-                    style={active ? { background: bg } : {}}
-                    className={`flex-1 py-1.5 px-1 rounded-md flex flex-col items-center justify-center gap-0.5 border transition-all ${
-                      active
-                        ? 'border-transparent text-white'
-                        : 'bg-forest/5 border-forest/10 text-forest/20 opacity-40'
-                    }`}
+                    style={{ background: bg, opacity: active ? 1 : 0.45 }}
+                    className="flex-1 py-1.5 px-1 rounded-md flex flex-col items-center justify-center gap-0.5 border border-transparent text-white transition-all"
                   >
                     {icon}
                     <span className="text-[6.5px] font-semibold tracking-wide leading-none">{label}</span>
