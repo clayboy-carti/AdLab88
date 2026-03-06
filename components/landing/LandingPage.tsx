@@ -39,12 +39,12 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
       sub: 'Drop in any image — product, lifestyle, or brand asset',
       content: (
         <div className="h-full flex flex-col gap-3">
-          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-forest/15 bg-forest/5">
-            <img src="/gooseoriginal.jpg" alt="Product photo" className="w-full h-full object-contain" />
+          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-forest/15 bg-forest/5 shadow-inner">
+            <img src="/juiceoriginal.jpg" alt="Product photo" className="w-full h-full object-cover object-center" />
           </div>
           <div className="flex gap-2 shrink-0">
             <div className="flex-1 h-8 rounded-lg bg-forest/8 border border-forest/15 flex items-center px-3">
-              <span className="font-mono text-[10px] text-forest/65 uppercase tracking-widest">gooseoriginal.jpg</span>
+              <span className="font-mono text-[10px] text-forest/65 uppercase tracking-widest">juiceoriginal.jpg</span>
             </div>
             <div className="px-3 h-8 rounded-lg bg-rust/70 flex items-center">
               <span className="font-mono text-[10px] text-white uppercase tracking-widest">Upload</span>
@@ -66,8 +66,8 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
               </button>
             ))}
           </div>
-          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-forest/15 bg-forest/5">
-            <img src="/goosegenerated.png" alt="AI generated mockup" className="w-full h-full object-contain" />
+          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-forest/15 bg-forest/5 shadow-inner">
+            <img src="/juicetransform.png" alt="AI generated mockup" className="w-full h-full object-cover object-center" />
             <div className="absolute bottom-2 right-2 flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full bg-sage animate-pulse-dot" />
               <span className="font-mono text-[8px] text-paper/80 bg-black/40 px-1.5 py-0.5 rounded">Gemini generating…</span>
@@ -97,8 +97,8 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
           <div className="flex gap-2 flex-1 min-h-0">
             {/* Post preview */}
             <div className="w-[44%] shrink-0 flex flex-col gap-1.5">
-              <div className="flex-1 min-h-0 rounded-lg overflow-hidden border border-forest/15 bg-forest/5">
-                <img src="/goosegenerated.png" alt="Scheduled ad" className="w-full h-full object-cover" />
+              <div className="flex-1 min-h-0 rounded-lg overflow-hidden border border-forest/15 bg-forest/5 shadow-inner">
+                <img src="/juicetransform.png" alt="Scheduled ad" className="w-full h-full object-cover object-center" />
               </div>
               {/* Platform pills */}
               <div className="flex gap-1">
@@ -198,9 +198,9 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
 
         {/* Content */}
         <div className="p-5 flex-1 min-h-0 flex flex-col">
-          <p className="font-mono text-sm font-semibold text-forest mb-0.5 shrink-0">{steps[activeStep].title}</p>
-          <p className="font-sans text-xs text-forest/75 mb-4 shrink-0">{steps[activeStep].sub}</p>
-          <div className="flex-1 min-h-0">
+          <p key={`title-${activeStep}`} className="font-mono text-sm font-semibold text-forest mb-0.5 shrink-0 animate-fade-in">{steps[activeStep].title}</p>
+          <p key={`sub-${activeStep}`} className="font-sans text-xs text-forest/75 mb-4 shrink-0 animate-fade-in">{steps[activeStep].sub}</p>
+          <div key={activeStep} className="flex-1 min-h-0 animate-fade-in">
             {steps[activeStep].content}
           </div>
         </div>
