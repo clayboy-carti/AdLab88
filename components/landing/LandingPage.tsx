@@ -483,7 +483,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-paper font-sans overflow-x-hidden">
 
       {/* ── NAV ───────────────────────────────────────────────────────────── */}
-      <nav className="fixed top-8 left-0 right-0 z-50 bg-forest/95 backdrop-blur-sm border-b border-paper/10" style={forestGrid}>
+      <nav className="fixed top-16 left-0 right-0 z-50 bg-forest/95 backdrop-blur-sm border-b border-paper/10" style={forestGrid}>
         <div className="max-w-6xl mx-auto px-6 h-24 flex items-center justify-between">
           <div className="flex items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
