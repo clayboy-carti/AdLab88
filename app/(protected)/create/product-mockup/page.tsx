@@ -3,6 +3,7 @@
 import { emitCreditsUpdated } from '@/lib/credits-event'
 
 import { useState, useEffect } from 'react'
+import { useLabLoadingSequence } from '@/hooks/useLabLoadingSequence'
 import Link from 'next/link'
 import PhotoPicker from '@/components/create/PhotoPicker'
 import {
@@ -221,9 +222,10 @@ export default function ProductMockupPage() {
   }, [imageModel])
 
   const [generating, setGenerating] = useState(false)
-  const [generationStage, setGenerationStage] = useState<string>('')
   const [generatedAd, setGeneratedAd] = useState<GeneratedAd | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const labLines = useLabLoadingSequence(generating)
 
   const [imageTitle, setImageTitle] = useState('')
   const [showPhoto, setShowPhoto] = useState(false)
@@ -242,14 +244,6 @@ export default function ProductMockupPage() {
     setGenerating(true)
     setError(null)
     setGeneratedAd(null)
-    setGenerationStage('Loading brand profile...')
-
-    const t1 = setTimeout(() => setGenerationStage('Analyzing product reference...'), 2000)
-    const t2 = setTimeout(() => setGenerationStage('Building scene prompt...'), 6000)
-    const modelLabel = imageModel === 'seedream' ? 'Seedream 4' : 'Gemini'
-    const t3 = setTimeout(() => setGenerationStage(`Placing product in scene with ${modelLabel}...`), 10000)
-    const t4 = setTimeout(() => setGenerationStage('Saving to your library...'), 35000)
-    const clearAll = () => [t1, t2, t3, t4].forEach(clearTimeout)
 
     try {
       const response = await fetch('/api/generate-ad', {
@@ -270,14 +264,10 @@ export default function ProductMockupPage() {
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Generation failed')
 
-      clearAll()
       setGeneratedAd(data.ad)
       emitCreditsUpdated()
-      setGenerationStage('Complete!')
     } catch (err: any) {
-      clearAll()
       setError(err.message || 'Failed to generate mockup')
-      setGenerationStage('')
     } finally {
       setGenerating(false)
     }
@@ -646,12 +636,20 @@ export default function ProductMockupPage() {
                         />
                       </div>
                       <div className="w-full">
-                        <p className="text-sm font-mono text-graphite/60 leading-tight mb-3">{generationStage}</p>
+                        <p className="text-sm font-mono text-graphite/60 leading-tight mb-3">Running image experiment…</p>
                         <div className="space-y-2.5">
-                          <p className="text-xs font-mono text-graphite/40">✓ Brand profile loaded</p>
-                          <p className="text-xs font-mono text-rust animate-pulse">→ Building scene prompt…</p>
-                          <p className="text-xs font-mono text-graphite/20">→ Generating with {imageModel === 'seedream' ? 'Seedream 4' : 'Gemini'}…</p>
-                          <p className="text-xs font-mono text-graphite/20">→ Saving to library…</p>
+                          {labLines.filter((l) => l.status !== 'hidden').map((line, i) => (
+                            <p
+                              key={i}
+                              className={
+                                line.status === 'completed'
+                                  ? 'text-xs font-mono text-graphite/40'
+                                  : 'text-xs font-mono text-rust animate-pulse'
+                              }
+                            >
+                              {line.status === 'completed' ? `✓ ${line.text}` : `→ ${line.text}…`}
+                            </p>
+                          ))}
                         </div>
                       </div>
                     </div>
