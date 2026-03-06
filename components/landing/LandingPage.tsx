@@ -39,21 +39,12 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
       sub: 'Drop in any image — product, lifestyle, or brand asset',
       content: (
         <div className="flex flex-col gap-3">
-          <div className="w-full rounded-xl bg-paper/8 border-2 border-dashed border-paper/20 aspect-video flex flex-col items-center justify-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-paper/10 border border-paper/20 grid grid-cols-2 gap-0.5 overflow-hidden p-1.5">
-              <div className="bg-paper/15 rounded-sm" />
-              <div className="bg-paper/10 rounded-sm" />
-              <div className="bg-paper/10 rounded-sm" />
-              <div className="bg-paper/15 rounded-sm" />
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <p className="font-mono text-[10px] text-paper/50 uppercase tracking-widest">Drop file here</p>
-              <p className="font-mono text-[9px] text-paper/25 uppercase tracking-widest">or pick from library</p>
-            </div>
+          <div className="w-full rounded-xl overflow-hidden aspect-video relative border border-paper/15">
+            <img src="/gooseoriginal.jpg" alt="Product photo" className="w-full h-full object-cover" />
           </div>
           <div className="flex gap-2">
             <div className="flex-1 h-8 rounded-lg bg-paper/8 border border-paper/15 flex items-center px-3">
-              <span className="font-mono text-[9px] text-paper/30 uppercase tracking-widest">product_shot.jpg</span>
+              <span className="font-mono text-[9px] text-paper/30 uppercase tracking-widest">gooseoriginal.jpg</span>
             </div>
             <div className="px-3 h-8 rounded-lg bg-rust/70 flex items-center">
               <span className="font-mono text-[9px] text-white uppercase tracking-widest">Upload</span>
@@ -75,16 +66,11 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
               </button>
             ))}
           </div>
-          <div className="w-full aspect-video rounded-xl bg-gradient-to-br from-stone-800 via-stone-700 to-stone-900 relative overflow-hidden flex items-center justify-center">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-            {/* Scan line animation */}
-            <div className="absolute inset-0 overflow-hidden">
-              <div className="w-full h-6 bg-gradient-to-b from-transparent via-sage/20 to-transparent" style={{ animation: 'scanLine 2s linear infinite' }} />
-            </div>
-            <div className="w-10 h-10 rounded-lg bg-white/90 shadow-2xl relative z-10" />
+          <div className="w-full aspect-video rounded-xl overflow-hidden relative border border-paper/15">
+            <img src="/goosegenerated.png" alt="AI generated mockup" className="w-full h-full object-cover" />
             <div className="absolute bottom-2 right-2 flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full bg-sage animate-pulse-dot" />
-              <span className="font-mono text-[8px] text-paper/50">Gemini generating…</span>
+              <span className="font-mono text-[8px] text-paper/80 bg-black/40 px-1.5 py-0.5 rounded">Gemini generating…</span>
             </div>
           </div>
           <div className="flex gap-2">
@@ -101,9 +87,8 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
       sub: 'Set a date, pick platforms, let AdLab handle the rest',
       content: (
         <div className="flex flex-col gap-3">
-          <div className="w-full rounded-xl bg-gradient-to-br from-stone-800 via-stone-700 to-stone-900 aspect-video relative overflow-hidden flex items-center justify-center border border-paper/10">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            <div className="w-10 h-10 rounded-lg bg-white/90 shadow-2xl relative z-10" />
+          <div className="w-full aspect-video rounded-xl overflow-hidden relative border border-paper/15">
+            <img src="/goosegenerated.png" alt="Scheduled ad" className="w-full h-full object-cover" />
             <div className="absolute top-2 right-2">
               <span className="bg-sage/80 text-forest font-mono text-[8px] uppercase tracking-widest px-2 py-0.5 rounded-full">✓ Ready</span>
             </div>
