@@ -441,7 +441,7 @@ export default function AnalyticsDashboard({ analytics }: AnalyticsDashboardProp
         <div className="mb-6 border border-rust/30 bg-rust/5 px-4 py-3 flex items-center gap-3">
           <BarChart2 size={14} strokeWidth={1.6} className="text-rust flex-shrink-0" />
           <p className="text-[11px] font-mono uppercase tracking-widest text-rust">
-            Sample data — connect Late API to see your real post metrics
+            Sample data — connect your accounts to see your real post metrics
           </p>
         </div>
       )}
@@ -450,12 +450,12 @@ export default function AnalyticsDashboard({ analytics }: AnalyticsDashboardProp
       <div className="flex items-start justify-between mb-8 gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl font-mono uppercase tracking-tight header-accent inline-block">Analytics</h1>
-          <p className="text-sm font-sans text-graphite/50 mt-2">Post performance metrics from Late API</p>
+          <p className="text-sm font-sans text-graphite/50 mt-2">Post performance metrics</p>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-mono uppercase tracking-widest text-graphite/30 flex items-center gap-1">
             <RefreshCw size={10} />
-            Data via Late API
+            Auto-synced
           </span>
         </div>
       </div>
@@ -591,7 +591,7 @@ export default function AnalyticsDashboard({ analytics }: AnalyticsDashboardProp
           <BarChart2 size={32} strokeWidth={1.2} className="text-graphite/20 mx-auto mb-4" />
           <p className="text-sm font-mono uppercase tracking-widest text-graphite/40 mb-2">No analytics data yet</p>
           <p className="text-xs font-sans text-graphite/30 max-w-sm mx-auto">
-            Once posts are published and Late API metrics are synced, performance data will appear here.
+            Once posts are published and metrics are synced, performance data will appear here.
           </p>
         </div>
       ) : (
@@ -719,7 +719,7 @@ export default function AnalyticsDashboard({ analytics }: AnalyticsDashboardProp
         <p className="text-[10px] font-mono text-graphite/25 uppercase tracking-widest mt-4 text-right">
           {data[0].fetched_at
             ? `Last synced ${formatDate(data[0].fetched_at)}`
-            : 'Not yet synced with Late API'}
+            : 'Not yet synced'}
         </p>
       )}
     </div>
