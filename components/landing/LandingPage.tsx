@@ -54,7 +54,7 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
       ),
     },
     {
-      label: 'GENERATE',
+      label: 'TRANSFORM',
       title: 'AI Creates Mockup',
       sub: 'Pick a scene, watch Gemini place your product in',
       content: (
@@ -185,7 +185,7 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
           {steps.map((step, i) => (
             <div
               key={i}
-              className={`flex-1 py-2.5 text-center font-mono text-[10px] uppercase tracking-widest transition-all duration-300 ${
+              className={`flex-1 py-2.5 text-center font-mono text-xs uppercase tracking-wider transition-all duration-300 ${
                 i === activeStep
                   ? 'bg-rust/15 text-rust border-b-2 border-rust'
                   : 'text-forest/55 border-b-2 border-transparent'
