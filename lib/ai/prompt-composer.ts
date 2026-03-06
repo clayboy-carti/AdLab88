@@ -1,15 +1,13 @@
-import { GoogleGenAI } from '@google/genai'
+import OpenAI from 'openai'
 import type { Brand, BrandIntelligence } from '@/types/database'
 
-let _gemini: GoogleGenAI | null = null
-function getGemini(): GoogleGenAI {
-  if (!_gemini) {
-    _gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+let _openai: OpenAI | null = null
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   }
-  return _gemini
+  return _openai
 }
-
-const TEXT_MODEL = 'gemini-2.5-flash'
 
 export interface ComposePromptParams {
   brand: Brand
@@ -25,15 +23,15 @@ export interface ComposedPrompt {
 
 /**
  * Compose a detailed image generation prompt from brand intelligence + assets + campaign goal.
- * Uses Gemini vision when assets are provided, Gemini text otherwise.
+ * Uses GPT-4o vision when assets are provided, GPT-4o text otherwise.
  */
 export async function composePrompt(params: ComposePromptParams): Promise<ComposedPrompt> {
   const { brand, intelligenceProfile, assetUrls, campaignGoal } = params
   const hasAssets = assetUrls.length > 0
 
-  console.log(`[PromptComposer] Composing prompt (assets: ${assetUrls.length}, model: ${TEXT_MODEL})...`)
+  console.log(`[PromptComposer] Composing prompt (assets: ${assetUrls.length}, model: gpt-4o)...`)
 
-  const textPrompt = `You are an expert AI image generation prompt engineer for advertising. Your prompts are sent directly to Gemini image generation to produce high-quality ad visuals.
+  const textPrompt = `You are an expert AI image generation prompt engineer for advertising. Your prompts are sent directly to an image generation model to produce high-quality ad visuals.
 
 Compose a detailed image generation prompt for an ad campaign with this context:
 
@@ -64,39 +62,27 @@ Return a JSON object with:
 
 Return ONLY valid JSON.`
 
-  const parts: any[] = []
+  const content: any[] = [{ type: 'text', text: textPrompt }]
 
   if (hasAssets) {
-    // Include asset images for visual context
     for (const url of assetUrls.slice(0, 2)) {
-      try {
-        const res = await fetch(url)
-        if (res.ok) {
-          const mimeType = res.headers.get('content-type') ?? 'image/jpeg'
-          const base64 = Buffer.from(await res.arrayBuffer()).toString('base64')
-          parts.push({ inlineData: { mimeType, data: base64 } })
-        }
-      } catch {
-        // skip if image fetch fails
-      }
+      content.push({ type: 'image_url', image_url: { url } })
     }
   }
 
-  parts.push({ text: textPrompt })
-
-  const result = await getGemini().models.generateContent({
-    model: TEXT_MODEL,
-    contents: [{ role: 'user', parts }],
-    config: {
-      temperature: 0.7,
-      responseMimeType: 'application/json',
-    },
+  const openai = getOpenAI()
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [{ role: 'user', content }],
+    temperature: 0.7,
+    max_tokens: 1500,
+    response_format: { type: 'json_object' },
   })
 
-  const raw = result.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!raw) throw new Error('No content from Gemini')
+  const raw = response.choices[0]?.message?.content
+  if (!raw) throw new Error('No content from OpenAI')
 
-  const parsed = JSON.parse(typeof raw === 'string' ? raw : JSON.stringify(raw))
+  const parsed = JSON.parse(raw)
   console.log('[PromptComposer] ✅ Prompt composed')
 
   const toStr = (val: unknown): string =>
