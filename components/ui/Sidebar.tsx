@@ -102,7 +102,7 @@ export default function Sidebar() {
       {/* ── Mobile top bar ── */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-forest text-paper flex items-center justify-between px-4 z-40 border-b border-paper/10">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/Adlab88_LogoGreen.png" alt="AdLab 88" style={{ height: 32, width: 'auto' }} className="object-contain" />
+        <img src="/AdLab_Logo2.png" alt="AdLab 88" style={{ height: 32, width: 'auto' }} className="object-contain" />
         <button
           onClick={() => setMobileOpen(true)}
           aria-label="Open navigation"
@@ -125,7 +125,7 @@ export default function Sidebar() {
             {/* Drawer header */}
             <div className="flex items-center justify-between px-5 pt-8 pb-6 flex-shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/Adlab88_LogoGreen.png" alt="AdLab 88" style={{ height: 38, width: 'auto' }} className="object-contain" />
+              <img src="/AdLab_Logo2.png" alt="AdLab 88" style={{ height: 38, width: 'auto' }} className="object-contain" />
               <button
                 onClick={() => setMobileOpen(false)}
                 aria-label="Close navigation"
@@ -219,7 +219,7 @@ export default function Sidebar() {
         {/* Logo */}
         <div className="px-5 pt-8 pb-6 flex-shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/Adlab88_LogoGreen.png" alt="AdLab 88" style={{ width: '100%', height: 'auto' }} className="object-contain" />
+          <img src="/AdLab_Logo2.png" alt="AdLab 88" style={{ width: '100%', height: 'auto' }} className="object-contain" />
         </div>
 
         {/* Nav links */}
