@@ -42,14 +42,6 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
           <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-forest/15 bg-forest/5 shadow-inner">
             <img src="/juiceoriginal.jpg" alt="Product photo" className="w-full h-full object-cover object-center" />
           </div>
-          <div className="flex gap-2 shrink-0">
-            <div className="flex-1 h-8 rounded-lg bg-forest/8 border border-forest/15 flex items-center px-3">
-              <span className="font-mono text-[10px] text-forest/65 uppercase tracking-widest">juiceoriginal.jpg</span>
-            </div>
-            <div className="px-3 h-8 rounded-lg bg-rust/70 flex items-center">
-              <span className="font-mono text-[10px] text-white uppercase tracking-widest">Upload</span>
-            </div>
-          </div>
         </div>
       ),
     },
