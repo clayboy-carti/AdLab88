@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 // ─── Scroll-trigger hook ──────────────────────────────────────────────────────
 function useInView(threshold = 0.12) {
@@ -544,24 +545,24 @@ export default function LandingPage() {
 
       {/* ── NAV ───────────────────────────────────────────────────────────── */}
       <nav className="w-full bg-paper border-b border-forest/10">
-        <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-8 py-3 flex items-center justify-between">
           <div className="flex items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/Adlab88_LogoGreen.png" alt="AdLab 88" className="h-14 w-auto object-contain" />
           </div>
-          <div className="flex items-center gap-5">
-            <Link href="#how-it-works" className="hidden md:block font-mono text-sm uppercase tracking-widest text-forest hover:text-forest/60 transition-colors">
+          <div className="flex items-center gap-10">
+            <Link href="#how-it-works" className="hidden md:block font-mono text-sm uppercase tracking-wider text-forest hover:text-forest/60 transition-colors">
               How It Works
             </Link>
-            <Link href="#pricing" className="hidden md:block font-mono text-sm uppercase tracking-widest text-forest hover:text-forest/60 transition-colors">
+            <Link href="#pricing" className="hidden md:block font-mono text-sm uppercase tracking-wider text-forest hover:text-forest/60 transition-colors">
               Pricing
             </Link>
-            <Link href="/login" className="font-mono text-sm uppercase tracking-widest text-forest hover:text-forest/60 transition-colors">
+            <Link href="/login" className="font-mono text-sm uppercase tracking-wider text-forest hover:text-forest/60 transition-colors">
               Sign In
             </Link>
             <Link
               href="/login"
-              className="bg-rust text-white font-mono text-sm uppercase tracking-widest px-4 py-2.5 rounded-xl hover:bg-rust/90 transition-all hover:shadow-lg hover:shadow-rust/20 hover:-translate-y-0.5"
+              className="bg-rust text-white font-mono text-sm uppercase tracking-wider px-6 py-2.5 rounded-xl hover:bg-rust/90 transition-all hover:shadow-lg hover:shadow-rust/20 hover:-translate-y-0.5"
             >
               Get Started →
             </Link>
