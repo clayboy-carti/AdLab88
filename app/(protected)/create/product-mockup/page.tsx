@@ -620,7 +620,7 @@ export default function ProductMockupPage() {
                 {/* Loading state */}
                 {generating && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-8" style={dotGrid}>
-                    <div className="bg-white rounded-2xl border border-forest/15 shadow-sm p-6 w-full max-w-sm flex flex-col items-center gap-5">
+                    <div className="bg-white rounded-2xl border border-forest/15 shadow-sm p-6 w-full max-w-md flex flex-col items-center gap-5">
                       {/* Video loading animation */}
                       <div className="rounded-xl overflow-hidden border border-forest/15 w-full aspect-video bg-paper">
                         <video
@@ -641,7 +641,7 @@ export default function ProductMockupPage() {
                               className={
                                 line.status === 'completed'
                                   ? 'text-xs font-mono text-graphite/40'
-                                  : 'text-xs font-mono text-rust animate-pulse'
+                                  : 'text-xs font-mono font-semibold text-rust animate-pulse'
                               }
                             >
                               {line.status === 'completed' ? `✓ ${line.text}` : `→ ${line.text}…`}
