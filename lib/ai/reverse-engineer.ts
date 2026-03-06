@@ -79,15 +79,20 @@ Return ONLY valid JSON.`
     },
   })
 
-  const text = result.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!text) throw new Error('No response from Gemini')
+  const raw = result.candidates?.[0]?.content?.parts?.[0]?.text
+  if (!raw) throw new Error('No response from Gemini')
 
-  const parsed = JSON.parse(text)
+  const parsed = JSON.parse(typeof raw === 'string' ? raw : JSON.stringify(raw))
   console.log('[ReverseEngineer] ✅ Analysis complete')
 
+  const toStr = (val: unknown): string =>
+    typeof val === 'string' ? val : val != null ? JSON.stringify(val) : ''
+
   return {
-    stylePrompt: parsed.stylePrompt ?? '',
-    copySkeleton: parsed.copySkeleton ?? '',
-    variants: Array.isArray(parsed.variants) ? parsed.variants : [],
+    stylePrompt: toStr(parsed.stylePrompt),
+    copySkeleton: toStr(parsed.copySkeleton),
+    variants: Array.isArray(parsed.variants)
+      ? parsed.variants.map(toStr).filter(Boolean)
+      : [],
   }
 }

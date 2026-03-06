@@ -88,19 +88,22 @@ Return ONLY valid JSON.`
     },
   })
 
-  const text = result.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!text) throw new Error('No response from Gemini')
+  const raw = result.candidates?.[0]?.content?.parts?.[0]?.text
+  if (!raw) throw new Error('No response from Gemini')
 
-  const parsed = JSON.parse(text)
+  const parsed = JSON.parse(typeof raw === 'string' ? raw : JSON.stringify(raw))
   if (!Array.isArray(parsed.concepts)) throw new Error('Invalid response: expected concepts array')
 
   console.log(`[Concepts] ✅ Generated ${parsed.concepts.length} concepts`)
 
+  const toStr = (val: unknown, fallback = ''): string =>
+    typeof val === 'string' ? val : val != null ? JSON.stringify(val) : fallback
+
   return parsed.concepts.map((c: any) => ({
-    type: c.type ?? 'Unknown',
-    angle: c.angle ?? '',
-    audienceStage: c.audienceStage ?? 'awareness',
-    whyDistinct: c.whyDistinct ?? '',
-    promptTemplate: c.promptTemplate ?? '',
+    type: toStr(c.type, 'Unknown'),
+    angle: toStr(c.angle),
+    audienceStage: toStr(c.audienceStage, 'awareness') as ConceptDirection['audienceStage'],
+    whyDistinct: toStr(c.whyDistinct),
+    promptTemplate: toStr(c.promptTemplate),
   }))
 }
