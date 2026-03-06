@@ -483,11 +483,11 @@ export default function LandingPage() {
     <div className="min-h-screen bg-paper font-sans overflow-x-hidden">
 
       {/* ── NAV ───────────────────────────────────────────────────────────── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-forest/95 backdrop-blur-sm border-b border-paper/10" style={forestGrid}>
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <nav className="fixed top-4 left-0 right-0 z-50 bg-forest/95 backdrop-blur-sm border-b border-paper/10" style={forestGrid}>
+        <div className="max-w-6xl mx-auto px-6 h-24 flex items-center justify-between">
           <div className="flex items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/AdLab_Logo2.png" alt="AdLab 88" className="h-24 w-auto object-contain brightness-0 invert" />
+            <img src="/AdLab_Logo2.png" alt="AdLab 88" className="h-20 w-auto object-contain brightness-0 invert" />
           </div>
           <div className="flex items-center gap-5">
             <Link href="#how-it-works" className="hidden md:block font-mono text-sm uppercase tracking-widest text-paper hover:text-paper/70 transition-colors">
