@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useState, useEffect, useMemo } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -13,6 +13,114 @@ import {
 } from '@/lib/validations/brand'
 import type { Brand, BrandDNA } from '@/types/database'
 
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+
+// Confetti burst config for the celebration screen
+const CONFETTI_PIECES = [
+  { keyframe: 'confettiLeft',     color: '#B55233', size: 9,  delay: 0,   dur: 1.2 },
+  { keyframe: 'confettiRight',    color: '#1F3A32', size: 6,  delay: 80,  dur: 1.0 },
+  { keyframe: 'confettiUp',       color: '#B55233', size: 10, delay: 160, dur: 1.4 },
+  { keyframe: 'confettiLeftLow',  color: '#8FA99B', size: 7,  delay: 40,  dur: 1.1 },
+  { keyframe: 'confettiRightLow', color: '#2A2A2A', size: 5,  delay: 200, dur: 0.9 },
+  { keyframe: 'confettiUpLeft',   color: '#8FA99B', size: 8,  delay: 120, dur: 1.3 },
+  { keyframe: 'confettiUpRight',  color: '#B55233', size: 6,  delay: 240, dur: 1.2 },
+  { keyframe: 'confettiUp',       color: '#1F3A32', size: 9,  delay: 60,  dur: 1.5 },
+  { keyframe: 'confettiLeftLow',  color: '#B55233', size: 5,  delay: 180, dur: 1.0 },
+  { keyframe: 'confettiRightLow', color: '#8FA99B', size: 7,  delay: 300, dur: 1.1 },
+  { keyframe: 'confettiLeft',     color: '#2A2A2A', size: 6,  delay: 220, dur: 0.9 },
+  { keyframe: 'confettiRight',    color: '#B55233', size: 10, delay: 140, dur: 1.4 },
+]
+
+// ── Idea 5: Celebration screen shown after brand is saved ──────────────────
+function BrandSavedCelebration({ onContinue }: { onContinue: () => void }) {
+  const [typedText, setTypedText] = useState('')
+  const TARGET = '> BRAND DNA LOCKED IN.'
+
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      await sleep(400)
+      for (let i = 0; i <= TARGET.length && !cancelled; i++) {
+        setTypedText(TARGET.slice(0, i))
+        await sleep(45)
+      }
+    }
+    run()
+    return () => { cancelled = true }
+  }, [])
+
+  return (
+    <div className="relative overflow-hidden text-center py-16 px-4">
+      {/* Confetti burst */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        {CONFETTI_PIECES.map((p, i) => (
+          <span
+            key={i}
+            className="absolute"
+            style={{
+              width: p.size,
+              height: p.size,
+              backgroundColor: p.color,
+              borderRadius: i % 3 === 0 ? '50%' : '2px',
+              top: '50%',
+              left: '50%',
+              animationName: p.keyframe,
+              animationDuration: `${p.dur}s`,
+              animationDelay: `${p.delay}ms`,
+              animationFillMode: 'both',
+              animationTimingFunction: 'cubic-bezier(0.2, 0.8, 0.3, 1)',
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10">
+        {/* Check circle */}
+        <div
+          className="w-16 h-16 rounded-full bg-forest/10 border-2 border-forest/40 flex items-center justify-center mx-auto mb-8 animate-fade-in-up"
+          style={{ animationDelay: '200ms' }}
+        >
+          <svg
+            className="w-7 h-7 text-forest"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+
+        {/* Typewriter headline */}
+        <div
+          className="font-mono text-xl sm:text-2xl text-graphite font-bold animate-fade-in-up"
+          style={{ animationDelay: '300ms' }}
+        >
+          {typedText}
+          <span className="animate-pulse opacity-60">█</span>
+        </div>
+
+        <p
+          className="text-sm text-gray-500 mt-5 max-w-sm mx-auto leading-relaxed animate-fade-in-up"
+          style={{ animationDelay: '1800ms' }}
+        >
+          Your brand profile is ready. Every ad you create will now be tuned to your voice.
+        </p>
+
+        <button
+          onClick={onContinue}
+          className="btn-primary mt-8 animate-fade-in-up"
+          style={{ animationDelay: '2400ms' }}
+        >
+          [ START CREATING → ]
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── Main wizard ────────────────────────────────────────────────────────────
 interface BrandWizardProps {
   existingBrand?: Brand
   /** Pre-filled data from a brand URL scan */
@@ -21,8 +129,10 @@ interface BrandWizardProps {
 
 export default function BrandWizard({ existingBrand, initialData }: BrandWizardProps) {
   const [step, setStep] = useState(1)
+  const [slideDir, setSlideDir] = useState<'forward' | 'back'>('forward')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [celebrated, setCelebrated] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -60,11 +170,22 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<BrandFormData>({
     resolver: zodResolver(brandSchema),
     defaultValues,
   })
+
+  // Idea 6: watch brand_colors for live swatch preview
+  const brandColorsRaw = useWatch({ control, name: 'brand_colors' })
+  const livePaletteColors = useMemo(() => {
+    if (!brandColorsRaw) return []
+    return brandColorsRaw
+      .split(',')
+      .map((c) => c.trim())
+      .filter((c) => /^#[0-9A-Fa-f]{6}$/.test(c))
+  }, [brandColorsRaw])
 
   const onSubmit = async (data: BrandFormData) => {
     setLoading(true)
@@ -76,7 +197,6 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
       } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      // Prepare payload with parsed arrays
       const payload = {
         user_id: user.id,
         company_name: data.company_name,
@@ -95,21 +215,18 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
       }
 
       if (existingBrand) {
-        // Update existing brand
         const { error: updateError } = await supabase
           .from('brands')
           .update(payload)
           .eq('user_id', user.id)
-
         if (updateError) throw updateError
       } else {
-        // Create new brand
         const { error: insertError } = await supabase.from('brands').insert(payload)
-
         if (insertError) throw insertError
       }
 
-      router.push('/create')
+      // Idea 5: show celebration instead of navigating immediately
+      setCelebrated(true)
     } catch (err: any) {
       console.error('Brand save error:', err)
       setError(err.message || 'Failed to save brand')
@@ -118,8 +235,25 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
     }
   }
 
-  const nextStep = () => setStep((prev) => Math.min(prev + 1, 4))
-  const prevStep = () => setStep((prev) => Math.max(prev - 1, 1))
+  // Idea 3: track slide direction alongside step
+  const nextStep = () => {
+    setSlideDir('forward')
+    setStep((prev) => Math.min(prev + 1, 4))
+  }
+  const prevStep = () => {
+    setSlideDir('back')
+    setStep((prev) => Math.max(prev - 1, 1))
+  }
+
+  // Idea 5: celebration screen
+  if (celebrated) {
+    return (
+      <BrandSavedCelebration onContinue={() => router.push('/create')} />
+    )
+  }
+
+  // Idea 3: animate class based on direction
+  const slideClass = slideDir === 'forward' ? 'animate-slide-in-right' : 'animate-slide-in-left'
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl mx-auto">
@@ -131,7 +265,7 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
 
       {/* Step 1: Core Identity */}
       {step === 1 && (
-        <div className="space-y-6">
+        <div key="step-1" className={`space-y-6 ${slideClass}`}>
           <h2 className="text-xl uppercase font-mono header-accent">STEP 1: CORE IDENTITY</h2>
 
           <div>
@@ -191,7 +325,7 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
 
       {/* Step 2: Voice & Messaging */}
       {step === 2 && (
-        <div className="space-y-6">
+        <div key="step-2" className={`space-y-6 ${slideClass}`}>
           <h2 className="text-xl uppercase font-mono header-accent">
             STEP 2: VOICE & MESSAGING
           </h2>
@@ -253,7 +387,7 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
 
       {/* Step 3: Visual Identity */}
       {step === 3 && (
-        <div className="space-y-6">
+        <div key="step-3" className={`space-y-6 ${slideClass}`}>
           <h2 className="text-xl uppercase font-mono header-accent">
             STEP 3: VISUAL IDENTITY
           </h2>
@@ -268,6 +402,25 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
               className="w-full border border-gray-400 rounded px-3 py-2 focus:outline-none focus:border-graphite"
               placeholder="#FF5733, #33FF57"
             />
+
+            {/* Idea 6: Live color swatch preview */}
+            {livePaletteColors.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-3">
+                {livePaletteColors.map((color, i) => (
+                  <div
+                    key={color}
+                    className="flex flex-col items-center gap-1 animate-paint-in"
+                    style={{ animationDelay: `${i * 90}ms` }}
+                  >
+                    <div
+                      className="w-12 h-12 border border-outline rounded shadow-sm"
+                      style={{ backgroundColor: color }}
+                    />
+                    <p className="text-xs font-mono uppercase text-gray-500">{color}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
@@ -296,7 +449,7 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
 
       {/* Step 4: Sample Copy */}
       {step === 4 && (
-        <div className="space-y-6">
+        <div key="step-4" className={`space-y-6 ${slideClass}`}>
           <h2 className="text-xl uppercase font-mono header-accent">STEP 4: SAMPLE COPY</h2>
 
           <div>
@@ -322,19 +475,28 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
             <button type="button" onClick={prevStep} className="btn-secondary flex-1">
               BACK
             </button>
-            <button type="submit" disabled={loading} className="btn-primary flex-1">
-              {loading ? 'SAVING...' : existingBrand ? 'UPDATE BRAND' : 'SAVE BRAND'}
+            <button type="submit" disabled={loading} className="btn-primary flex-1 disabled:opacity-50">
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent animate-spin" />
+                  Saving...
+                </span>
+              ) : (
+                existingBrand ? 'UPDATE BRAND' : 'SAVE BRAND'
+              )}
             </button>
           </div>
         </div>
       )}
 
-      {/* Progress Indicator */}
-      <div className="mt-8 flex justify-center gap-2">
+      {/* Progress indicator — active segments grow wider */}
+      <div className="mt-8 flex justify-center gap-2 items-center">
         {[1, 2, 3, 4].map((num) => (
           <div
             key={num}
-            className={`w-16 h-1 ${num <= step ? 'bg-rust' : 'bg-gray-300'}`}
+            className={`h-1 rounded-full transition-all duration-500 ${
+              num <= step ? 'bg-rust w-16' : 'bg-gray-300 w-8'
+            }`}
           />
         ))}
       </div>

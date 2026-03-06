@@ -11,16 +11,19 @@ interface BrandDNACardsProps {
 export default function BrandDNACards({ data, onApply, onRescan }: BrandDNACardsProps) {
   return (
     <div className="space-y-6">
-      <p className="text-sm font-mono text-gray-500">
+      <p
+        className="text-sm font-mono text-gray-500 animate-fade-in-up"
+        style={{ animationDelay: '0ms' }}
+      >
         Review the extracted brand data below. Click &ldquo;Build Brand Profile&rdquo; to pre-fill
         the setup wizard — you can edit everything before saving.
       </p>
 
-      {/* Sections */}
+      {/* Sections — each staggered in */}
       <div className="flex flex-col border border-outline divide-y divide-outline">
 
         {/* Core Identity */}
-        <DNASection label="01 — Core Identity">
+        <DNASection label="01 — Core Identity" delay={60}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {data.company_name && (
               <DNAField label="Company Name">{data.company_name}</DNAField>
@@ -40,7 +43,7 @@ export default function BrandDNACards({ data, onApply, onRescan }: BrandDNACards
         </DNASection>
 
         {/* Voice & Messaging */}
-        <DNASection label="02 — Voice & Messaging">
+        <DNASection label="02 — Voice & Messaging" delay={180}>
           <div className="space-y-4">
             {data.voice_summary && (
               <DNAField label="Voice Summary">
@@ -97,7 +100,7 @@ export default function BrandDNACards({ data, onApply, onRescan }: BrandDNACards
 
         {/* Visual Identity */}
         {(data.brand_colors?.length || data.typography_notes) && (
-          <DNASection label="03 — Visual Identity">
+          <DNASection label="03 — Visual Identity" delay={300}>
             <div className="flex flex-col md:flex-row gap-6">
               {data.brand_colors?.length ? (
                 <div>
@@ -105,8 +108,12 @@ export default function BrandDNACards({ data, onApply, onRescan }: BrandDNACards
                     Colors
                   </p>
                   <div className="flex gap-3 flex-wrap">
-                    {data.brand_colors.map((color) => (
-                      <div key={color} className="flex flex-col gap-1 items-center">
+                    {data.brand_colors.map((color, i) => (
+                      <div
+                        key={color}
+                        className="flex flex-col gap-1 items-center animate-paint-in"
+                        style={{ animationDelay: `${320 + i * 80}ms` }}
+                      >
                         <div
                           className="w-10 h-10 border border-outline"
                           style={{ backgroundColor: color }}
@@ -126,7 +133,7 @@ export default function BrandDNACards({ data, onApply, onRescan }: BrandDNACards
 
         {/* Sample Copy */}
         {data.sample_copy && (
-          <DNASection label="04 — Sample Copy">
+          <DNASection label="04 — Sample Copy" delay={420}>
             <div className="flex gap-4">
               <div className="w-1 bg-rust flex-shrink-0" />
               <p className="text-sm text-graphite leading-relaxed font-mono italic">
@@ -138,7 +145,10 @@ export default function BrandDNACards({ data, onApply, onRescan }: BrandDNACards
       </div>
 
       {/* CTA */}
-      <div className="flex gap-3">
+      <div
+        className="flex gap-3 animate-fade-in-up"
+        style={{ animationDelay: '540ms' }}
+      >
         <button onClick={() => onApply(data)} className="btn-primary flex-1">
           BUILD BRAND PROFILE
         </button>
@@ -150,9 +160,20 @@ export default function BrandDNACards({ data, onApply, onRescan }: BrandDNACards
   )
 }
 
-function DNASection({ label, children }: { label: string; children: React.ReactNode }) {
+function DNASection({
+  label,
+  delay,
+  children,
+}: {
+  label: string
+  delay: number
+  children: React.ReactNode
+}) {
   return (
-    <div className="px-6 py-5">
+    <div
+      className="px-6 py-5 animate-fade-in-up"
+      style={{ animationDelay: `${delay}ms` }}
+    >
       <h3 className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-1">{label}</h3>
       <div className="w-8 h-0.5 bg-rust mb-4" />
       {children}
