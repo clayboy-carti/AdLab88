@@ -60,10 +60,7 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
           </div>
           <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-forest/15 bg-forest/5 shadow-inner">
             <img src="/juicetransform.png" alt="AI generated mockup" className="w-full h-full object-cover object-center" />
-            <div className="absolute bottom-2 right-2 flex items-center gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-sage animate-pulse-dot" />
-              <span className="font-mono text-[8px] text-paper/80 bg-black/40 px-1.5 py-0.5 rounded">Gemini generating…</span>
-            </div>
+
           </div>
         </div>
       ),
