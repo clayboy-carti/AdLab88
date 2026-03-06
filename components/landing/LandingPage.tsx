@@ -191,8 +191,8 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
             <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/70" />
             <div className="w-2.5 h-2.5 rounded-full bg-green-400/70" />
           </div>
-          <div className="flex-1 text-center font-mono text-[10px] uppercase tracking-widest text-forest/60">
-            AdLab 88 — Lab Bench
+          <div className="flex-1 text-center font-mono text-xs uppercase tracking-widest text-forest/60">
+            The Lab Bench
           </div>
         </div>
 
