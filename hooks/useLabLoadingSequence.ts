@@ -30,6 +30,16 @@ const LAB_CHAOS = [
   'Emergency napkin deployment initiated',
   'The render escaped containment briefly',
   'Shaking the inspiration container carefully',
+  'Lab coat is on fire but the vibe is immaculate',
+  'Rogue pixel detected in the test tube',
+  'AI intern ate the product sample',
+  'Accidental explosion improved the composition',
+  'The background chemicals have opinions now',
+  'Containment protocol: strongly worded email',
+  'Recalibrating after unexpected sneezing incident',
+  'Someone left the creativity dial on maximum',
+  'The formula is technically correct but suspicious',
+  'Negotiating with the render to please finish',
 ]
 
 const LAB_FINALIZING = [
@@ -52,8 +62,8 @@ function buildSequence(): string[] {
   const processCount = Math.random() < 0.5 ? 2 : 3
   const process = pickRandom(LAB_PROCESS, processCount)
 
-  // 5% chance of a chaos line inserted randomly into the process steps
-  const chaos = Math.random() < 0.05 ? pickRandom(LAB_CHAOS, 1) : []
+  // 20% chance of a chaos line inserted randomly into the process steps
+  const chaos = Math.random() < 0.20 ? pickRandom(LAB_CHAOS, 1) : []
   const finalizing = pickRandom(LAB_FINALIZING, 1)
 
   const middle = [...process]
