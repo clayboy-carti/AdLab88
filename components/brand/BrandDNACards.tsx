@@ -171,7 +171,7 @@ function DNAField({
 }) {
   return (
     <div className={className}>
-      <p className="text-xs font-mono uppercase tracking-widest text-rust mb-1">{label}</p>
+      <p className="text-xs font-mono font-bold uppercase tracking-widest text-rust mb-1">{label}</p>
       <div className="text-sm text-graphite leading-relaxed font-mono">{children}</div>
     </div>
   )
