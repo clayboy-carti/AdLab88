@@ -35,56 +35,40 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
   const steps = [
     {
       label: 'UPLOAD',
-      title: 'Your Product Photo',
-      sub: 'Drop in any image — product, lifestyle, or brand asset',
+      title: 'Start With a Photo',
+      sub: 'Upload any product shot to begin',
       content: (
         <div className="h-full flex flex-col gap-3">
-          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-forest/15 bg-forest/5">
-            <img src="/gooseoriginal.jpg" alt="Product photo" className="w-full h-full object-contain" />
-          </div>
-          <div className="flex gap-2 shrink-0">
-            <div className="flex-1 h-8 rounded-lg bg-forest/8 border border-forest/15 flex items-center px-3">
-              <span className="font-mono text-[10px] text-forest/65 uppercase tracking-widest">gooseoriginal.jpg</span>
-            </div>
-            <div className="px-3 h-8 rounded-lg bg-rust/70 flex items-center">
-              <span className="font-mono text-[10px] text-white uppercase tracking-widest">Upload</span>
-            </div>
+          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-forest/15 bg-forest/5 shadow-inner">
+            <img src="/juiceoriginal.jpg" alt="Product photo" className="w-full h-full object-cover object-center" />
           </div>
         </div>
       ),
     },
     {
       label: 'TRANSFORM',
-      title: 'AI Creates Mockup',
-      sub: 'Pick a scene, watch Gemini place your product in',
+      title: 'Build Your Scene',
+      sub: 'Choose a setting and place your product',
       content: (
         <div className="h-full flex flex-col gap-3">
-          <div className="grid grid-cols-3 gap-1.5 shrink-0">
-            {['Studio', 'Lifestyle', 'Luxury', 'Golden Hr', 'Minimal', 'Outdoor'].map((s, i) => (
-              <button key={i} className={`py-1.5 rounded-lg font-mono text-[9px] uppercase tracking-widest transition-all ${i === 1 ? 'bg-sage/40 border border-sage/60 text-forest' : 'bg-forest/5 border border-forest/15 text-forest/65'}`}>
+          <div className="flex gap-1.5 shrink-0">
+            {['Studio', 'Lifestyle', 'Luxury'].map((s, i) => (
+              <button key={i} className={`flex-1 py-1.5 rounded-lg font-mono text-[9px] uppercase tracking-widest transition-all ${i === 1 ? 'bg-sage/40 border border-sage/60 text-forest' : 'bg-forest/5 border border-forest/15 text-forest/65'}`}>
                 {s}
               </button>
             ))}
           </div>
-          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-forest/15 bg-forest/5">
-            <img src="/goosegenerated.png" alt="AI generated mockup" className="w-full h-full object-contain" />
-            <div className="absolute bottom-2 right-2 flex items-center gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-sage animate-pulse-dot" />
-              <span className="font-mono text-[8px] text-paper/80 bg-black/40 px-1.5 py-0.5 rounded">Gemini generating…</span>
-            </div>
-          </div>
-          <div className="flex gap-2 shrink-0">
-            {['Gemini Vision', 'Claude 3.5', '2K Quality'].map((m, i) => (
-              <span key={i} className="flex-1 text-center py-1 rounded-lg bg-forest/5 border border-forest/15 font-mono text-[9px] uppercase tracking-widest text-forest/70">{m}</span>
-            ))}
+          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-forest/15 bg-forest/5 shadow-inner">
+            <img src="/juicetransform.png" alt="AI generated mockup" className="w-full h-full object-cover object-center" />
+
           </div>
         </div>
       ),
     },
     {
       label: 'SCHEDULE',
-      title: 'Schedule & Post',
-      sub: 'Set a date, pick platforms, let AdLab handle the rest',
+      title: 'Schedule Your Post',
+      sub: 'Choose where and when it goes live',
       content: (
         <div className="h-full flex flex-col gap-2.5">
           {/* Confirmed banner */}
@@ -97,18 +81,50 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
           <div className="flex gap-2 flex-1 min-h-0">
             {/* Post preview */}
             <div className="w-[44%] shrink-0 flex flex-col gap-1.5">
-              <div className="flex-1 min-h-0 rounded-lg overflow-hidden border border-forest/15 bg-forest/5">
-                <img src="/goosegenerated.png" alt="Scheduled ad" className="w-full h-full object-cover" />
+              <div className="flex-1 min-h-0 rounded-lg overflow-hidden border border-forest/15 bg-forest/5 shadow-inner">
+                <img src="/juicetransform.png" alt="Scheduled ad" className="w-full h-full object-cover object-center" />
               </div>
               {/* Platform pills */}
               <div className="flex gap-1">
                 {[
-                  { label: 'IG', active: true },
-                  { label: 'TK', active: true },
-                  { label: 'FB', active: false },
-                ].map(({ label, active }, i) => (
-                  <div key={i} className={`flex-1 py-1 rounded-md flex items-center justify-center border text-[9px] font-mono font-semibold uppercase ${active ? 'bg-rust/20 border-rust/50 text-rust' : 'bg-forest/5 border-forest/15 text-forest/40'}`}>
-                    {label}
+                  {
+                    label: 'Instagram',
+                    active: true,
+                    bg: 'linear-gradient(135deg, #833AB4 0%, #E1306C 50%, #F77737 100%)',
+                    icon: (
+                      <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 flex-shrink-0" fill="currentColor">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+                      </svg>
+                    ),
+                  },
+                  {
+                    label: 'TikTok',
+                    active: true,
+                    bg: '#010101',
+                    icon: (
+                      <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 flex-shrink-0" fill="currentColor">
+                        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.74a4.85 4.85 0 01-1.01-.05z"/>
+                      </svg>
+                    ),
+                  },
+                  {
+                    label: 'Facebook',
+                    active: false,
+                    bg: '#1877F2',
+                    icon: (
+                      <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 flex-shrink-0" fill="currentColor">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                      </svg>
+                    ),
+                  },
+                ].map(({ label, active, bg, icon }, i) => (
+                  <div
+                    key={i}
+                    style={{ background: bg, opacity: active ? 1 : 0.45 }}
+                    className="flex-1 py-1.5 px-1 rounded-md flex flex-col items-center justify-center gap-0.5 border border-transparent text-white transition-all"
+                  >
+                    {icon}
+                    <span className="text-[6.5px] font-semibold tracking-wide leading-none">{label}</span>
                   </div>
                 ))}
               </div>
@@ -169,14 +185,14 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
       {/* App window */}
       <div className="rounded-2xl border border-forest/15 bg-paper overflow-hidden shadow-2xl flex flex-col h-[540px]">
         {/* Title bar */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-forest/10 bg-forest/8">
+        <div className="relative flex items-center gap-3 px-4 py-3 border-b border-forest/10 bg-forest/8">
           <div className="flex gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full bg-red-400/70" />
             <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/70" />
             <div className="w-2.5 h-2.5 rounded-full bg-green-400/70" />
           </div>
-          <div className="flex-1 text-center font-mono text-[10px] uppercase tracking-widest text-forest/60">
-            AdLab 88 — Lab Bench
+          <div className="absolute inset-0 flex items-center justify-center font-mono text-xs uppercase tracking-widest text-forest/60 pointer-events-none">
+            The Lab Bench
           </div>
         </div>
 
@@ -198,9 +214,9 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
 
         {/* Content */}
         <div className="p-5 flex-1 min-h-0 flex flex-col">
-          <p className="font-mono text-sm font-semibold text-forest mb-0.5 shrink-0">{steps[activeStep].title}</p>
-          <p className="font-sans text-xs text-forest/75 mb-4 shrink-0">{steps[activeStep].sub}</p>
-          <div className="flex-1 min-h-0">
+          <p key={`title-${activeStep}`} className="font-mono text-sm font-semibold text-forest mb-0.5 shrink-0 animate-fade-in">{steps[activeStep].title}</p>
+          <p key={`sub-${activeStep}`} className="font-sans text-xs text-forest/75 mb-4 shrink-0 animate-fade-in">{steps[activeStep].sub}</p>
+          <div key={activeStep} className="flex-1 min-h-0 animate-fade-in">
             {steps[activeStep].content}
           </div>
         </div>
@@ -524,23 +540,23 @@ export default function LandingPage() {
   }, [analyticsInView])
 
   return (
-    <div className="min-h-screen bg-paper font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-paper font-sans">
 
       {/* ── NAV ───────────────────────────────────────────────────────────── */}
-      <nav className="fixed top-16 left-0 right-0 z-50 bg-forest/95 backdrop-blur-sm border-b border-paper/10" style={forestGrid}>
-        <div className="max-w-6xl mx-auto px-6 h-24 flex items-center justify-between">
+      <nav className="w-full bg-paper border-b border-forest/10">
+        <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/AdLab_Logo2.png" alt="AdLab 88" className="h-20 w-auto object-contain brightness-0 invert" />
+            <img src="/AdLab_Logo2.png" alt="AdLab 88" className="h-14 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-5">
-            <Link href="#how-it-works" className="hidden md:block font-mono text-sm uppercase tracking-widest text-paper hover:text-paper/70 transition-colors">
+            <Link href="#how-it-works" className="hidden md:block font-mono text-sm uppercase tracking-widest text-forest hover:text-forest/60 transition-colors">
               How It Works
             </Link>
-            <Link href="#pricing" className="hidden md:block font-mono text-sm uppercase tracking-widest text-paper hover:text-paper/70 transition-colors">
+            <Link href="#pricing" className="hidden md:block font-mono text-sm uppercase tracking-widest text-forest hover:text-forest/60 transition-colors">
               Pricing
             </Link>
-            <Link href="/login" className="font-mono text-sm uppercase tracking-widest text-paper hover:text-paper/70 transition-colors">
+            <Link href="/login" className="font-mono text-sm uppercase tracking-widest text-forest hover:text-forest/60 transition-colors">
               Sign In
             </Link>
             <Link
@@ -554,7 +570,7 @@ export default function LandingPage() {
       </nav>
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section className="min-h-screen bg-forest pt-16 flex items-center relative overflow-hidden" style={forestGrid}>
+      <section className="min-h-screen bg-forest flex items-center relative overflow-hidden" style={forestGrid}>
         {/* Decorative blobs */}
         <div className="absolute top-24 left-12 w-72 h-72 rounded-full bg-sage/6 blur-3xl pointer-events-none" />
         <div className="absolute bottom-16 right-16 w-96 h-96 rounded-full bg-rust/5 blur-3xl pointer-events-none" />
