@@ -86,24 +86,77 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
       title: 'Schedule & Post',
       sub: 'Set a date, pick platforms, let AdLab handle the rest',
       content: (
-        <div className="h-full flex flex-col gap-3">
-          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-forest/15 bg-forest/5">
-            <img src="/goosegenerated.png" alt="Scheduled ad" className="w-full h-full object-contain" />
-            <div className="absolute top-2 right-2">
-              <span className="bg-sage/80 text-forest font-mono text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full">✓ Ready</span>
+        <div className="h-full flex flex-col gap-2.5">
+          {/* Confirmed banner */}
+          <div className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-sage/25 border border-sage/50">
+            <div className="w-2 h-2 rounded-full bg-sage shrink-0" />
+            <span className="font-mono text-[11px] text-forest font-semibold tracking-wide">Scheduled — Mar 17 · 9:00 AM</span>
+          </div>
+
+          {/* Main row: preview + calendar */}
+          <div className="flex gap-2 flex-1 min-h-0">
+            {/* Post preview */}
+            <div className="w-[44%] shrink-0 flex flex-col gap-1.5">
+              <div className="flex-1 min-h-0 rounded-lg overflow-hidden border border-forest/15 bg-forest/5">
+                <img src="/goosegenerated.png" alt="Scheduled ad" className="w-full h-full object-cover" />
+              </div>
+              {/* Platform pills */}
+              <div className="flex gap-1">
+                {[
+                  { label: 'IG', active: true },
+                  { label: 'TK', active: true },
+                  { label: 'FB', active: false },
+                ].map(({ label, active }, i) => (
+                  <div key={i} className={`flex-1 py-1 rounded-md flex items-center justify-center border text-[9px] font-mono font-semibold uppercase ${active ? 'bg-rust/20 border-rust/50 text-rust' : 'bg-forest/5 border-forest/15 text-forest/40'}`}>
+                    {label}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Mini calendar */}
+            <div className="flex-1 min-w-0 rounded-xl border border-forest/20 bg-paper/80 p-2 flex flex-col gap-1.5">
+              {/* Month header */}
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[9px] text-forest/50">‹</span>
+                <span className="font-mono text-[9px] font-semibold text-forest uppercase tracking-widest">Mar</span>
+                <span className="font-mono text-[9px] text-forest/50">›</span>
+              </div>
+              {/* Day headers */}
+              <div className="grid grid-cols-7 gap-px">
+                {['S','M','T','W','T','F','S'].map((d, i) => (
+                  <div key={i} className="text-center font-mono text-[7px] text-forest/40">{d}</div>
+                ))}
+              </div>
+              {/* Dates */}
+              {[
+                [null,null,null,null,null,null,1],
+                [2,3,4,5,6,7,8],
+                [9,10,11,12,13,14,15],
+                [16,17,18,19,20,21,22],
+                [23,24,25,26,27,28,29],
+              ].map((week, wi) => (
+                <div key={wi} className="grid grid-cols-7 gap-px">
+                  {week.map((d, di) => (
+                    <div key={di} className={`text-center font-mono text-[8px] rounded aspect-square flex items-center justify-center leading-none
+                      ${d === 17 ? 'bg-rust text-white font-bold' : d === 6 ? 'bg-forest/10 text-forest/60' : d ? 'text-forest/65' : ''}`}>
+                      {d ?? ''}
+                    </div>
+                  ))}
+                </div>
+              ))}
+              {/* Time row */}
+              <div className="mt-auto pt-1 border-t border-forest/10 flex items-center justify-between">
+                <span className="font-mono text-[8px] text-forest/50">Time</span>
+                <span className="font-mono text-[9px] font-semibold text-forest bg-forest/8 px-1.5 py-0.5 rounded">9:00 AM</span>
+              </div>
             </div>
           </div>
-          <div className="flex gap-1.5 shrink-0">
-            {['IG', 'TW', 'FB'].map((p, i) => (
-              <div key={i} className={`flex-1 py-2 rounded-lg flex flex-col items-center gap-0.5 border transition-all ${i === 0 ? 'bg-rust/20 border-rust/40' : 'bg-forest/5 border-forest/10'}`}>
-                <span className="font-mono text-[10px] text-forest/80 uppercase">{p}</span>
-                {i === 0 && <div className="w-1.5 h-1.5 rounded-full bg-rust" />}
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-2 shrink-0">
-            <div className="flex-1 py-2 rounded-xl bg-rust/80 text-center font-mono text-[10px] uppercase tracking-widest text-white">
-              Schedule for Mar 17
+
+          {/* Confirm button */}
+          <div className="shrink-0">
+            <div className="w-full py-2 rounded-xl bg-rust text-center font-mono text-[10px] uppercase tracking-widest text-white font-semibold">
+              ✓ Confirm &amp; Schedule
             </div>
           </div>
         </div>
