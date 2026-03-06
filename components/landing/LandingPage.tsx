@@ -483,7 +483,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-paper font-sans overflow-x-hidden">
 
       {/* ── NAV ───────────────────────────────────────────────────────────── */}
-      <nav className="fixed top-4 left-0 right-0 z-50 bg-forest/95 backdrop-blur-sm border-b border-paper/10" style={forestGrid}>
+      <nav className="fixed top-8 left-0 right-0 z-50 bg-forest/95 backdrop-blur-sm border-b border-paper/10" style={forestGrid}>
         <div className="max-w-6xl mx-auto px-6 h-24 flex items-center justify-between">
           <div className="flex items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -518,13 +518,6 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 py-20 w-full grid lg:grid-cols-2 gap-16 items-center">
           {/* Left: Copy */}
           <div className="flex flex-col gap-7">
-            {/* Label */}
-            <div className="inline-flex">
-              <span className="bg-rust/15 border border-rust/25 text-rust font-mono text-[10px] uppercase tracking-widest px-3.5 py-1.5 rounded-full">
-                AI-Powered Ad Creative Platform
-              </span>
-            </div>
-
             {/* Headline */}
             <div className="flex flex-col gap-1">
               <h1 className="font-mono text-5xl lg:text-6xl font-bold text-paper leading-[1.05] tracking-tight">
