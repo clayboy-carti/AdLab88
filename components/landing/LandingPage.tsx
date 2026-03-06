@@ -61,7 +61,7 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
         <div className="h-full flex flex-col gap-3">
           <div className="grid grid-cols-3 gap-1.5 shrink-0">
             {['Studio', 'Lifestyle', 'Luxury', 'Golden Hr', 'Minimal', 'Outdoor'].map((s, i) => (
-              <button key={i} className={`py-1.5 rounded-lg font-mono text-[8px] uppercase tracking-widest transition-all ${i === 0 ? 'bg-sage/40 border border-sage/60 text-paper' : 'bg-paper/5 border border-paper/10 text-paper/30'}`}>
+              <button key={i} className={`py-1.5 rounded-lg font-mono text-[8px] uppercase tracking-widest transition-all ${i === 1 ? 'bg-sage/40 border border-sage/60 text-paper' : 'bg-paper/5 border border-paper/10 text-paper/30'}`}>
                 {s}
               </button>
             ))}
