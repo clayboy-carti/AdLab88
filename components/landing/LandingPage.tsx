@@ -38,58 +38,44 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
       title: 'Your Product Photo',
       sub: 'Drop in any image — product, lifestyle, or brand asset',
       content: (
-        <div className="flex flex-col gap-3">
-          <div className="w-full rounded-xl bg-paper/8 border-2 border-dashed border-paper/20 aspect-video flex flex-col items-center justify-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-paper/10 border border-paper/20 grid grid-cols-2 gap-0.5 overflow-hidden p-1.5">
-              <div className="bg-paper/15 rounded-sm" />
-              <div className="bg-paper/10 rounded-sm" />
-              <div className="bg-paper/10 rounded-sm" />
-              <div className="bg-paper/15 rounded-sm" />
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <p className="font-mono text-[10px] text-paper/50 uppercase tracking-widest">Drop file here</p>
-              <p className="font-mono text-[9px] text-paper/25 uppercase tracking-widest">or pick from library</p>
-            </div>
+        <div className="h-full flex flex-col gap-3">
+          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-forest/15 bg-forest/5">
+            <img src="/gooseoriginal.jpg" alt="Product photo" className="w-full h-full object-contain" />
           </div>
-          <div className="flex gap-2">
-            <div className="flex-1 h-8 rounded-lg bg-paper/8 border border-paper/15 flex items-center px-3">
-              <span className="font-mono text-[9px] text-paper/30 uppercase tracking-widest">product_shot.jpg</span>
+          <div className="flex gap-2 shrink-0">
+            <div className="flex-1 h-8 rounded-lg bg-forest/8 border border-forest/15 flex items-center px-3">
+              <span className="font-mono text-[10px] text-forest/65 uppercase tracking-widest">gooseoriginal.jpg</span>
             </div>
             <div className="px-3 h-8 rounded-lg bg-rust/70 flex items-center">
-              <span className="font-mono text-[9px] text-white uppercase tracking-widest">Upload</span>
+              <span className="font-mono text-[10px] text-white uppercase tracking-widest">Upload</span>
             </div>
           </div>
         </div>
       ),
     },
     {
-      label: 'GENERATE',
+      label: 'TRANSFORM',
       title: 'AI Creates Mockup',
       sub: 'Pick a scene, watch Gemini place your product in',
       content: (
-        <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-3 gap-1.5">
+        <div className="h-full flex flex-col gap-3">
+          <div className="grid grid-cols-3 gap-1.5 shrink-0">
             {['Studio', 'Lifestyle', 'Luxury', 'Golden Hr', 'Minimal', 'Outdoor'].map((s, i) => (
-              <button key={i} className={`py-1.5 rounded-lg font-mono text-[8px] uppercase tracking-widest transition-all ${i === 0 ? 'bg-sage/40 border border-sage/60 text-paper' : 'bg-paper/5 border border-paper/10 text-paper/30'}`}>
+              <button key={i} className={`py-1.5 rounded-lg font-mono text-[9px] uppercase tracking-widest transition-all ${i === 1 ? 'bg-sage/40 border border-sage/60 text-forest' : 'bg-forest/5 border border-forest/15 text-forest/65'}`}>
                 {s}
               </button>
             ))}
           </div>
-          <div className="w-full aspect-video rounded-xl bg-gradient-to-br from-stone-800 via-stone-700 to-stone-900 relative overflow-hidden flex items-center justify-center">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-            {/* Scan line animation */}
-            <div className="absolute inset-0 overflow-hidden">
-              <div className="w-full h-6 bg-gradient-to-b from-transparent via-sage/20 to-transparent" style={{ animation: 'scanLine 2s linear infinite' }} />
-            </div>
-            <div className="w-10 h-10 rounded-lg bg-white/90 shadow-2xl relative z-10" />
+          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-forest/15 bg-forest/5">
+            <img src="/goosegenerated.png" alt="AI generated mockup" className="w-full h-full object-contain" />
             <div className="absolute bottom-2 right-2 flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full bg-sage animate-pulse-dot" />
-              <span className="font-mono text-[8px] text-paper/50">Gemini generating…</span>
+              <span className="font-mono text-[8px] text-paper/80 bg-black/40 px-1.5 py-0.5 rounded">Gemini generating…</span>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 shrink-0">
             {['Gemini Vision', 'Claude 3.5', '2K Quality'].map((m, i) => (
-              <span key={i} className="flex-1 text-center py-1 rounded-lg bg-paper/5 border border-paper/10 font-mono text-[7px] uppercase tracking-widest text-paper/40">{m}</span>
+              <span key={i} className="flex-1 text-center py-1 rounded-lg bg-forest/5 border border-forest/15 font-mono text-[9px] uppercase tracking-widest text-forest/70">{m}</span>
             ))}
           </div>
         </div>
@@ -100,25 +86,77 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
       title: 'Schedule & Post',
       sub: 'Set a date, pick platforms, let AdLab handle the rest',
       content: (
-        <div className="flex flex-col gap-3">
-          <div className="w-full rounded-xl bg-gradient-to-br from-stone-800 via-stone-700 to-stone-900 aspect-video relative overflow-hidden flex items-center justify-center border border-paper/10">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            <div className="w-10 h-10 rounded-lg bg-white/90 shadow-2xl relative z-10" />
-            <div className="absolute top-2 right-2">
-              <span className="bg-sage/80 text-forest font-mono text-[8px] uppercase tracking-widest px-2 py-0.5 rounded-full">✓ Ready</span>
+        <div className="h-full flex flex-col gap-2.5">
+          {/* Confirmed banner */}
+          <div className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl bg-sage/25 border border-sage/50">
+            <div className="w-2 h-2 rounded-full bg-sage shrink-0" />
+            <span className="font-mono text-[11px] text-forest font-semibold tracking-wide">Scheduled — Mar 17 · 9:00 AM</span>
+          </div>
+
+          {/* Main row: preview + calendar */}
+          <div className="flex gap-2 flex-1 min-h-0">
+            {/* Post preview */}
+            <div className="w-[44%] shrink-0 flex flex-col gap-1.5">
+              <div className="flex-1 min-h-0 rounded-lg overflow-hidden border border-forest/15 bg-forest/5">
+                <img src="/goosegenerated.png" alt="Scheduled ad" className="w-full h-full object-cover" />
+              </div>
+              {/* Platform pills */}
+              <div className="flex gap-1">
+                {[
+                  { label: 'IG', active: true },
+                  { label: 'TK', active: true },
+                  { label: 'FB', active: false },
+                ].map(({ label, active }, i) => (
+                  <div key={i} className={`flex-1 py-1 rounded-md flex items-center justify-center border text-[9px] font-mono font-semibold uppercase ${active ? 'bg-rust/20 border-rust/50 text-rust' : 'bg-forest/5 border-forest/15 text-forest/40'}`}>
+                    {label}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Mini calendar */}
+            <div className="flex-1 min-w-0 rounded-xl border border-forest/20 bg-paper/80 p-2 flex flex-col gap-1.5">
+              {/* Month header */}
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[9px] text-forest/50">‹</span>
+                <span className="font-mono text-[9px] font-semibold text-forest uppercase tracking-widest">Mar</span>
+                <span className="font-mono text-[9px] text-forest/50">›</span>
+              </div>
+              {/* Day headers */}
+              <div className="grid grid-cols-7 gap-px">
+                {['S','M','T','W','T','F','S'].map((d, i) => (
+                  <div key={i} className="text-center font-mono text-[7px] text-forest/40">{d}</div>
+                ))}
+              </div>
+              {/* Dates */}
+              {[
+                [null,null,null,null,null,null,1],
+                [2,3,4,5,6,7,8],
+                [9,10,11,12,13,14,15],
+                [16,17,18,19,20,21,22],
+                [23,24,25,26,27,28,29],
+              ].map((week, wi) => (
+                <div key={wi} className="grid grid-cols-7 gap-px">
+                  {week.map((d, di) => (
+                    <div key={di} className={`text-center font-mono text-[8px] rounded aspect-square flex items-center justify-center leading-none
+                      ${d === 17 ? 'bg-rust text-white font-bold' : d === 6 ? 'bg-forest/10 text-forest/60' : d ? 'text-forest/65' : ''}`}>
+                      {d ?? ''}
+                    </div>
+                  ))}
+                </div>
+              ))}
+              {/* Time row */}
+              <div className="mt-auto pt-1 border-t border-forest/10 flex items-center justify-between">
+                <span className="font-mono text-[8px] text-forest/50">Time</span>
+                <span className="font-mono text-[9px] font-semibold text-forest bg-forest/8 px-1.5 py-0.5 rounded">9:00 AM</span>
+              </div>
             </div>
           </div>
-          <div className="flex gap-1.5">
-            {['IG', 'TW', 'FB'].map((p, i) => (
-              <div key={i} className={`flex-1 py-2 rounded-lg flex flex-col items-center gap-0.5 border transition-all ${i === 0 ? 'bg-rust/20 border-rust/40' : 'bg-paper/5 border-paper/10'}`}>
-                <span className="font-mono text-[9px] text-paper/60 uppercase">{p}</span>
-                {i === 0 && <div className="w-1.5 h-1.5 rounded-full bg-rust" />}
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <div className="flex-1 py-2 rounded-xl bg-rust/80 text-center font-mono text-[9px] uppercase tracking-widest text-white">
-              Schedule for Mar 17
+
+          {/* Confirm button */}
+          <div className="shrink-0">
+            <div className="w-full py-2 rounded-xl bg-rust text-center font-mono text-[10px] uppercase tracking-widest text-white font-semibold">
+              ✓ Confirm &amp; Schedule
             </div>
           </div>
         </div>
@@ -128,38 +166,29 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
 
   return (
     <div className="relative w-full max-w-md mx-auto">
-      {/* Floating badge top-right */}
-      <div className="absolute -top-3 -right-3 z-20 bg-rust text-white rounded-full px-3 py-1 font-mono text-[9px] uppercase tracking-widest shadow-lg animate-bounce-slow">
-        5× Faster
-      </div>
-      {/* Floating badge bottom-left */}
-      <div className="absolute -bottom-3 -left-3 z-20 bg-sage text-forest rounded-full px-3 py-1 font-mono text-[9px] uppercase tracking-widest shadow-lg animate-float-alt">
-        AI-Powered
-      </div>
-
       {/* App window */}
-      <div className="rounded-2xl border border-paper/15 bg-forest/60 backdrop-blur-md overflow-hidden shadow-2xl">
+      <div className="rounded-2xl border border-forest/15 bg-paper overflow-hidden shadow-2xl flex flex-col h-[540px]">
         {/* Title bar */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-paper/10 bg-forest/40">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-forest/10 bg-forest/8">
           <div className="flex gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full bg-red-400/70" />
             <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/70" />
             <div className="w-2.5 h-2.5 rounded-full bg-green-400/70" />
           </div>
-          <div className="flex-1 text-center font-mono text-[9px] uppercase tracking-widest text-paper/30">
+          <div className="flex-1 text-center font-mono text-[10px] uppercase tracking-widest text-forest/60">
             AdLab 88 — Lab Bench
           </div>
         </div>
 
         {/* Step tabs */}
-        <div className="flex border-b border-paper/10">
+        <div className="flex border-b border-forest/10">
           {steps.map((step, i) => (
             <div
               key={i}
-              className={`flex-1 py-2.5 text-center font-mono text-[9px] uppercase tracking-widest transition-all duration-300 ${
+              className={`flex-1 py-2.5 text-center font-mono text-xs uppercase tracking-wider transition-all duration-300 ${
                 i === activeStep
-                  ? 'bg-rust/20 text-rust border-b-2 border-rust'
-                  : 'text-paper/25 border-b-2 border-transparent'
+                  ? 'bg-rust/15 text-rust border-b-2 border-rust'
+                  : 'text-forest/55 border-b-2 border-transparent'
               }`}
             >
               {step.label}
@@ -168,16 +197,18 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
         </div>
 
         {/* Content */}
-        <div className="p-5">
-          <p className="font-mono text-xs font-semibold text-paper/80 mb-0.5">{steps[activeStep].title}</p>
-          <p className="font-sans text-[10px] text-paper/40 mb-4">{steps[activeStep].sub}</p>
-          {steps[activeStep].content}
+        <div className="p-5 flex-1 min-h-0 flex flex-col">
+          <p className="font-mono text-sm font-semibold text-forest mb-0.5 shrink-0">{steps[activeStep].title}</p>
+          <p className="font-sans text-xs text-forest/75 mb-4 shrink-0">{steps[activeStep].sub}</p>
+          <div className="flex-1 min-h-0">
+            {steps[activeStep].content}
+          </div>
         </div>
 
         {/* Progress indicator */}
-        <div className="flex justify-center gap-2 pb-4 pt-1">
+        <div className="flex justify-center gap-2 pb-4 pt-1 shrink-0">
           {steps.map((_, i) => (
-            <div key={i} className={`rounded-full transition-all duration-400 ${i === activeStep ? 'w-5 h-1.5 bg-rust' : 'w-1.5 h-1.5 bg-paper/20'}`} />
+            <div key={i} className={`rounded-full transition-all duration-400 ${i === activeStep ? 'w-5 h-1.5 bg-rust' : 'w-1.5 h-1.5 bg-forest/20'}`} />
           ))}
         </div>
       </div>
@@ -496,27 +527,25 @@ export default function LandingPage() {
     <div className="min-h-screen bg-paper font-sans overflow-x-hidden">
 
       {/* ── NAV ───────────────────────────────────────────────────────────── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-forest/95 backdrop-blur-sm border-b border-paper/10" style={forestGrid}>
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-rust flex items-center justify-center shadow-sm">
-              <span className="font-mono text-white font-bold text-xs leading-none">88</span>
-            </div>
-            <span className="font-mono font-bold text-paper text-sm tracking-widest uppercase">AdLab 88</span>
+      <nav className="fixed top-16 left-0 right-0 z-50 bg-forest/95 backdrop-blur-sm border-b border-paper/10" style={forestGrid}>
+        <div className="max-w-6xl mx-auto px-6 h-24 flex items-center justify-between">
+          <div className="flex items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/AdLab_Logo2.png" alt="AdLab 88" className="h-20 w-auto object-contain brightness-0 invert" />
           </div>
           <div className="flex items-center gap-5">
-            <Link href="#how-it-works" className="hidden md:block font-mono text-xs uppercase tracking-widest text-rust hover:text-rust/80 transition-colors">
+            <Link href="#how-it-works" className="hidden md:block font-mono text-sm uppercase tracking-widest text-paper hover:text-paper/70 transition-colors">
               How It Works
             </Link>
-            <Link href="#pricing" className="hidden md:block font-mono text-xs uppercase tracking-widest text-rust hover:text-rust/80 transition-colors">
+            <Link href="#pricing" className="hidden md:block font-mono text-sm uppercase tracking-widest text-paper hover:text-paper/70 transition-colors">
               Pricing
             </Link>
-            <Link href="/login" className="font-mono text-xs uppercase tracking-widest text-rust hover:text-rust/80 transition-colors">
+            <Link href="/login" className="font-mono text-sm uppercase tracking-widest text-paper hover:text-paper/70 transition-colors">
               Sign In
             </Link>
             <Link
               href="/login"
-              className="bg-rust text-white font-mono text-[10px] uppercase tracking-widest px-4 py-2.5 rounded-xl hover:bg-rust/90 transition-all hover:shadow-lg hover:shadow-rust/20 hover:-translate-y-0.5"
+              className="bg-rust text-white font-mono text-sm uppercase tracking-widest px-4 py-2.5 rounded-xl hover:bg-rust/90 transition-all hover:shadow-lg hover:shadow-rust/20 hover:-translate-y-0.5"
             >
               Get Started →
             </Link>
@@ -529,18 +558,10 @@ export default function LandingPage() {
         {/* Decorative blobs */}
         <div className="absolute top-24 left-12 w-72 h-72 rounded-full bg-sage/6 blur-3xl pointer-events-none" />
         <div className="absolute bottom-16 right-16 w-96 h-96 rounded-full bg-rust/5 blur-3xl pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-forest/50 blur-3xl pointer-events-none" />
 
         <div className="max-w-6xl mx-auto px-6 py-20 w-full grid lg:grid-cols-2 gap-16 items-center">
           {/* Left: Copy */}
           <div className="flex flex-col gap-7">
-            {/* Label */}
-            <div className="inline-flex">
-              <span className="bg-rust/15 border border-rust/25 text-rust font-mono text-[10px] uppercase tracking-widest px-3.5 py-1.5 rounded-full">
-                AI-Powered Ad Creative Platform
-              </span>
-            </div>
-
             {/* Headline */}
             <div className="flex flex-col gap-1">
               <h1 className="font-mono text-5xl lg:text-6xl font-bold text-paper leading-[1.05] tracking-tight">
@@ -553,7 +574,7 @@ export default function LandingPage() {
             </div>
 
             {/* Subtext */}
-            <p className="font-sans text-paper/60 text-lg leading-relaxed max-w-md">
+            <p className="font-sans text-paper/90 text-lg leading-relaxed max-w-md">
               Transform product images into photorealistic scene mockups,
               generate AI-optimized ad copy, and schedule across all your
               platforms. In minutes, not hours.
@@ -573,7 +594,7 @@ export default function LandingPage() {
                     <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
                   </svg>
                 ) : (
-                  <span key={i} className="bg-paper/8 border border-paper/12 text-paper/75 font-mono text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-full">
+                  <span key={i} className="bg-paper/12 border border-paper/25 text-paper font-mono text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-full">
                     {item.label}
                   </span>
                 )
