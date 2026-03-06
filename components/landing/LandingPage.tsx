@@ -503,7 +503,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/login"
-              className="bg-rust text-white font-mono text-[10px] uppercase tracking-widest px-4 py-2.5 rounded-xl hover:bg-rust/90 transition-all hover:shadow-lg hover:shadow-rust/20 hover:-translate-y-0.5"
+              className="bg-rust text-white font-mono text-sm uppercase tracking-widest px-4 py-2.5 rounded-xl hover:bg-rust/90 transition-all hover:shadow-lg hover:shadow-rust/20 hover:-translate-y-0.5"
             >
               Get Started →
             </Link>
