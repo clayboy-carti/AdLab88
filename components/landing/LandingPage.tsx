@@ -113,15 +113,6 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
 
   return (
     <div className="relative w-full max-w-md mx-auto">
-      {/* Floating badge top-right */}
-      <div className="absolute -top-3 -right-3 z-20 bg-rust text-white rounded-full px-3 py-1 font-mono text-[9px] uppercase tracking-widest shadow-lg animate-bounce-slow">
-        5× Faster
-      </div>
-      {/* Floating badge bottom-left */}
-      <div className="absolute -bottom-3 -left-3 z-20 bg-sage text-forest rounded-full px-3 py-1 font-mono text-[9px] uppercase tracking-widest shadow-lg animate-float-alt">
-        AI-Powered
-      </div>
-
       {/* App window */}
       <div className="rounded-2xl border border-paper/15 bg-forest/60 backdrop-blur-md overflow-hidden shadow-2xl flex flex-col h-[540px]">
         {/* Title bar */}
