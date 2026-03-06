@@ -528,29 +528,19 @@ export default function VideoModal({ video, onClose, onDelete, onTitleUpdate, in
             ) : !lateConfigured ? (
               <div className="flex-1 p-5 flex flex-col gap-3">
                 <p className="text-xs font-mono text-gray-500 leading-relaxed">
-                  Add your <span className="text-graphite font-bold">LATE_API_KEY</span> to Vercel environment variables (enable for Preview + Production) or .env.local for local development.
+                  Social publishing is not configured. Contact support to enable this feature.
                 </p>
-                <a
-                  href="https://getlate.dev"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-mono uppercase border border-outline px-3 py-2 text-center hover:bg-gray-100 transition-colors"
-                >
-                  Get Late API Key →
-                </a>
               </div>
             ) : lateAccounts.length === 0 ? (
               <div className="flex-1 p-5 flex flex-col gap-3">
                 <p className="text-xs font-mono text-gray-500 leading-relaxed">
-                  No social accounts connected. Connect accounts in your Late dashboard first.
+                  No social accounts connected. Connect your accounts from your profile page.
                 </p>
                 <a
-                  href="https://app.getlate.dev"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="/profile"
                   className="text-xs font-mono uppercase border border-outline px-3 py-2 text-center hover:bg-gray-100 transition-colors"
                 >
-                  Open Late Dashboard →
+                  Go to Profile →
                 </a>
               </div>
             ) : (
@@ -627,22 +617,22 @@ export default function VideoModal({ video, onClose, onDelete, onTitleUpdate, in
                   )}
                   {lateStatus === 'success' && (
                     <p className="text-[10px] font-mono text-forest bg-forest/5 border border-forest/20 px-2 py-1.5 leading-snug">
-                      ✓ Synced to Late
+                      ✓ Scheduled successfully
                     </p>
                   )}
                   {lateStatus === 'skipped' && lateSkipReason === 'no_api_key' && (
                     <p className="text-[10px] font-mono text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1.5 leading-snug">
-                      Saved locally — LATE_API_KEY not found in environment.
+                      Saved locally — publishing not configured.
                     </p>
                   )}
                   {lateStatus === 'skipped' && lateSkipReason === 'no_platforms' && (
                     <p className="text-[10px] font-mono text-gray-400 bg-gray-50 border border-outline px-2 py-1.5 leading-snug">
-                      Saved locally — select accounts on the left to publish to Late
+                      Saved locally — select accounts on the left to publish
                     </p>
                   )}
                   {(lateStatus === 'error' || lateError) && (
                     <div className="text-[10px] font-mono text-red-600 bg-red-50 border border-red-200 px-2 py-1.5">
-                      <p className="font-bold">Late API error</p>
+                      <p className="font-bold">Scheduling error</p>
                       {lateError && <p className="mt-0.5 opacity-80">{lateError}</p>}
                     </div>
                   )}
