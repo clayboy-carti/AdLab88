@@ -138,7 +138,7 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
             <label className="block text-sm uppercase font-mono mb-2">
               Company Name <span className="text-rust">*</span>
             </label>
-            <input {...register('company_name')} className="w-full" />
+            <input {...register('company_name')} className="w-full border border-gray-400 rounded px-3 py-2 focus:outline-none focus:border-graphite" />
             {errors.company_name && (
               <p className="text-red-600 text-sm mt-1">{errors.company_name.message}</p>
             )}
@@ -151,7 +151,7 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
             <p className="text-xs text-gray-600 mb-2">
               Describe the specific products, solutions, and/or services you provide — not your mission statement
             </p>
-            <textarea {...register('what_we_do')} rows={3} className="w-full" />
+            <textarea {...register('what_we_do')} rows={3} className="w-full border border-gray-400 rounded px-3 py-2 focus:outline-none focus:border-graphite" />
             {errors.what_we_do && (
               <p className="text-red-600 text-sm mt-1">{errors.what_we_do.message}</p>
             )}
@@ -163,7 +163,7 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
             </label>
             <input
               {...register('target_audience')}
-              className="w-full"
+              className="w-full border border-gray-400 rounded px-3 py-2 focus:outline-none focus:border-graphite"
               placeholder="e.g., Small business owners, B2B marketers"
             />
             {errors.target_audience && (
@@ -178,7 +178,7 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
             <p className="text-xs text-gray-600 mb-2">What makes you different?</p>
             <input
               {...register('unique_differentiator')}
-              className="w-full"
+              className="w-full border border-gray-400 rounded px-3 py-2 focus:outline-none focus:border-graphite"
               placeholder="Optional"
             />
           </div>
@@ -202,7 +202,7 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
             <textarea
               {...register('voice_summary')}
               rows={3}
-              className="w-full"
+              className="w-full border border-gray-400 rounded px-3 py-2 focus:outline-none focus:border-graphite"
               placeholder="e.g., Professional yet approachable, witty and bold"
             />
           </div>
@@ -213,7 +213,7 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
             </label>
             <input
               {...register('personality_traits')}
-              className="w-full"
+              className="w-full border border-gray-400 rounded px-3 py-2 focus:outline-none focus:border-graphite"
               placeholder="e.g., professional, witty, bold"
             />
           </div>
@@ -224,7 +224,7 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
             </label>
             <input
               {...register('words_to_use')}
-              className="w-full"
+              className="w-full border border-gray-400 rounded px-3 py-2 focus:outline-none focus:border-graphite"
               placeholder="e.g., innovative, results-driven, strategic"
             />
           </div>
@@ -235,7 +235,7 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
             </label>
             <input
               {...register('words_to_avoid')}
-              className="w-full"
+              className="w-full border border-gray-400 rounded px-3 py-2 focus:outline-none focus:border-graphite"
               placeholder="e.g., synergy, leverage, disrupt"
             />
           </div>
@@ -265,7 +265,7 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
             <p className="text-xs text-gray-600 mb-2">e.g., #FF5733, #33FF57, #3357FF</p>
             <input
               {...register('brand_colors')}
-              className="w-full"
+              className="w-full border border-gray-400 rounded px-3 py-2 focus:outline-none focus:border-graphite"
               placeholder="#FF5733, #33FF57"
             />
           </div>
@@ -278,7 +278,7 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
             <textarea
               {...register('typography_notes')}
               rows={3}
-              className="w-full"
+              className="w-full border border-gray-400 rounded px-3 py-2 focus:outline-none focus:border-graphite"
               placeholder="e.g., Sans-serif, bold headlines, clean and modern"
             />
           </div>
@@ -310,7 +310,7 @@ export default function BrandWizard({ existingBrand, initialData }: BrandWizardP
             <textarea
               {...register('sample_copy')}
               rows={10}
-              className="w-full"
+              className="w-full border border-gray-400 rounded px-3 py-2 focus:outline-none focus:border-graphite"
               placeholder="Paste your brand's copy examples here..."
             />
             {errors.sample_copy && (
