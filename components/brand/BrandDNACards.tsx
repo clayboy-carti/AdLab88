@@ -11,27 +11,13 @@ interface BrandDNACardsProps {
 export default function BrandDNACards({ data, onApply, onRescan }: BrandDNACardsProps) {
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-end justify-between border-b-2 border-rust pb-4">
-        <div>
-          <p className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-1">
-            Scan Results
-          </p>
-          <h2 className="text-2xl font-mono font-bold text-graphite uppercase">
-            {data.company_name ?? 'Brand Detected'}
-          </h2>
-        </div>
-        <p className="text-xs font-mono text-gray-400 pb-1 truncate max-w-xs" title={data.source_url}>
-          {data.source_url}
-        </p>
-      </div>
-
-      <p className="text-sm text-gray-500 font-mono">
-        Review the extracted brand data below. Click &ldquo;Build Profile&rdquo; to pre-fill the setup wizard — you can edit everything before saving.
+      <p className="text-sm font-mono text-gray-500">
+        Review the extracted brand data below. Click &ldquo;Build Brand Profile&rdquo; to pre-fill
+        the setup wizard — you can edit everything before saving.
       </p>
 
-      {/* Cards grid */}
-      <div className="flex flex-col gap-0 border border-outline">
+      {/* Sections */}
+      <div className="flex flex-col border border-outline divide-y divide-outline">
 
         {/* Core Identity */}
         <DNASection label="01 — Core Identity">
@@ -53,7 +39,7 @@ export default function BrandDNACards({ data, onApply, onRescan }: BrandDNACards
           </div>
         </DNASection>
 
-        {/* Voice */}
+        {/* Voice & Messaging */}
         <DNASection label="02 — Voice & Messaging">
           <div className="space-y-4">
             {data.voice_summary && (
@@ -109,7 +95,7 @@ export default function BrandDNACards({ data, onApply, onRescan }: BrandDNACards
           </div>
         </DNASection>
 
-        {/* Visual */}
+        {/* Visual Identity */}
         {(data.brand_colors?.length || data.typography_notes) && (
           <DNASection label="03 — Visual Identity">
             <div className="flex flex-col md:flex-row gap-6">
@@ -154,10 +140,10 @@ export default function BrandDNACards({ data, onApply, onRescan }: BrandDNACards
       {/* CTA */}
       <div className="flex gap-3">
         <button onClick={() => onApply(data)} className="btn-primary flex-1">
-          [ BUILD BRAND PROFILE ]
+          BUILD BRAND PROFILE
         </button>
         <button onClick={onRescan} className="btn-secondary px-5">
-          Rescan
+          RESCAN
         </button>
       </div>
     </div>
@@ -166,7 +152,7 @@ export default function BrandDNACards({ data, onApply, onRescan }: BrandDNACards
 
 function DNASection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="border-b border-outline last:border-b-0 bg-white px-6 py-5">
+    <div className="px-6 py-5">
       <h3 className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-1">{label}</h3>
       <div className="w-8 h-0.5 bg-rust mb-4" />
       {children}
@@ -185,8 +171,8 @@ function DNAField({
 }) {
   return (
     <div className={className}>
-      <p className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-1">{label}</p>
-      <div className="text-sm text-graphite leading-relaxed">{children}</div>
+      <p className="text-xs font-mono uppercase tracking-widest text-rust mb-1">{label}</p>
+      <div className="text-sm text-graphite leading-relaxed font-mono">{children}</div>
     </div>
   )
 }

@@ -60,11 +60,26 @@ export default function BrandSetupFlow() {
       )}
 
       {step === 'review' && scannedDNA && (
-        <BrandDNACards
-          data={scannedDNA}
-          onApply={handleApply}
-          onRescan={handleRescan}
-        />
+        <div>
+          <div className="mb-6 flex flex-wrap items-start gap-2 justify-between">
+            <div>
+              <p className="text-xs font-mono uppercase tracking-widest text-gray-400 mb-1">
+                Scan Results
+              </p>
+              <h1 className="text-3xl uppercase font-mono header-accent">
+                {scannedDNA.company_name ?? 'Brand Detected'}
+              </h1>
+            </div>
+            <p className="text-xs font-mono text-gray-400 pt-1">{scannedDNA.source_url}</p>
+          </div>
+          <div className="card">
+            <BrandDNACards
+              data={scannedDNA}
+              onApply={handleApply}
+              onRescan={handleRescan}
+            />
+          </div>
+        </div>
       )}
 
       {step === 'wizard' && (
