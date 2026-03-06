@@ -35,8 +35,8 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
   const steps = [
     {
       label: 'UPLOAD',
-      title: 'Your Product Photo',
-      sub: 'Drop in any image — product, lifestyle, or brand asset',
+      title: 'Start With a Photo',
+      sub: 'Upload any product shot to begin',
       content: (
         <div className="h-full flex flex-col gap-3">
           <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-forest/15 bg-forest/5 shadow-inner">
@@ -47,8 +47,8 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
     },
     {
       label: 'TRANSFORM',
-      title: 'AI Creates Mockup',
-      sub: 'Pick a scene, watch Gemini place your product in',
+      title: 'Build Your Scene',
+      sub: 'Choose a setting and place your product',
       content: (
         <div className="h-full flex flex-col gap-3">
           <div className="flex gap-1.5 shrink-0">
@@ -67,8 +67,8 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
     },
     {
       label: 'SCHEDULE',
-      title: 'Schedule & Post',
-      sub: 'Set a date, pick platforms, let AdLab handle the rest',
+      title: 'Schedule Your Post',
+      sub: 'Choose where and when it goes live',
       content: (
         <div className="h-full flex flex-col gap-2.5">
           {/* Confirmed banner */}
