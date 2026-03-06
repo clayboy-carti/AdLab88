@@ -51,9 +51,9 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
       sub: 'Pick a scene, watch Gemini place your product in',
       content: (
         <div className="h-full flex flex-col gap-3">
-          <div className="grid grid-cols-3 gap-1.5 shrink-0">
-            {['Studio', 'Lifestyle', 'Luxury', 'Golden Hr', 'Minimal', 'Outdoor'].map((s, i) => (
-              <button key={i} className={`py-1.5 rounded-lg font-mono text-[9px] uppercase tracking-widest transition-all ${i === 1 ? 'bg-sage/40 border border-sage/60 text-forest' : 'bg-forest/5 border border-forest/15 text-forest/65'}`}>
+          <div className="flex gap-1.5 shrink-0">
+            {['Studio', 'Lifestyle', 'Luxury'].map((s, i) => (
+              <button key={i} className={`flex-1 py-1.5 rounded-lg font-mono text-[9px] uppercase tracking-widest transition-all ${i === 1 ? 'bg-sage/40 border border-sage/60 text-forest' : 'bg-forest/5 border border-forest/15 text-forest/65'}`}>
                 {s}
               </button>
             ))}
@@ -64,11 +64,6 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
               <div className="w-1.5 h-1.5 rounded-full bg-sage animate-pulse-dot" />
               <span className="font-mono text-[8px] text-paper/80 bg-black/40 px-1.5 py-0.5 rounded">Gemini generating…</span>
             </div>
-          </div>
-          <div className="flex gap-2 shrink-0">
-            {['Gemini Vision', 'Claude 3.5', '2K Quality'].map((m, i) => (
-              <span key={i} className="flex-1 text-center py-1 rounded-lg bg-forest/5 border border-forest/15 font-mono text-[9px] uppercase tracking-widest text-forest/70">{m}</span>
-            ))}
           </div>
         </div>
       ),
