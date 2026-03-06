@@ -622,8 +622,8 @@ export default function ProductMockupPage() {
 
                 {/* Loading state */}
                 {generating && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-8" style={dotGrid}>
-                    <div className="bg-white rounded-2xl border border-forest/15 shadow-sm p-6 w-full max-w-xs flex flex-col items-center gap-5">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-5" style={dotGrid}>
+                    <div className="bg-white rounded-2xl border border-forest/15 shadow-sm p-8 w-full flex flex-col items-center gap-6">
                       {/* Video loading animation */}
                       <div className="rounded-xl overflow-hidden border border-forest/15 w-full aspect-video bg-paper">
                         <video
@@ -636,15 +636,15 @@ export default function ProductMockupPage() {
                         />
                       </div>
                       <div className="w-full">
-                        <p className="text-sm font-mono text-graphite/60 leading-tight mb-3">Running image experiment…</p>
-                        <div className="space-y-2.5">
+                        <p className="text-base font-mono text-graphite/60 leading-tight mb-4">Running image experiment…</p>
+                        <div className="space-y-3">
                           {labLines.filter((l) => l.status !== 'hidden').map((line, i) => (
                             <p
                               key={i}
                               className={
                                 line.status === 'completed'
-                                  ? 'text-xs font-mono text-graphite/40'
-                                  : 'text-xs font-mono text-rust animate-pulse'
+                                  ? 'text-sm font-mono text-graphite/40'
+                                  : 'text-sm font-mono text-rust animate-pulse'
                               }
                             >
                               {line.status === 'completed' ? `✓ ${line.text}` : `→ ${line.text}…`}
