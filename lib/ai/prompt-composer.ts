@@ -1,13 +1,15 @@
-import OpenAI from 'openai'
+import { GoogleGenAI } from '@google/genai'
 import type { Brand, BrandIntelligence } from '@/types/database'
 
-let _openai: OpenAI | null = null
-function getOpenAI(): OpenAI {
-  if (!_openai) {
-    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+let _gemini: GoogleGenAI | null = null
+function getGemini(): GoogleGenAI {
+  if (!_gemini) {
+    _gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
   }
-  return _openai
+  return _gemini
 }
+
+const TEXT_MODEL = 'gemini-2.5-flash'
 
 export interface ComposePromptParams {
   brand: Brand
@@ -23,17 +25,17 @@ export interface ComposedPrompt {
 
 /**
  * Compose a detailed image generation prompt from brand intelligence + assets + campaign goal.
- * Uses gpt-4o (vision) when assets are provided, gpt-4o-mini otherwise.
+ * Uses Gemini vision when assets are provided, Gemini text otherwise.
  */
 export async function composePrompt(params: ComposePromptParams): Promise<ComposedPrompt> {
   const { brand, intelligenceProfile, assetUrls, campaignGoal } = params
   const hasAssets = assetUrls.length > 0
 
-  console.log(`[PromptComposer] Composing prompt (assets: ${assetUrls.length}, model: ${hasAssets ? 'gpt-4o' : 'gpt-4o-mini'})...`)
+  console.log(`[PromptComposer] Composing prompt (assets: ${assetUrls.length}, model: ${TEXT_MODEL})...`)
 
-  const systemPrompt = `You are an expert AI image generation prompt engineer for advertising. Your prompts are sent directly to Gemini image generation to produce high-quality ad visuals.`
+  const textPrompt = `You are an expert AI image generation prompt engineer for advertising. Your prompts are sent directly to Gemini image generation to produce high-quality ad visuals.
 
-  const textPrompt = `Compose a detailed image generation prompt for an ad campaign with this context:
+Compose a detailed image generation prompt for an ad campaign with this context:
 
 BRAND: ${brand.company_name}
 INDUSTRY: ${brand.what_we_do}
@@ -62,35 +64,46 @@ Return a JSON object with:
 
 Return ONLY valid JSON.`
 
-  const userContent: any = hasAssets
-    ? [
-        { type: 'text', text: textPrompt },
-        ...assetUrls.slice(0, 2).map((url) => ({
-          type: 'image_url',
-          image_url: { url, detail: 'low' as const },
-        })),
-      ]
-    : textPrompt
+  const parts: any[] = []
 
-  const response = await getOpenAI().chat.completions.create({
-    model: hasAssets ? 'gpt-4o' : 'gpt-4o-mini',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userContent },
-    ],
-    temperature: 0.7,
-    max_tokens: 1500,
-    response_format: { type: 'json_object' },
+  if (hasAssets) {
+    // Include asset images for visual context
+    for (const url of assetUrls.slice(0, 2)) {
+      try {
+        const res = await fetch(url)
+        if (res.ok) {
+          const mimeType = res.headers.get('content-type') ?? 'image/jpeg'
+          const base64 = Buffer.from(await res.arrayBuffer()).toString('base64')
+          parts.push({ inlineData: { mimeType, data: base64 } })
+        }
+      } catch {
+        // skip if image fetch fails
+      }
+    }
+  }
+
+  parts.push({ text: textPrompt })
+
+  const result = await getGemini().models.generateContent({
+    model: TEXT_MODEL,
+    contents: [{ role: 'user', parts }],
+    config: {
+      temperature: 0.7,
+      responseMimeType: 'application/json',
+    },
   })
 
-  const content = response.choices[0]?.message?.content
-  if (!content) throw new Error('No content from OpenAI')
+  const raw = result.candidates?.[0]?.content?.parts?.[0]?.text
+  if (!raw) throw new Error('No content from Gemini')
 
-  const parsed = JSON.parse(content)
+  const parsed = JSON.parse(typeof raw === 'string' ? raw : JSON.stringify(raw))
   console.log('[PromptComposer] ✅ Prompt composed')
 
+  const toStr = (val: unknown): string =>
+    typeof val === 'string' ? val : val != null ? JSON.stringify(val) : ''
+
   return {
-    prompt: parsed.prompt ?? '',
-    rationale: parsed.rationale ?? '',
+    prompt: toStr(parsed.prompt),
+    rationale: toStr(parsed.rationale),
   }
 }
