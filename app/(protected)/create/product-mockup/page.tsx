@@ -356,10 +356,10 @@ export default function ProductMockupPage() {
   }
 
   return (
-    <div className="min-h-screen p-6 lg:p-8">
+    <div className="h-screen overflow-hidden flex flex-col p-6 lg:p-8">
 
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6 flex-shrink-0">
         <Link
           href="/create"
           className="inline-flex items-center gap-1 text-xs font-mono text-graphite/40 uppercase tracking-widest hover:text-rust transition-colors mb-3"
@@ -369,10 +369,10 @@ export default function ProductMockupPage() {
         <h1 className="text-3xl font-mono font-semibold text-graphite">Product Mockup</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0 items-start overflow-y-auto lg:overflow-hidden">
 
         {/* ── LEFT COLUMN — Controls Card ─────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col overflow-hidden">
+        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col overflow-hidden h-full">
 
           {/* Card header */}
           <div className="px-6 pt-5 pb-4 border-b border-forest/10">
@@ -585,10 +585,7 @@ export default function ProductMockupPage() {
         </div>
 
         {/* ── RIGHT COLUMN — Preview Canvas ────────────────────────────────── */}
-        <div
-          className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col sticky top-4 overflow-hidden"
-          style={{ height: 'calc(100vh - 2rem)' }}
-        >
+        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col overflow-hidden h-full">
 
           {/* Canvas header */}
           <div className="px-6 py-4 border-b border-forest/10 flex items-center justify-between flex-shrink-0">
