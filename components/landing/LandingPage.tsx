@@ -39,12 +39,12 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
       sub: 'Drop in any image — product, lifestyle, or brand asset',
       content: (
         <div className="h-full flex flex-col gap-3">
-          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-paper/15 bg-paper/5">
+          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-forest/15 bg-forest/5">
             <img src="/gooseoriginal.jpg" alt="Product photo" className="w-full h-full object-contain" />
           </div>
           <div className="flex gap-2 shrink-0">
-            <div className="flex-1 h-8 rounded-lg bg-paper/8 border border-paper/15 flex items-center px-3">
-              <span className="font-mono text-[9px] text-paper/30 uppercase tracking-widest">gooseoriginal.jpg</span>
+            <div className="flex-1 h-8 rounded-lg bg-forest/8 border border-forest/15 flex items-center px-3">
+              <span className="font-mono text-[9px] text-forest/40 uppercase tracking-widest">gooseoriginal.jpg</span>
             </div>
             <div className="px-3 h-8 rounded-lg bg-rust/70 flex items-center">
               <span className="font-mono text-[9px] text-white uppercase tracking-widest">Upload</span>
@@ -61,12 +61,12 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
         <div className="h-full flex flex-col gap-3">
           <div className="grid grid-cols-3 gap-1.5 shrink-0">
             {['Studio', 'Lifestyle', 'Luxury', 'Golden Hr', 'Minimal', 'Outdoor'].map((s, i) => (
-              <button key={i} className={`py-1.5 rounded-lg font-mono text-[8px] uppercase tracking-widest transition-all ${i === 1 ? 'bg-sage/40 border border-sage/60 text-paper' : 'bg-paper/5 border border-paper/10 text-paper/30'}`}>
+              <button key={i} className={`py-1.5 rounded-lg font-mono text-[8px] uppercase tracking-widest transition-all ${i === 1 ? 'bg-sage/40 border border-sage/60 text-forest' : 'bg-forest/5 border border-forest/10 text-forest/40'}`}>
                 {s}
               </button>
             ))}
           </div>
-          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-paper/15 bg-paper/5">
+          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-forest/15 bg-forest/5">
             <img src="/goosegenerated.png" alt="AI generated mockup" className="w-full h-full object-contain" />
             <div className="absolute bottom-2 right-2 flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full bg-sage animate-pulse-dot" />
@@ -75,7 +75,7 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
           </div>
           <div className="flex gap-2 shrink-0">
             {['Gemini Vision', 'Claude 3.5', '2K Quality'].map((m, i) => (
-              <span key={i} className="flex-1 text-center py-1 rounded-lg bg-paper/5 border border-paper/10 font-mono text-[7px] uppercase tracking-widest text-paper/40">{m}</span>
+              <span key={i} className="flex-1 text-center py-1 rounded-lg bg-forest/5 border border-forest/10 font-mono text-[7px] uppercase tracking-widest text-forest/50">{m}</span>
             ))}
           </div>
         </div>
@@ -87,7 +87,7 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
       sub: 'Set a date, pick platforms, let AdLab handle the rest',
       content: (
         <div className="h-full flex flex-col gap-3">
-          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-paper/15 bg-paper/5">
+          <div className="flex-1 min-h-0 rounded-xl overflow-hidden relative border border-forest/15 bg-forest/5">
             <img src="/goosegenerated.png" alt="Scheduled ad" className="w-full h-full object-contain" />
             <div className="absolute top-2 right-2">
               <span className="bg-sage/80 text-forest font-mono text-[8px] uppercase tracking-widest px-2 py-0.5 rounded-full">✓ Ready</span>
@@ -95,8 +95,8 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
           </div>
           <div className="flex gap-1.5 shrink-0">
             {['IG', 'TW', 'FB'].map((p, i) => (
-              <div key={i} className={`flex-1 py-2 rounded-lg flex flex-col items-center gap-0.5 border transition-all ${i === 0 ? 'bg-rust/20 border-rust/40' : 'bg-paper/5 border-paper/10'}`}>
-                <span className="font-mono text-[9px] text-paper/60 uppercase">{p}</span>
+              <div key={i} className={`flex-1 py-2 rounded-lg flex flex-col items-center gap-0.5 border transition-all ${i === 0 ? 'bg-rust/20 border-rust/40' : 'bg-forest/5 border-forest/10'}`}>
+                <span className="font-mono text-[9px] text-forest/60 uppercase">{p}</span>
                 {i === 0 && <div className="w-1.5 h-1.5 rounded-full bg-rust" />}
               </div>
             ))}
@@ -114,28 +114,28 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
   return (
     <div className="relative w-full max-w-md mx-auto">
       {/* App window */}
-      <div className="rounded-2xl border border-paper/15 bg-forest/60 backdrop-blur-md overflow-hidden shadow-2xl flex flex-col h-[540px]">
+      <div className="rounded-2xl border border-forest/15 bg-paper overflow-hidden shadow-2xl flex flex-col h-[540px]">
         {/* Title bar */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-paper/10 bg-forest/40">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-forest/10 bg-forest/8">
           <div className="flex gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full bg-red-400/70" />
             <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/70" />
             <div className="w-2.5 h-2.5 rounded-full bg-green-400/70" />
           </div>
-          <div className="flex-1 text-center font-mono text-[9px] uppercase tracking-widest text-paper/30">
+          <div className="flex-1 text-center font-mono text-[9px] uppercase tracking-widest text-forest/40">
             AdLab 88 — Lab Bench
           </div>
         </div>
 
         {/* Step tabs */}
-        <div className="flex border-b border-paper/10">
+        <div className="flex border-b border-forest/10">
           {steps.map((step, i) => (
             <div
               key={i}
               className={`flex-1 py-2.5 text-center font-mono text-[9px] uppercase tracking-widest transition-all duration-300 ${
                 i === activeStep
-                  ? 'bg-rust/20 text-rust border-b-2 border-rust'
-                  : 'text-paper/25 border-b-2 border-transparent'
+                  ? 'bg-rust/15 text-rust border-b-2 border-rust'
+                  : 'text-forest/30 border-b-2 border-transparent'
               }`}
             >
               {step.label}
@@ -145,8 +145,8 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
 
         {/* Content */}
         <div className="p-5 flex-1 min-h-0 flex flex-col">
-          <p className="font-mono text-xs font-semibold text-paper/80 mb-0.5 shrink-0">{steps[activeStep].title}</p>
-          <p className="font-sans text-[10px] text-paper/40 mb-4 shrink-0">{steps[activeStep].sub}</p>
+          <p className="font-mono text-xs font-semibold text-forest mb-0.5 shrink-0">{steps[activeStep].title}</p>
+          <p className="font-sans text-[10px] text-forest/50 mb-4 shrink-0">{steps[activeStep].sub}</p>
           <div className="flex-1 min-h-0">
             {steps[activeStep].content}
           </div>
@@ -155,7 +155,7 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
         {/* Progress indicator */}
         <div className="flex justify-center gap-2 pb-4 pt-1 shrink-0">
           {steps.map((_, i) => (
-            <div key={i} className={`rounded-full transition-all duration-400 ${i === activeStep ? 'w-5 h-1.5 bg-rust' : 'w-1.5 h-1.5 bg-paper/20'}`} />
+            <div key={i} className={`rounded-full transition-all duration-400 ${i === activeStep ? 'w-5 h-1.5 bg-rust' : 'w-1.5 h-1.5 bg-forest/20'}`} />
           ))}
         </div>
       </div>
