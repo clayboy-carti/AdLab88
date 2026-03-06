@@ -145,3 +145,84 @@ body {
 .reveal-left.visible  { opacity: 1; transform: translateX(0); }
 .reveal-right    { opacity: 0; transform: translateX(32px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); }
 .reveal-right.visible { opacity: 1; transform: translateX(0); }
+
+
+/* ─── Brand Setup animations ───────────────────────────────────────────────── */
+
+/* Wizard step slide transitions */
+@keyframes slideInFromRight {
+  from { opacity: 0; transform: translateX(48px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInFromLeft {
+  from { opacity: 0; transform: translateX(-48px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in-right { animation: slideInFromRight 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-slide-in-left  { animation: slideInFromLeft 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+
+/* Color swatch paint-in (clip-path reveal left-to-right) */
+@keyframes paintIn {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0% 0 0); }
+}
+.animate-paint-in { animation: paintIn 0.55s cubic-bezier(0.16,1,0.3,1) both; }
+
+/* Breathing focus ring for the hero URL input */
+@keyframes breatheRing {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(181,82,51,0.2); }
+  50%       { box-shadow: 0 0 0 7px rgba(181,82,51,0.06); }
+}
+.animate-breathe-ring { animation: breatheRing 2.8s ease-in-out infinite; }
+
+/* Progress bar fill during brand scan (never reaches 100% — JS completes it) */
+@keyframes scanProgressFill {
+  0%   { width: 0%; }
+  10%  { width: 18%; }
+  30%  { width: 40%; }
+  55%  { width: 62%; }
+  75%  { width: 78%; }
+  90%  { width: 88%; }
+  100% { width: 93%; }
+}
+.animate-scan-progress { animation: scanProgressFill 18s cubic-bezier(0.4,0,0.2,1) forwards; }
+
+/* Decorative accent line grow-in from center */
+@keyframes lineGrow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+.animate-line-grow {
+  transform-origin: center;
+  animation: lineGrow 0.7s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* Confetti burst trajectories for brand-saved celebration */
+@keyframes confettiLeft {
+  0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(-160px, -180px) rotate(720deg) scale(0); opacity: 0; }
+}
+@keyframes confettiRight {
+  0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(160px, -180px) rotate(-720deg) scale(0); opacity: 0; }
+}
+@keyframes confettiUp {
+  0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(20px, -230px) rotate(540deg) scale(0); opacity: 0; }
+}
+@keyframes confettiLeftLow {
+  0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(-220px, -80px) rotate(-360deg) scale(0); opacity: 0; }
+}
+@keyframes confettiRightLow {
+  0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(220px, -80px) rotate(360deg) scale(0); opacity: 0; }
+}
+@keyframes confettiUpLeft {
+  0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(-90px, -220px) rotate(-600deg) scale(0); opacity: 0; }
+}
+@keyframes confettiUpRight {
+  0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(90px, -220px) rotate(600deg) scale(0); opacity: 0; }
+}

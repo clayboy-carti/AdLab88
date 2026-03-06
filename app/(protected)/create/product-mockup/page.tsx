@@ -3,6 +3,7 @@
 import { emitCreditsUpdated } from '@/lib/credits-event'
 
 import { useState, useEffect } from 'react'
+import { useLabLoadingSequence } from '@/hooks/useLabLoadingSequence'
 import Link from 'next/link'
 import PhotoPicker from '@/components/create/PhotoPicker'
 import {
@@ -221,9 +222,10 @@ export default function ProductMockupPage() {
   }, [imageModel])
 
   const [generating, setGenerating] = useState(false)
-  const [generationStage, setGenerationStage] = useState<string>('')
   const [generatedAd, setGeneratedAd] = useState<GeneratedAd | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const labLines = useLabLoadingSequence(generating)
 
   const [imageTitle, setImageTitle] = useState('')
   const [showPhoto, setShowPhoto] = useState(false)
@@ -242,14 +244,6 @@ export default function ProductMockupPage() {
     setGenerating(true)
     setError(null)
     setGeneratedAd(null)
-    setGenerationStage('Loading brand profile...')
-
-    const t1 = setTimeout(() => setGenerationStage('Analyzing product reference...'), 2000)
-    const t2 = setTimeout(() => setGenerationStage('Building scene prompt...'), 6000)
-    const modelLabel = imageModel === 'seedream' ? 'Seedream 4' : 'Gemini'
-    const t3 = setTimeout(() => setGenerationStage(`Placing product in scene with ${modelLabel}...`), 10000)
-    const t4 = setTimeout(() => setGenerationStage('Saving to your library...'), 35000)
-    const clearAll = () => [t1, t2, t3, t4].forEach(clearTimeout)
 
     try {
       const response = await fetch('/api/generate-ad', {
@@ -270,14 +264,10 @@ export default function ProductMockupPage() {
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Generation failed')
 
-      clearAll()
       setGeneratedAd(data.ad)
       emitCreditsUpdated()
-      setGenerationStage('Complete!')
     } catch (err: any) {
-      clearAll()
       setError(err.message || 'Failed to generate mockup')
-      setGenerationStage('')
     } finally {
       setGenerating(false)
     }
@@ -366,10 +356,10 @@ export default function ProductMockupPage() {
   }
 
   return (
-    <div className="min-h-screen p-6 lg:p-8">
+    <div className="h-screen overflow-hidden flex flex-col p-6 lg:p-8">
 
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6 flex-shrink-0">
         <Link
           href="/create"
           className="inline-flex items-center gap-1 text-xs font-mono text-graphite/40 uppercase tracking-widest hover:text-rust transition-colors mb-3"
@@ -379,10 +369,10 @@ export default function ProductMockupPage() {
         <h1 className="text-3xl font-mono font-semibold text-graphite">Product Mockup</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0 items-start overflow-y-auto lg:overflow-hidden pb-6">
 
         {/* ── LEFT COLUMN — Controls Card ─────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col overflow-hidden">
+        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col overflow-hidden h-full">
 
           {/* Card header */}
           <div className="px-6 pt-5 pb-4 border-b border-forest/10">
@@ -595,10 +585,7 @@ export default function ProductMockupPage() {
         </div>
 
         {/* ── RIGHT COLUMN — Preview Canvas ────────────────────────────────── */}
-        <div
-          className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col"
-          style={{ minHeight: '640px' }}
-        >
+        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col overflow-hidden h-full">
 
           {/* Canvas header */}
           <div className="px-6 py-4 border-b border-forest/10 flex items-center justify-between flex-shrink-0">
@@ -614,7 +601,7 @@ export default function ProductMockupPage() {
           </div>
 
           {/* Canvas body */}
-          <div className="flex-1 relative overflow-auto">
+          <div className="flex-1 relative overflow-auto min-h-0">
 
             {/* ── SINGLE MOCKUP ─────────────────────────────────────────────── */}
             {!photoShootMode && (
@@ -633,7 +620,7 @@ export default function ProductMockupPage() {
                 {/* Loading state */}
                 {generating && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-8" style={dotGrid}>
-                    <div className="bg-white rounded-2xl border border-forest/15 shadow-sm p-6 w-full max-w-xs flex flex-col items-center gap-5">
+                    <div className="bg-white rounded-2xl border border-forest/15 shadow-sm p-6 w-full max-w-md flex flex-col items-center gap-5">
                       {/* Video loading animation */}
                       <div className="rounded-xl overflow-hidden border border-forest/15 w-full aspect-video bg-paper">
                         <video
@@ -646,12 +633,20 @@ export default function ProductMockupPage() {
                         />
                       </div>
                       <div className="w-full">
-                        <p className="text-sm font-mono text-graphite/60 leading-tight mb-3">{generationStage}</p>
+                        <p className="text-sm font-mono text-graphite/60 leading-tight mb-3">Running image experiment…</p>
                         <div className="space-y-2.5">
-                          <p className="text-xs font-mono text-graphite/40">✓ Brand profile loaded</p>
-                          <p className="text-xs font-mono text-rust animate-pulse">→ Building scene prompt…</p>
-                          <p className="text-xs font-mono text-graphite/20">→ Generating with {imageModel === 'seedream' ? 'Seedream 4' : 'Gemini'}…</p>
-                          <p className="text-xs font-mono text-graphite/20">→ Saving to library…</p>
+                          {labLines.filter((l) => l.status !== 'hidden').map((line, i) => (
+                            <p
+                              key={i}
+                              className={
+                                line.status === 'completed'
+                                  ? 'text-xs font-mono text-graphite/40'
+                                  : 'text-xs font-mono font-semibold text-rust animate-pulse'
+                              }
+                            >
+                              {line.status === 'completed' ? `✓ ${line.text}` : `→ ${line.text}…`}
+                            </p>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -663,7 +658,7 @@ export default function ProductMockupPage() {
                   <div className="p-5 space-y-4">
                     {generatedAd.generatedImageUrl && (
                       <div className="relative group rounded-xl overflow-hidden border border-forest/15">
-                        <img src={generatedAd.generatedImageUrl} alt="Product mockup" className="w-full h-auto" />
+                        <img src={generatedAd.generatedImageUrl} alt="Product mockup" className="w-full object-contain max-h-[55vh]" />
                         <button
                           onClick={() => setPreviewUrl(generatedAd.generatedImageUrl)}
                           className="absolute top-3 right-3 flex items-center gap-1.5 bg-white/90 backdrop-blur-sm border border-forest/20 rounded-lg px-3 py-1.5 text-xs font-mono text-graphite opacity-0 group-hover:opacity-100 transition-opacity"
