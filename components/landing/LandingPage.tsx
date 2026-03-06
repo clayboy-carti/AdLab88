@@ -543,7 +543,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-paper font-sans overflow-x-hidden">
 
       {/* ── NAV ───────────────────────────────────────────────────────────── */}
-      <nav className="fixed top-16 left-0 right-0 z-50 bg-forest/95 backdrop-blur-sm border-b border-paper/10" style={forestGrid}>
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-forest/95 backdrop-blur-sm border-b border-paper/10" style={forestGrid}>
         <div className="max-w-6xl mx-auto px-6 h-24 flex items-center justify-between">
           <div className="flex items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -570,7 +570,7 @@ export default function LandingPage() {
       </nav>
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section className="min-h-screen bg-forest pt-16 flex items-center relative overflow-hidden" style={forestGrid}>
+      <section className="min-h-screen bg-forest pt-24 flex items-center relative overflow-hidden" style={forestGrid}>
         {/* Decorative blobs */}
         <div className="absolute top-24 left-12 w-72 h-72 rounded-full bg-sage/6 blur-3xl pointer-events-none" />
         <div className="absolute bottom-16 right-16 w-96 h-96 rounded-full bg-rust/5 blur-3xl pointer-events-none" />
