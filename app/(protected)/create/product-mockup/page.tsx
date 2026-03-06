@@ -586,8 +586,8 @@ export default function ProductMockupPage() {
 
         {/* ── RIGHT COLUMN — Preview Canvas ────────────────────────────────── */}
         <div
-          className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col"
-          style={{ minHeight: '640px' }}
+          className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col sticky top-4 overflow-hidden"
+          style={{ height: 'calc(100vh - 2rem)' }}
         >
 
           {/* Canvas header */}
@@ -604,7 +604,7 @@ export default function ProductMockupPage() {
           </div>
 
           {/* Canvas body */}
-          <div className="flex-1 relative overflow-auto">
+          <div className="flex-1 relative overflow-auto min-h-0">
 
             {/* ── SINGLE MOCKUP ─────────────────────────────────────────────── */}
             {!photoShootMode && (
@@ -661,7 +661,7 @@ export default function ProductMockupPage() {
                   <div className="p-5 space-y-4">
                     {generatedAd.generatedImageUrl && (
                       <div className="relative group rounded-xl overflow-hidden border border-forest/15">
-                        <img src={generatedAd.generatedImageUrl} alt="Product mockup" className="w-full h-auto" />
+                        <img src={generatedAd.generatedImageUrl} alt="Product mockup" className="w-full object-contain max-h-[55vh]" />
                         <button
                           onClick={() => setPreviewUrl(generatedAd.generatedImageUrl)}
                           className="absolute top-3 right-3 flex items-center gap-1.5 bg-white/90 backdrop-blur-sm border border-forest/20 rounded-lg px-3 py-1.5 text-xs font-mono text-graphite opacity-0 group-hover:opacity-100 transition-opacity"
