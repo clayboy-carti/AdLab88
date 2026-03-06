@@ -516,7 +516,6 @@ export default function LandingPage() {
         {/* Decorative blobs */}
         <div className="absolute top-24 left-12 w-72 h-72 rounded-full bg-sage/6 blur-3xl pointer-events-none" />
         <div className="absolute bottom-16 right-16 w-96 h-96 rounded-full bg-rust/5 blur-3xl pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-forest/50 blur-3xl pointer-events-none" />
 
         <div className="max-w-6xl mx-auto px-6 py-20 w-full grid lg:grid-cols-2 gap-16 items-center">
           {/* Left: Copy */}
@@ -540,7 +539,7 @@ export default function LandingPage() {
             </div>
 
             {/* Subtext */}
-            <p className="font-sans text-paper/60 text-lg leading-relaxed max-w-md">
+            <p className="font-sans text-paper/90 text-lg leading-relaxed max-w-md">
               Transform product images into photorealistic scene mockups,
               generate AI-optimized ad copy, and schedule across all your
               platforms. In minutes, not hours.
@@ -560,7 +559,7 @@ export default function LandingPage() {
                     <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
                   </svg>
                 ) : (
-                  <span key={i} className="bg-paper/8 border border-paper/12 text-paper/75 font-mono text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-full">
+                  <span key={i} className="bg-paper/12 border border-paper/25 text-paper font-mono text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-full">
                     {item.label}
                   </span>
                 )
