@@ -39,8 +39,8 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
       sub: 'Drop in any image — product, lifestyle, or brand asset',
       content: (
         <div className="flex flex-col gap-3">
-          <div className="w-full rounded-xl overflow-hidden aspect-video relative border border-paper/15">
-            <img src="/gooseoriginal.jpg" alt="Product photo" className="w-full h-full object-cover" />
+          <div className="w-full rounded-xl overflow-hidden aspect-[4/5] relative border border-paper/15 bg-paper/5">
+            <img src="/gooseoriginal.jpg" alt="Product photo" className="w-full h-full object-contain" />
           </div>
           <div className="flex gap-2">
             <div className="flex-1 h-8 rounded-lg bg-paper/8 border border-paper/15 flex items-center px-3">
@@ -66,8 +66,8 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
               </button>
             ))}
           </div>
-          <div className="w-full aspect-video rounded-xl overflow-hidden relative border border-paper/15">
-            <img src="/goosegenerated.png" alt="AI generated mockup" className="w-full h-full object-cover" />
+          <div className="w-full aspect-[4/5] rounded-xl overflow-hidden relative border border-paper/15 bg-paper/5">
+            <img src="/goosegenerated.png" alt="AI generated mockup" className="w-full h-full object-contain" />
             <div className="absolute bottom-2 right-2 flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full bg-sage animate-pulse-dot" />
               <span className="font-mono text-[8px] text-paper/80 bg-black/40 px-1.5 py-0.5 rounded">Gemini generating…</span>
@@ -87,8 +87,8 @@ function HeroWorkflowVisual({ activeStep }: { activeStep: number }) {
       sub: 'Set a date, pick platforms, let AdLab handle the rest',
       content: (
         <div className="flex flex-col gap-3">
-          <div className="w-full aspect-video rounded-xl overflow-hidden relative border border-paper/15">
-            <img src="/goosegenerated.png" alt="Scheduled ad" className="w-full h-full object-cover" />
+          <div className="w-full aspect-[4/5] rounded-xl overflow-hidden relative border border-paper/15 bg-paper/5">
+            <img src="/goosegenerated.png" alt="Scheduled ad" className="w-full h-full object-contain" />
             <div className="absolute top-2 right-2">
               <span className="bg-sage/80 text-forest font-mono text-[8px] uppercase tracking-widest px-2 py-0.5 rounded-full">✓ Ready</span>
             </div>
