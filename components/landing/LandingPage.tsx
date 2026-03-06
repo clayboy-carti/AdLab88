@@ -487,7 +487,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/AdLab_Logo2.png" alt="AdLab 88" className="h-8 w-auto object-contain brightness-0 invert" />
+            <img src="/AdLab_Logo2.png" alt="AdLab 88" className="h-14 w-auto object-contain brightness-0 invert" />
           </div>
           <div className="flex items-center gap-5">
             <Link href="#how-it-works" className="hidden md:block font-mono text-sm uppercase tracking-widest text-paper hover:text-paper/70 transition-colors">
