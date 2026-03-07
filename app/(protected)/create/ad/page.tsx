@@ -2,10 +2,14 @@
 
 import { emitCreditsUpdated } from '@/lib/credits-event'
 import { useState, useEffect } from 'react'
+import { useLabLoadingSequence } from '@/hooks/useLabLoadingSequence'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import BatchResultsGrid, { type BatchAdResult } from '@/components/create/BatchResultsGrid'
+import type { BatchAdResult } from '@/components/create/BatchResultsGrid'
 import type { BrandAsset } from '@/types/database'
+import {
+  FlaskConical, ImagePlus, CheckCircle, X, Maximize2, Monitor,
+} from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,43 +17,55 @@ interface AssetWithUrl extends BrandAsset {
   signedUrl: string
 }
 
-// Style reference is upload-only — stored in reference_images, we only track the id locally
 interface StyleRef {
   id: string
   fileName: string
   previewUrl: string
 }
 
+const GEMINI_ASPECT_RATIOS = [
+  { value: '1:1',  label: '1:1',  tooltip: 'Instagram Feed · Facebook · LinkedIn' },
+  { value: '4:5',  label: '4:5',  tooltip: 'Instagram Feed Portrait · Facebook' },
+  { value: '4:3',  label: '4:3',  tooltip: 'Facebook · LinkedIn · Pinterest' },
+  { value: '3:4',  label: '3:4',  tooltip: 'Pinterest · Facebook · Print' },
+  { value: '16:9', label: '16:9', tooltip: 'YouTube · Twitter/X · LinkedIn · Facebook' },
+  { value: '9:16', label: '9:16', tooltip: 'Instagram Stories & Reels · TikTok · YouTube Shorts' },
+  { value: '3:2',  label: '3:2',  tooltip: 'Twitter/X · Blog headers' },
+  { value: '2:3',  label: '2:3',  tooltip: 'Pinterest · Print' },
+  { value: '5:4',  label: '5:4',  tooltip: 'Facebook · Print' },
+  { value: '21:9', label: '21:9', tooltip: 'YouTube banners · Desktop headers' },
+]
+
 export default function AdPage() {
-  // ── Inputs ──────────────────────────────────────────────────────────
+  // ── Inputs ───────────────────────────────────────────────────────────
   const [contextText, setContextText] = useState('')
   const [imageQuality, setImageQuality] = useState<'1K' | '2K'>('1K')
   const [aspectRatio, setAspectRatio] = useState('1:1')
   const [creativity, setCreativity] = useState(2)
   const [title, setTitle] = useState('')
 
-  // ── Style reference (upload-only) ───────────────────────────────────
+  // ── Style reference (upload-only) ────────────────────────────────────
   const [styleRef, setStyleRef] = useState<StyleRef | null>(null)
   const [uploadingStyle, setUploadingStyle] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
 
-  // ── Product asset (from brand assets) ───────────────────────────────
+  // ── Product asset (from brand assets) ────────────────────────────────
   const [assets, setAssets] = useState<AssetWithUrl[]>([])
   const [loadingAssets, setLoadingAssets] = useState(true)
   const [productId, setProductId] = useState<string | null>(null)
 
-  // ── Ads per persona ─────────────────────────────────────────────────
+  // ── Ads per persona ──────────────────────────────────────────────────
   const [adsPerPersona, setAdsPerPersona] = useState(1)
 
-  // ── Generation ──────────────────────────────────────────────────────
+  // ── Generation ───────────────────────────────────────────────────────
   const [generating, setGenerating] = useState(false)
-  const [generationStage, setGenerationStage] = useState('')
   const [generatedBatch, setGeneratedBatch] = useState<BatchAdResult[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
+  const labLines = useLabLoadingSequence(generating)
   const supabase = createClient()
 
-  // ── Load brand assets ───────────────────────────────────────────────
   useEffect(() => {
     loadAssets()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -76,7 +92,6 @@ export default function AdPage() {
     setLoadingAssets(false)
   }
 
-  // ── Upload style reference ───────────────────────────────────────────
   async function handleStyleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -92,9 +107,7 @@ export default function AdPage() {
 
       const newId = result.image?.id ?? result.id
       const previewUrl = result.image?.signedUrl ?? result.signedUrl ?? ''
-      if (newId) {
-        setStyleRef({ id: newId, fileName: file.name, previewUrl })
-      }
+      if (newId) setStyleRef({ id: newId, fileName: file.name, previewUrl })
     } catch (err: any) {
       setUploadError(err.message || 'Upload failed')
     } finally {
@@ -103,19 +116,10 @@ export default function AdPage() {
     }
   }
 
-  // ── Generate ────────────────────────────────────────────────────────
   const handleGenerate = async () => {
     setGenerating(true)
     setError(null)
     setGeneratedBatch(null)
-    setGenerationStage('Loading brand profiles...')
-
-    const t1 = setTimeout(() => setGenerationStage('Analyzing reference ad style...'), 3000)
-    const t2 = setTimeout(() => setGenerationStage('Building persona-driven prompts...'), 10000)
-    const t3 = setTimeout(() => setGenerationStage('Generating images in parallel...'), 18000)
-    const t4 = setTimeout(() => setGenerationStage('Saving to library...'), 70000)
-    const t5 = setTimeout(() => setGenerationStage('Almost done...'), 95000)
-    const clearAll = () => [t1, t2, t3, t4, t5].forEach(clearTimeout)
 
     try {
       const res = await fetch('/api/generate-persona-batch', {
@@ -136,14 +140,10 @@ export default function AdPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Generation failed')
 
-      clearAll()
       setGeneratedBatch(data.ads)
       emitCreditsUpdated()
-      setGenerationStage(`Done — ${data.succeeded}/${data.total} generated!`)
     } catch (err: any) {
-      clearAll()
       setError(err.message || 'Generation failed')
-      setGenerationStage('')
     } finally {
       setGenerating(false)
     }
@@ -151,83 +151,92 @@ export default function AdPage() {
 
   const canGenerate = !generating && !!styleRef && !!productId && !!title.trim()
 
+  const dotGrid = {
+    backgroundImage: 'radial-gradient(circle, rgba(31,58,50,0.07) 1px, transparent 1px)',
+    backgroundSize: '24px 24px',
+  }
+
   return (
-    <div className="w-full p-4 lg:p-8">
+    <div className="h-screen overflow-hidden flex flex-col p-6 lg:p-8">
+
       {/* Header */}
-      <div className="flex items-baseline justify-between mb-8">
-        <div>
-          <Link
-            href="/create"
-            className="font-mono text-xs text-gray-400 uppercase tracking-widest hover:text-rust transition-colors"
-          >
-            ← The Lab Bench
-          </Link>
-          <h1 className="text-3xl font-mono header-accent mt-1">Ad Generation</h1>
-          <p className="font-mono text-xs text-gray-400 mt-1">
-            Upload a reference ad + select your product — generates one variation per persona profile.
-          </p>
-        </div>
+      <div className="mb-6 flex-shrink-0">
+        <Link
+          href="/create"
+          className="inline-flex items-center gap-1 text-xs font-mono text-graphite/40 uppercase tracking-widest hover:text-rust transition-colors mb-3"
+        >
+          ← The Lab Bench
+        </Link>
+        <h1 className="text-3xl font-mono font-semibold text-graphite">Ad Generation</h1>
+        <p className="text-xs font-mono text-graphite/40 mt-1">
+          Upload a reference ad · select your product · generates one variation per persona.
+        </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0 items-start overflow-y-auto lg:overflow-hidden pb-6">
 
-        {/* ── LEFT COLUMN ── */}
-        <div className="flex flex-col gap-3">
+        {/* ── LEFT — Controls ─────────────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col overflow-hidden h-full">
 
-          {/* Post Title */}
-          <div className="border border-outline">
-            <div className="px-4 py-1.5 border-b border-outline bg-[#e4dcc8] flex items-center justify-between">
-              <span className="font-mono text-xs uppercase tracking-widest">Post Title</span>
-              <span className="font-mono text-[10px] text-rust uppercase tracking-widest">Required</span>
+          {/* Card header */}
+          <div className="px-6 pt-5 pb-4 border-b border-forest/10">
+            <div className="flex items-center gap-2">
+              <FlaskConical size={15} className="text-forest/50" strokeWidth={1.8} />
+              <span className="text-[11px] font-mono uppercase tracking-widest text-graphite/60">Ad Setup</span>
             </div>
-            <div className="p-3 bg-white">
+          </div>
+
+          <div className="px-6 py-5 flex flex-col gap-5 overflow-y-auto flex-1">
+
+            {/* Title */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
+                Title <span className="text-rust">*</span>
+              </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Summer Sale — Persona Set"
+                placeholder="e.g. Summer Drop — Persona Set"
                 maxLength={80}
-                className="w-full text-sm font-mono bg-transparent focus:outline-none placeholder:text-gray-300"
+                className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-3 text-sm font-mono focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
               />
             </div>
-          </div>
 
-          {/* ── Style Reference (upload-only) ── */}
-          <div className="border border-outline">
-            <div className="bg-[#e4dcc8] border-b border-outline px-4 py-1.5 flex items-center justify-between">
-              <div>
-                <span className="font-mono text-xs uppercase tracking-widest">Style Reference</span>
-                <span className="font-mono text-[10px] text-gray-500 ml-3">The ad to style after</span>
-              </div>
-              <span className="font-mono text-[10px] text-rust uppercase tracking-widest">Required</span>
-            </div>
-            <div className="p-4 bg-white">
+            {/* Style Reference */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
+                Style Reference <span className="text-rust">*</span>
+                <span className="ml-2 normal-case text-graphite/35 tracking-normal">— the ad to style after</span>
+              </label>
+
               {styleRef ? (
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 rounded-xl border border-forest/20 bg-paper p-3">
                   {styleRef.previewUrl && (
                     <img
                       src={styleRef.previewUrl}
                       alt={styleRef.fileName}
-                      className="w-20 h-20 object-cover border border-outline flex-shrink-0"
+                      className="w-16 h-16 object-cover rounded-lg border border-forest/15 flex-shrink-0"
                     />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="font-mono text-xs text-rust uppercase tracking-widest mb-0.5">✓ Uploaded</p>
-                    <p className="font-mono text-[10px] text-gray-500 truncate">{styleRef.fileName}</p>
-                    <button
-                      onClick={() => setStyleRef(null)}
-                      className="mt-2 font-mono text-[10px] text-gray-400 hover:text-rust uppercase tracking-widest border border-outline px-2 py-1 hover:border-rust transition-colors"
-                    >
-                      Remove
-                    </button>
+                    <p className="text-[11px] font-mono text-forest uppercase tracking-widest mb-0.5">✓ Uploaded</p>
+                    <p className="text-xs font-mono text-graphite/50 truncate">{styleRef.fileName}</p>
                   </div>
+                  <button
+                    onClick={() => setStyleRef(null)}
+                    className="text-graphite/30 hover:text-rust transition-colors flex-shrink-0 mt-0.5"
+                  >
+                    <X size={14} />
+                  </button>
                 </div>
               ) : (
-                <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed border-outline p-6 cursor-pointer hover:border-rust hover:bg-rust/5 transition-colors ${uploadingStyle ? 'opacity-60 pointer-events-none' : ''}`}>
-                  <span className="font-mono text-xs text-gray-400 text-center">
+                <label className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-forest/20 bg-paper p-5 cursor-pointer hover:border-rust/40 hover:bg-rust/5 transition-colors ${uploadingStyle ? 'opacity-60 pointer-events-none' : ''}`}>
+                  <ImagePlus size={20} className="text-graphite/25" strokeWidth={1.5} />
+                  <span className="text-xs font-mono text-graphite/40 text-center">
                     {uploadingStyle ? 'Uploading…' : 'Drop an ad image here or click to upload'}
                   </span>
-                  <span className="font-mono text-[10px] text-gray-300">JPEG or PNG</span>
+                  <span className="text-[10px] font-mono text-graphite/25">JPEG or PNG</span>
                   <input
                     type="file"
                     accept="image/jpeg,image/png"
@@ -237,61 +246,50 @@ export default function AdPage() {
                   />
                 </label>
               )}
-            </div>
-          </div>
 
-          {/* ── Product Asset (from brand assets) ── */}
-          <div className="border border-outline">
-            <div className="bg-[#e4dcc8] border-b border-outline px-4 py-1.5 flex items-center justify-between">
-              <div>
-                <span className="font-mono text-xs uppercase tracking-widest">Product Asset</span>
-                <span className="font-mono text-[10px] text-gray-500 ml-3">From your brand assets</span>
-              </div>
-              <div className="flex items-center gap-3">
-                {productId && (
-                  <button
-                    onClick={() => setProductId(null)}
-                    className="font-mono text-[10px] text-gray-400 hover:text-rust uppercase tracking-widest"
-                  >
-                    clear
-                  </button>
-                )}
-                <Link
-                  href="/brand"
-                  className="font-mono text-[10px] text-gray-400 hover:text-forest uppercase tracking-widest"
-                >
+              {uploadError && (
+                <p className="text-[11px] font-mono text-rust">{uploadError}</p>
+              )}
+            </div>
+
+            {/* Product Asset */}
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
+                  Product Asset <span className="text-rust">*</span>
+                  <span className="ml-2 normal-case text-graphite/35 tracking-normal">— from brand assets</span>
+                </label>
+                <Link href="/brand" className="text-[11px] font-mono text-forest/50 hover:text-forest transition-colors">
                   + Add assets →
                 </Link>
-                <span className="font-mono text-[10px] text-rust uppercase tracking-widest">Required</span>
               </div>
-            </div>
-            <div className="p-4 bg-white">
+
               {loadingAssets ? (
-                <div className="h-20 bg-gray-50 animate-pulse" />
+                <div className="h-20 rounded-xl bg-paper animate-pulse" />
               ) : assets.length === 0 ? (
-                <div className="text-center py-4">
-                  <p className="font-mono text-[10px] text-gray-400 mb-2">No brand assets found.</p>
-                  <Link href="/brand" className="font-mono text-[10px] uppercase tracking-widest text-forest hover:underline">
+                <div className="rounded-xl border border-forest/15 bg-paper p-5 text-center">
+                  <p className="text-xs font-mono text-graphite/40 mb-2">No brand assets yet.</p>
+                  <Link href="/brand" className="text-xs font-mono text-forest hover:underline">
                     Go to Brand → Assets to upload your products
                   </Link>
                 </div>
               ) : (
-                <div className="grid grid-cols-5 gap-1.5">
+                <div className="grid grid-cols-6 gap-1.5">
                   {assets.map((asset) => (
                     <button
                       key={asset.id}
                       onClick={() => setProductId(asset.id === productId ? null : asset.id)}
                       title={asset.file_name}
-                      className={`relative aspect-square border-2 overflow-hidden transition-all ${
+                      className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
                         productId === asset.id
-                          ? 'border-forest scale-[0.97]'
-                          : 'border-transparent hover:border-gray-300'
+                          ? 'border-forest ring-2 ring-forest/20 scale-[0.97]'
+                          : 'border-transparent hover:border-forest/30'
                       }`}
                     >
                       <img src={asset.signedUrl} alt={asset.file_name} className="w-full h-full object-cover" />
                       {productId === asset.id && (
-                        <div className="absolute inset-0 bg-forest/20 flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">✓</span>
+                        <div className="absolute inset-0 bg-forest/15 flex items-center justify-center">
+                          <CheckCircle size={14} className="text-white" strokeWidth={2.5} />
                         </div>
                       )}
                     </button>
@@ -300,104 +298,82 @@ export default function AdPage() {
               )}
 
               {productId && (
-                <p className="font-mono text-[10px] text-forest uppercase tracking-widest mt-2">
+                <p className="text-[11px] font-mono text-forest uppercase tracking-widest">
                   ✓ {assets.find((a) => a.id === productId)?.file_name}
                 </p>
               )}
             </div>
-          </div>
 
-          {uploadError && (
-            <p className="font-mono text-xs text-rust border border-rust/20 bg-rust/5 px-3 py-2">{uploadError}</p>
-          )}
+            <div className="h-px bg-forest/10" />
 
-          {/* Ad Context */}
-          <div className="border border-outline">
-            <div className="px-4 py-1.5 border-b border-outline bg-white">
-              <span className="font-mono text-xs text-gray-400 tracking-wider">— CONTEXT BRIEF —</span>
-            </div>
-            <div className="p-4 bg-white">
+            {/* Context brief */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Context Brief</label>
               <textarea
                 value={contextText}
                 onChange={(e) => setContextText(e.target.value)}
                 placeholder="e.g. 10% off first order · Free shipping · Summer sale"
                 rows={2}
                 maxLength={300}
-                className="w-full text-sm font-mono bg-transparent resize-none focus:outline-none placeholder:text-gray-300"
+                className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-3 text-sm font-mono resize-none focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
               />
-              <div className="text-right mt-1">
-                <span className="font-mono text-xs text-gray-400">{contextText.length} / 300</span>
+              <div className="text-right">
+                <span className="text-[11px] font-mono text-graphite/25">{contextText.length} / 300</span>
               </div>
             </div>
-          </div>
 
-          {/* Image Settings */}
-          <div className="border border-outline bg-white">
-            <div className="px-4 py-1.5 border-b border-outline">
-              <span className="font-mono text-xs text-gray-400 tracking-wider">— IMAGE SETTINGS —</span>
-            </div>
+            <div className="h-px bg-forest/10" />
 
-            {/* Quality */}
-            <div className="flex items-center border-b border-outline">
-              <div className="w-32 shrink-0 px-4 py-2.5 border-r border-outline">
-                <span className="font-mono text-xs uppercase text-gray-500">Quality</span>
-              </div>
-              <div className="px-4 py-2 flex gap-2">
-                {(['1K', '2K'] as const).map((q) => (
-                  <button
-                    key={q}
-                    onClick={() => setImageQuality(q)}
-                    className={`font-mono text-xs uppercase px-3 py-1 border transition-colors ${
-                      imageQuality === q
-                        ? 'border-rust text-rust'
-                        : 'border-outline text-gray-400 hover:border-gray-400'
-                    }`}
-                  >
-                    [ {q} ]
-                  </button>
+            {/* Aspect ratio chips */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Aspect Ratio</label>
+              <div className="flex flex-wrap gap-1.5">
+                {GEMINI_ASPECT_RATIOS.map((r) => (
+                  <div key={r.value} className="relative group">
+                    <button
+                      onClick={() => setAspectRatio(r.value)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all border ${
+                        aspectRatio === r.value
+                          ? 'bg-sage border-forest/30 text-forest font-semibold'
+                          : 'border-forest/15 text-graphite/50 hover:border-forest/35 hover:text-graphite'
+                      }`}
+                    >
+                      {r.label}
+                    </button>
+                    <div className="pointer-events-none absolute bottom-full left-0 mb-2 px-2.5 py-1.5 bg-graphite text-paper text-[10px] font-mono whitespace-nowrap rounded opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
+                      {r.tooltip}
+                      <div className="absolute top-full left-3 border-4 border-transparent border-t-graphite" />
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
 
-            {/* Aspect Ratio */}
-            <div className="flex items-center border-b border-outline">
-              <div className="w-32 shrink-0 px-4 py-2.5 border-r border-outline">
-                <span className="font-mono text-xs uppercase text-gray-500">Aspect Ratio</span>
-              </div>
-              <div className="px-4 py-1.5 flex-1">
-                <select
-                  value={aspectRatio}
-                  onChange={(e) => setAspectRatio(e.target.value)}
-                  className="w-full font-mono text-xs bg-transparent focus:outline-none border-none p-0 text-gray-700"
-                >
-                  <option value="1:1">1:1 — Square</option>
-                  <option value="4:5">4:5 — Feed Portrait</option>
-                  <option value="4:3">4:3 — Standard</option>
-                  <option value="3:4">3:4 — Portrait</option>
-                  <option value="16:9">16:9 — Landscape</option>
-                  <option value="9:16">9:16 — Story / Reel</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Creativity */}
-            <div className="flex items-start">
-              <div className="w-32 shrink-0 px-4 py-3 border-r border-outline self-stretch">
-                <span className="font-mono text-xs uppercase text-gray-500">Creativity</span>
-              </div>
-              <div className="px-4 pt-2.5 pb-3 flex-1">
-                <div className="flex justify-between mb-1.5">
-                  {(['Strict', 'Balanced', 'Creative', 'Loose'] as const).map((label, i) => (
-                    <span
-                      key={label}
-                      className={`font-mono text-xs transition-colors ${
-                        creativity === i + 1 ? 'text-rust font-bold' : 'text-gray-300'
+            {/* Resolution + Creativity row */}
+            <div className="flex gap-6 items-start">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Resolution</label>
+                <div className="flex gap-1.5">
+                  {(['1K', '2K'] as const).map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => setImageQuality(q)}
+                      className={`px-5 py-1.5 rounded-lg text-xs font-mono transition-all border ${
+                        imageQuality === q
+                          ? 'bg-sage border-forest/30 text-forest font-semibold'
+                          : 'border-forest/15 text-graphite/50 hover:border-forest/35'
                       }`}
                     >
-                      {label}
-                    </span>
+                      {q}
+                    </button>
                   ))}
                 </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5 flex-1">
+                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
+                  Creativity — <span className="text-rust">{['', 'Strict', 'Balanced', 'Creative', 'Loose'][creativity]}</span>
+                </label>
                 <input
                   type="range"
                   min={1}
@@ -405,144 +381,204 @@ export default function AdPage() {
                   step={1}
                   value={creativity}
                   onChange={(e) => setCreativity(Number(e.target.value))}
-                  className="w-full accent-rust cursor-pointer"
+                  className="w-full accent-rust cursor-pointer mt-1"
                 />
-                <div className="flex justify-between mt-1.5">
-                  <span className="font-mono text-xs text-gray-400">Closely follows style</span>
-                  <span className="font-mono text-xs text-gray-400">Freely reimagined</span>
+                <div className="flex justify-between">
+                  <span className="text-[10px] font-mono text-graphite/30">Follows style closely</span>
+                  <span className="text-[10px] font-mono text-graphite/30">Freely reimagined</span>
                 </div>
               </div>
             </div>
 
             {/* Ads per Persona */}
-            <div className="flex items-center border-t border-outline">
-              <div className="w-32 shrink-0 px-4 py-2.5 border-r border-outline">
-                <span className="font-mono text-xs uppercase text-gray-500">Ads / Persona</span>
-              </div>
-              <div className="px-4 py-2 flex items-center gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Ads per Persona</label>
+              <div className="flex items-center gap-3">
                 <button
                   onClick={() => setAdsPerPersona((n) => Math.max(1, n - 1))}
                   disabled={adsPerPersona <= 1}
-                  className="font-mono text-sm text-gray-500 hover:text-rust disabled:opacity-30 w-5 text-center"
+                  className="w-8 h-8 rounded-lg border border-forest/20 text-graphite/50 hover:text-rust hover:border-rust/30 disabled:opacity-30 transition-colors font-mono text-lg leading-none flex items-center justify-center"
                 >−</button>
-                <span className="font-mono text-sm w-4 text-center">{adsPerPersona}</span>
+                <span className="font-mono text-sm w-4 text-center text-graphite">{adsPerPersona}</span>
                 <button
                   onClick={() => setAdsPerPersona((n) => Math.min(5, n + 1))}
                   disabled={adsPerPersona >= 5}
-                  className="font-mono text-sm text-gray-500 hover:text-rust disabled:opacity-30 w-5 text-center"
+                  className="w-8 h-8 rounded-lg border border-forest/20 text-graphite/50 hover:text-rust hover:border-rust/30 disabled:opacity-30 transition-colors font-mono text-lg leading-none flex items-center justify-center"
                 >+</button>
-                <span className="font-mono text-[10px] text-gray-400 ml-1">unique ad{adsPerPersona !== 1 ? 's' : ''} per profile</span>
+                <span className="text-[11px] font-mono text-graphite/35">unique ad{adsPerPersona !== 1 ? 's' : ''} per profile</span>
               </div>
             </div>
+
+            {/* Generate CTA */}
+            <button
+              onClick={handleGenerate}
+              disabled={!canGenerate}
+              className="w-full bg-rust text-white rounded-xl py-4 font-mono font-semibold text-sm tracking-wide hover:bg-[#9a4429] active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {generating ? 'Generating Persona Batch…' : 'Generate Persona Batch'}
+            </button>
+
+            {error && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                <p className="text-[11px] font-mono uppercase text-red-500 mb-1">Error</p>
+                <p className="text-sm text-red-500">{error}</p>
+              </div>
+            )}
           </div>
-
-          {/* Validation hints */}
-          {!styleRef && (
-            <p className="font-mono text-[10px] uppercase tracking-widest text-gray-400">
-              ↑ Upload a style reference ad to continue
-            </p>
-          )}
-          {styleRef && !productId && (
-            <p className="font-mono text-[10px] uppercase tracking-widest text-gray-400">
-              ↑ Select a product asset to continue
-            </p>
-          )}
-
-          {/* Generate */}
-          <button
-            onClick={handleGenerate}
-            disabled={!canGenerate}
-            className="btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {generating ? 'GENERATING PERSONA BATCH...' : 'GENERATE PERSONA BATCH'}
-          </button>
-
-          {error && (
-            <div className="border border-red-300 bg-red-50 p-3">
-              <p className="font-mono text-xs uppercase text-red-700 mb-1">Error</p>
-              <p className="font-mono text-xs text-red-600">{error}</p>
-            </div>
-          )}
         </div>
 
-        {/* ── RIGHT COLUMN ── */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <p className="font-mono text-xs uppercase tracking-widest text-gray-500">
-              [ LIVE OUTPUT ENGINE ]
-            </p>
-            <span className="font-mono text-xs border border-rust text-rust px-2 py-0.5">
-              [ MODEL: READY ]
+        {/* ── RIGHT — Preview Canvas ───────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col overflow-hidden h-full">
+
+          {/* Canvas header */}
+          <div className="px-6 py-4 border-b border-forest/10 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <Monitor size={15} className="text-forest/35" strokeWidth={1.8} />
+              <span className="text-[11px] font-mono uppercase tracking-widest text-graphite/40">Ad Preview</span>
+            </div>
+            <span className="text-[11px] font-mono bg-sage/20 text-forest/60 px-3 py-1 rounded-full border border-sage/30">
+              Gemini · Ready
             </span>
           </div>
 
-          <div className="border border-outline flex flex-col">
-            <div className="bg-[#e4dcc8] border-b border-outline px-4 py-2">
-              <span className="font-mono text-xs uppercase tracking-widest">Generated Preview</span>
-            </div>
+          {/* Canvas body */}
+          <div className="flex-1 relative overflow-auto min-h-0">
 
-            <div className="flex-1 min-h-[480px] relative bg-white">
+            {/* Empty state */}
+            {!generating && !generatedBatch && !error && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-5" style={dotGrid}>
+                <div className="text-center">
+                  <p className="text-sm font-mono text-graphite/40">Your persona batch will appear here</p>
+                  <p className="text-[11px] font-mono text-graphite/25 mt-1">upload style ref · select product · generate</p>
+                </div>
+              </div>
+            )}
 
-              {/* Loading */}
-              {generating && (
-                <div
-                  className="absolute inset-0 flex flex-col items-center justify-center p-8"
-                  style={{
-                    backgroundImage: 'radial-gradient(circle, #d4cbb8 1px, transparent 1px)',
-                    backgroundSize: '20px 20px',
-                  }}
-                >
-                  <div className="bg-white border border-outline p-6 text-center w-full max-w-xs">
-                    <div className="animate-spin h-6 w-6 border-2 border-rust border-t-transparent mx-auto mb-4" />
-                    <p className="font-mono text-xs text-gray-600 mb-4">{generationStage}</p>
-                    <div className="space-y-1.5 text-left">
-                      <p className="font-mono text-xs text-gray-500">✓ Brand profiles loaded</p>
-                      <p className="font-mono text-xs text-rust animate-pulse">→ Reverse-engineering style reference...</p>
-                      <p className="font-mono text-xs text-gray-300">→ Generating per-persona images...</p>
-                      <p className="font-mono text-xs text-gray-300">→ Saving to library...</p>
+            {/* Loading state */}
+            {generating && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-8" style={dotGrid}>
+                <div className="bg-white rounded-2xl border border-forest/15 shadow-sm p-6 w-full max-w-md flex flex-col items-center gap-5">
+                  <div className="rounded-xl overflow-hidden border border-forest/15 w-full aspect-video bg-paper">
+                    <video
+                      src="/Generate_labLoading.mp4"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="w-full">
+                    <p className="text-sm font-mono text-graphite/60 leading-tight mb-3">Running image experiment…</p>
+                    <div className="space-y-2.5">
+                      {labLines.filter((l) => l.status !== 'hidden').map((line, i) => (
+                        <p
+                          key={i}
+                          className={
+                            line.status === 'completed'
+                              ? 'text-xs font-mono text-graphite/40'
+                              : 'text-xs font-mono font-semibold text-rust animate-pulse'
+                          }
+                        >
+                          {line.status === 'completed' ? `✓ ${line.text}` : `→ ${line.text}…`}
+                        </p>
+                      ))}
                     </div>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Batch results */}
-              {!generating && generatedBatch && (
-                <BatchResultsGrid
-                  ads={generatedBatch}
-                  succeeded={generatedBatch.filter((a) => !a.imageGenerationFailed).length}
-                  onReset={() => { setGeneratedBatch(null); setError(null) }}
-                />
-              )}
-
-              {/* Empty state */}
-              {!generating && !generatedBatch && !error && (
-                <div
-                  className="absolute inset-0 flex flex-col items-center justify-center gap-3"
-                  style={{
-                    backgroundImage: 'radial-gradient(circle, #d4cbb8 1px, transparent 1px)',
-                    backgroundSize: '20px 20px',
-                  }}
-                >
-                  <p className="font-mono text-xs text-gray-500 text-center leading-relaxed">
-                    Awaiting input.<br />
-                    <span className="text-gray-400">
-                      Upload style ref + select product, then generate.
+            {/* Results */}
+            {!generating && generatedBatch && (
+              <div className="p-5 space-y-4">
+                {/* Saved banner */}
+                <div className="flex items-center justify-between rounded-xl bg-sage/15 border border-sage/25 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle size={14} className="text-forest" strokeWidth={2} />
+                    <span className="text-xs font-mono text-forest uppercase tracking-wide">
+                      {generatedBatch.filter((a) => !a.imageGenerationFailed).length}/{generatedBatch.length} Saved to Library
                     </span>
-                  </p>
+                  </div>
+                  <a href="/library" className="text-xs font-mono text-rust hover:underline">View Library →</a>
                 </div>
-              )}
-            </div>
 
-            {/* Status bar */}
-            <div className="border-t border-outline px-4 py-2 bg-[#e4dcc8]">
-              <span className="font-mono text-xs text-gray-500 tracking-wider">
-                FORMAT: {aspectRatio}&nbsp;&nbsp;|&nbsp;&nbsp;QUALITY: {imageQuality}&nbsp;&nbsp;|&nbsp;&nbsp;CREATIVITY: {['', 'STRICT', 'BALANCED', 'CREATIVE', 'LOOSE'][creativity]}
-              </span>
-            </div>
+                {/* Batch grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  {generatedBatch.map((ad, i) => (
+                    <div key={ad.id ?? i} className="flex flex-col gap-1.5">
+                      {ad.imageGenerationFailed ? (
+                        <div className="aspect-square rounded-xl border border-red-200 bg-red-50 flex items-center justify-center p-3">
+                          <p className="text-[10px] font-mono text-red-400 text-center">Generation failed</p>
+                        </div>
+                      ) : ad.generatedImageUrl ? (
+                        <div className="relative group">
+                          <img
+                            src={ad.generatedImageUrl}
+                            alt={ad.hook}
+                            className="w-full aspect-square object-cover rounded-xl border border-forest/15"
+                          />
+                          <button
+                            onClick={() => setPreviewUrl(ad.generatedImageUrl)}
+                            className="absolute top-2 right-2 flex items-center gap-1.5 bg-white/90 backdrop-blur-sm border border-forest/20 rounded-lg px-2.5 py-1 text-xs font-mono text-graphite opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Maximize2 size={10} /> Expand
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="aspect-square rounded-xl bg-paper border border-forest/10 animate-pulse" />
+                      )}
+                      {ad.framework_applied && (
+                        <p className="text-[10px] font-mono text-graphite/35 uppercase tracking-wider truncate text-center">
+                          {ad.framework_applied}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => { setGeneratedBatch(null); setError(null) }}
+                  className="w-full rounded-xl border border-forest/20 py-3 text-sm font-mono text-graphite/50 hover:text-graphite hover:border-forest/40 transition-colors"
+                >
+                  Generate Another Batch
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Status bar */}
+          <div className="px-6 py-3 border-t border-forest/10 flex-shrink-0">
+            <span className="text-[11px] font-mono text-graphite/25 uppercase tracking-widest">
+              {aspectRatio} · {imageQuality} · Gemini · Persona Batch
+            </span>
           </div>
         </div>
 
       </div>
+
+      {/* Image preview modal */}
+      {previewUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60"
+          onClick={() => setPreviewUrl(null)}
+        >
+          <div
+            className="relative max-w-4xl w-full max-h-[90vh] flex flex-col rounded-2xl overflow-hidden bg-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-5 py-3.5 bg-paper border-b border-forest/10 flex items-center justify-between">
+              <span className="text-xs font-mono uppercase tracking-widest text-graphite/40">Preview</span>
+              <button onClick={() => setPreviewUrl(null)} className="text-graphite/40 hover:text-graphite transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="overflow-auto flex items-center justify-center">
+              <img src={previewUrl} alt="Preview" className="max-w-full max-h-[80vh] object-contain" />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
