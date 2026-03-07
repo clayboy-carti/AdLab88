@@ -21,7 +21,8 @@ export function buildReplicatePrompt(
   brand: Brand,
   mode: 'reference' | 'original' | 'product_mockup' = 'reference',
   userContext?: string,
-  memeContext?: MemeContext | null
+  memeContext?: MemeContext | null,
+  stylePrompt?: string | null
 ): string {
   const brandColors =
     brand.brand_colors && brand.brand_colors.length > 0
@@ -144,28 +145,16 @@ Quality benchmark: editorial lifestyle photography — authentic, aspirational, 
     return prompt
   }
 
-  // MODE 2: ORIGINAL (Framework-driven creative generation)
+  // MODE 2: ORIGINAL (Framework-driven or style-prompted creative generation)
   const offerLine = userContext
     ? `• Offer / promotional context (feature prominently): "${userContext}"\n`
     : ''
 
-  const prompt = `
-Create a professional, high-quality advertisement for ${brand.company_name}, a ${industry} company.
-
-BRAND DETAILS:
-• Company: ${brand.company_name}
-• Industry: ${industry}
-• What we do: ${brand.what_we_do}
-• Target audience: ${brand.target_audience}
-• Brand colors: ${brandColors}
-• Brand personality: ${brand.personality_traits?.join(', ') || 'Professional, trustworthy'}
-
-AD COPY (Display prominently):
-• Main headline (large, bold): "${copy.hook}"
-• Call-to-action (prominent button/text): "${copy.cta}"
-${offerLine}
-
-VISUAL REQUIREMENTS:
+  // If a reverse-engineered style prompt is provided, it drives the visual direction
+  const visualSection = stylePrompt
+    ? `VISUAL STYLE (extracted from reference ad — follow closely):
+${stylePrompt}`
+    : `VISUAL REQUIREMENTS:
 • Professional, modern design suitable for ${copy.target_platform}
 • Use brand colors (${brandColors}) as primary color scheme
 • Include relevant ${industry} imagery or icons
@@ -173,13 +162,28 @@ VISUAL REQUIREMENTS:
 • Typography should be bold and readable
 • Ensure text hierarchy (headline > CTA)
 • High-quality, polished aesthetic
-• Square format (1:1 ratio) optimized for social media
 
 STYLE INSPIRATION:
 • Modern, professional ${industry} advertising
 • Clean, benefit-driven messaging
 • Visual appeal that resonates with ${brand.target_audience}
-• Framework applied: ${copy.framework_applied}
+• Framework applied: ${copy.framework_applied}`
+
+  const prompt = `
+Create a professional, high-quality advertisement for ${brand.company_name}, a ${industry} company.
+
+BRAND DETAILS:
+• Company: ${brand.company_name}
+• Industry: ${industry}
+• Target audience: ${brand.target_audience}
+• Brand colors: ${brandColors}
+• Strategic angle: ${copy.positioning_angle}
+
+AD COPY (Display prominently):
+• Main headline (large, bold): "${copy.hook}"
+• Call-to-action (prominent button/text): "${copy.cta}"
+${offerLine}
+${visualSection}
 
 Create an eye-catching, conversion-focused advertisement that clearly communicates the value proposition.
 `.trim()
