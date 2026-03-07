@@ -20,6 +20,8 @@ const CREATIVITY_TEMPERATURES: Record<number, number> = {
 export async function POST(request: Request) {
   console.log('[PersonaBatch] Starting persona-driven batch generation...')
 
+  let spentCredits = 0
+
   try {
     const supabase = createClient()
 
@@ -37,7 +39,7 @@ export async function POST(request: Request) {
 
     // 2. Parse request body
     const body = await request.json()
-    const { style_reference_image_id, product_asset_id, user_context, image_quality, aspect_ratio, creativity, title } = body
+    const { style_reference_image_id, product_asset_id, user_context, image_quality, aspect_ratio, creativity, title, ads_per_persona } = body
 
     if (!style_reference_image_id) {
       return NextResponse.json({ error: 'style_reference_image_id is required' }, { status: 400 })
@@ -51,6 +53,7 @@ export async function POST(request: Request) {
     const imageAspectRatio: string = aspect_ratio || '1:1'
     const creativityNotch = Number(creativity) || 2
     const imageTemperature = CREATIVITY_TEMPERATURES[creativityNotch] ?? 0.6
+    const adsPerPersona = Math.min(Math.max(Number(ads_per_persona) || 1, 1), 5)
 
     console.log(`[PersonaBatch] Quality: ${imageQuality}, Aspect: ${imageAspectRatio}, Creativity: ${creativityNotch}`)
 
@@ -86,11 +89,17 @@ export async function POST(request: Request) {
     }
 
     const profiles = intelligenceProfiles.slice(0, 5) // cap at 5
-    const batchSize = profiles.length
-    console.log(`[PersonaBatch] Found ${batchSize} intelligence profile(s)`)
+    console.log(`[PersonaBatch] Found ${profiles.length} intelligence profile(s), ${adsPerPersona} ad(s) per persona`)
+
+    // Flatten profiles × adsPerPersona into a flat job list
+    const jobs = profiles.flatMap((profile, pi) =>
+      Array.from({ length: adsPerPersona }, (_, vi) => ({ profile, profileIndex: pi, variationIndex: vi }))
+    )
+    const batchSize = jobs.length
 
     // 5. Spend credits upfront
     const { error: creditError } = await supabase.rpc('spend_credit', { p_user_id: user.id, p_amount: batchSize })
+    if (!creditError) spentCredits = batchSize
     if (creditError) {
       const insufficient = creditError.message?.includes('insufficient_credits')
       return NextResponse.json(
@@ -167,7 +176,7 @@ export async function POST(request: Request) {
     // 8. Build copy and image prompts for each persona profile
     console.log('[PersonaBatch] === PHASE 3: Building prompts per persona ===')
 
-    const copyVariants: GeneratedAd[] = profiles.map((profile) => ({
+    const copyVariants: GeneratedAd[] = jobs.map(({ profile, variationIndex }) => ({
       positioning_angle: profile.angle ?? 'Brand Benefit',
       angle_justification: `Targeting persona: ${profile.persona ?? 'General audience'}`,
       hook: profile.copy_hook ?? `Discover ${brand.company_name}`,
@@ -180,21 +189,17 @@ export async function POST(request: Request) {
         .join(' '),
       cta: 'Shop Now',
       brand_voice_match: profile.emotion ?? 'Authentic',
-      framework_applied: `Persona: ${(profile.persona ?? 'General').slice(0, 40)}`,
+      framework_applied: `Persona: ${(profile.persona ?? 'General').slice(0, 40)}${adsPerPersona > 1 ? ` · V${variationIndex + 1}` : ''}`,
       target_platform: 'Instagram / Social',
       estimated_performance: undefined,
     }))
 
-    const imagePrompts: string[] = copyVariants.map((copy) =>
-      buildReplicatePrompt(
-        copy,
-        brand as Brand,
-        'original',
-        userContext,
-        null,
-        stylePrompt
-      )
-    )
+    const imagePrompts: string[] = jobs.map(({ variationIndex }, i) => {
+      const variationContext = adsPerPersona > 1
+        ? [userContext, `Variation ${variationIndex + 1} of ${adsPerPersona}`].filter(Boolean).join(' · ')
+        : userContext
+      return buildReplicatePrompt(copyVariants[i], brand as Brand, 'original', variationContext, null, stylePrompt)
+    })
 
     console.log('[PersonaBatch] ✅ Prompts built for all personas')
 
@@ -249,7 +254,7 @@ export async function POST(request: Request) {
     const batchId = crypto.randomUUID()
 
     const dbInserts = await Promise.allSettled(
-      profiles.map((profile, i) => {
+      jobs.map(({ profile }, i) => {
         const storagePath = generatedStoragePaths[i]
         if (!storagePath) return Promise.resolve(null)
 
@@ -289,7 +294,7 @@ export async function POST(request: Request) {
     )
 
     // 12. Build response
-    const ads = profiles.map((profile, i) => {
+    const ads = jobs.map(({ profile }, i) => {
       const dbResult = dbInserts[i]
       const urlResult = outSignedUrlResults[i]
 
@@ -348,8 +353,7 @@ export async function POST(request: Request) {
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      // Best-effort refund — profile count unknown at this point so refund max 5
-      if (user) await supabase.rpc('refund_credit', { p_user_id: user.id, p_amount: 5 })
+      if (user && spentCredits > 0) await supabase.rpc('refund_credit', { p_user_id: user.id, p_amount: spentCredits })
     } catch (_) {}
     return NextResponse.json(
       {

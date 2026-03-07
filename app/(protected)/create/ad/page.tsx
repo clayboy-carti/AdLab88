@@ -38,6 +38,9 @@ export default function AdPage() {
   const [loadingAssets, setLoadingAssets] = useState(true)
   const [productId, setProductId] = useState<string | null>(null)
 
+  // ── Ads per persona ─────────────────────────────────────────────────
+  const [adsPerPersona, setAdsPerPersona] = useState(1)
+
   // ── Generation ──────────────────────────────────────────────────────
   const [generating, setGenerating] = useState(false)
   const [generationStage, setGenerationStage] = useState('')
@@ -126,6 +129,7 @@ export default function AdPage() {
           aspect_ratio: aspectRatio,
           creativity,
           title: title.trim() || undefined,
+          ads_per_persona: adsPerPersona,
         }),
       })
 
@@ -407,6 +411,27 @@ export default function AdPage() {
                   <span className="font-mono text-xs text-gray-400">Closely follows style</span>
                   <span className="font-mono text-xs text-gray-400">Freely reimagined</span>
                 </div>
+              </div>
+            </div>
+
+            {/* Ads per Persona */}
+            <div className="flex items-center border-t border-outline">
+              <div className="w-32 shrink-0 px-4 py-2.5 border-r border-outline">
+                <span className="font-mono text-xs uppercase text-gray-500">Ads / Persona</span>
+              </div>
+              <div className="px-4 py-2 flex items-center gap-3">
+                <button
+                  onClick={() => setAdsPerPersona((n) => Math.max(1, n - 1))}
+                  disabled={adsPerPersona <= 1}
+                  className="font-mono text-sm text-gray-500 hover:text-rust disabled:opacity-30 w-5 text-center"
+                >−</button>
+                <span className="font-mono text-sm w-4 text-center">{adsPerPersona}</span>
+                <button
+                  onClick={() => setAdsPerPersona((n) => Math.min(5, n + 1))}
+                  disabled={adsPerPersona >= 5}
+                  className="font-mono text-sm text-gray-500 hover:text-rust disabled:opacity-30 w-5 text-center"
+                >+</button>
+                <span className="font-mono text-[10px] text-gray-400 ml-1">unique ad{adsPerPersona !== 1 ? 's' : ''} per profile</span>
               </div>
             </div>
           </div>
