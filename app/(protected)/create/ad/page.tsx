@@ -54,6 +54,9 @@ export default function AdPage() {
   const [loadingAssets, setLoadingAssets] = useState(true)
   const [productId, setProductId] = useState<string | null>(null)
 
+  // ── Ads per persona ──────────────────────────────────────────────────
+  const [adsPerPersona, setAdsPerPersona] = useState(1)
+
   // ── Generation ───────────────────────────────────────────────────────
   const [generating, setGenerating] = useState(false)
   const [generatedBatch, setGeneratedBatch] = useState<BatchAdResult[] | null>(null)
@@ -130,6 +133,7 @@ export default function AdPage() {
           aspect_ratio: aspectRatio,
           creativity,
           title: title.trim() || undefined,
+          ads_per_persona: adsPerPersona,
         }),
       })
 
@@ -386,6 +390,25 @@ export default function AdPage() {
               </div>
             </div>
 
+            {/* Ads per Persona */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Ads per Persona</label>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setAdsPerPersona((n) => Math.max(1, n - 1))}
+                  disabled={adsPerPersona <= 1}
+                  className="w-8 h-8 rounded-lg border border-forest/20 text-graphite/50 hover:text-rust hover:border-rust/30 disabled:opacity-30 transition-colors font-mono text-lg leading-none flex items-center justify-center"
+                >−</button>
+                <span className="font-mono text-sm w-4 text-center text-graphite">{adsPerPersona}</span>
+                <button
+                  onClick={() => setAdsPerPersona((n) => Math.min(5, n + 1))}
+                  disabled={adsPerPersona >= 5}
+                  className="w-8 h-8 rounded-lg border border-forest/20 text-graphite/50 hover:text-rust hover:border-rust/30 disabled:opacity-30 transition-colors font-mono text-lg leading-none flex items-center justify-center"
+                >+</button>
+                <span className="text-[11px] font-mono text-graphite/35">unique ad{adsPerPersona !== 1 ? 's' : ''} per profile</span>
+              </div>
+            </div>
+
             {/* Generate CTA */}
             <button
               onClick={handleGenerate}
@@ -401,7 +424,6 @@ export default function AdPage() {
                 <p className="text-sm text-red-500">{error}</p>
               </div>
             )}
-
           </div>
         </div>
 
