@@ -422,48 +422,48 @@ export default function AdPage() {
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Aspect Ratio</label>
-                <div className="relative">
+                <div className="relative w-24">
                   <select
                     value={aspectRatio}
                     onChange={(e) => setAspectRatio(e.target.value)}
-                    className="appearance-none rounded-xl bg-sage border border-forest/30 px-4 py-1.5 pr-8 text-sm font-mono text-forest font-semibold focus:outline-none focus:border-forest/50 cursor-pointer [&>option]:bg-white [&>option]:text-graphite [&>option]:font-normal"
+                    className="appearance-none w-full rounded-xl bg-sage border border-forest/30 pl-3 pr-7 py-1.5 text-sm font-mono text-forest font-semibold focus:outline-none cursor-pointer [&>option]:bg-white [&>option]:text-graphite [&>option]:font-normal"
                   >
                     {aspectRatioOptions.map((r) => (
                       <option key={r.value} value={r.value} title={r.tooltip}>{r.label}</option>
                     ))}
                   </select>
-                  <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-forest/50 pointer-events-none" />
+                  <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-forest/50 pointer-events-none" />
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Model</label>
-                <div className="relative">
+                <div className="relative w-32">
                   <select
                     value={geminiModel}
                     onChange={(e) => setGeminiModel(e.target.value as 'gemini-pro' | 'gemini-flash')}
-                    className="appearance-none rounded-xl bg-sage border border-forest/30 px-4 py-1.5 pr-8 text-sm font-mono text-forest font-semibold focus:outline-none focus:border-forest/50 cursor-pointer [&>option]:bg-white [&>option]:text-graphite [&>option]:font-normal"
+                    className="appearance-none w-full rounded-xl bg-sage border border-forest/30 pl-3 pr-7 py-1.5 text-sm font-mono text-forest font-semibold focus:outline-none cursor-pointer [&>option]:bg-white [&>option]:text-graphite [&>option]:font-normal"
                   >
                     <option value="gemini-pro">Gemini Pro</option>
                     <option value="gemini-flash">Gemini Flash</option>
                   </select>
-                  <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-graphite/30 pointer-events-none" />
+                  <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-forest/50 pointer-events-none" />
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Ads / Persona</label>
-                <div className="relative">
+                <div className="relative w-28">
                   <select
                     value={adsPerPersona}
                     onChange={(e) => setAdsPerPersona(Number(e.target.value))}
-                    className="appearance-none w-28 rounded-xl bg-sage border border-forest/30 px-4 py-1.5 pr-8 text-sm font-mono text-forest font-semibold focus:outline-none focus:border-forest/50 cursor-pointer [&>option]:bg-white [&>option]:text-graphite [&>option]:font-normal"
+                    className="appearance-none w-full rounded-xl bg-sage border border-forest/30 pl-3 pr-7 py-1.5 text-sm font-mono text-forest font-semibold focus:outline-none cursor-pointer [&>option]:bg-white [&>option]:text-graphite [&>option]:font-normal"
                   >
                     {[1, 2, 3, 4, 5].map((n) => (
                       <option key={n} value={n}>{n} ad{n !== 1 ? 's' : ''}</option>
                     ))}
                   </select>
-                  <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-graphite/30 pointer-events-none" />
+                  <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-forest/50 pointer-events-none" />
                 </div>
               </div>
 
