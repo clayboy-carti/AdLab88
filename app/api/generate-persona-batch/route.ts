@@ -196,11 +196,8 @@ export async function POST(request: Request) {
       estimated_performance: undefined,
     }))
 
-    const imagePrompts: string[] = jobs.map(({ variationIndex }, i) => {
-      const variationContext = adsPerPersona > 1
-        ? [userContext, `Variation ${variationIndex + 1} of ${adsPerPersona}`].filter(Boolean).join(' · ')
-        : userContext
-      return buildReplicatePrompt(copyVariants[i], brand as Brand, 'original', variationContext, null, stylePrompt)
+    const imagePrompts: string[] = jobs.map((_, i) => {
+      return buildReplicatePrompt(copyVariants[i], brand as Brand, 'original', userContext, null, stylePrompt)
     })
 
     console.log('[PersonaBatch] ✅ Prompts built for all personas')
