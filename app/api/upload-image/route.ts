@@ -78,10 +78,18 @@ export async function POST(request: Request) {
       )
     }
 
+    // 7. Generate a signed URL for immediate preview
+    const { data: signedUrlData } = await supabase.storage
+      .from('reference-images')
+      .createSignedUrl(fileName, 604800) // 7 days
+
     return NextResponse.json(
       {
         message: 'Image uploaded successfully',
-        image: imageRecord,
+        image: {
+          ...imageRecord,
+          signedUrl: signedUrlData?.signedUrl ?? null,
+        },
       },
       { status: 200 }
     )
