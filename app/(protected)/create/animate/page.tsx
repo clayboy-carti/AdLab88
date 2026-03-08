@@ -182,15 +182,21 @@ function AnimateContent() {
     <div className="min-h-screen p-6 lg:p-8">
 
       {/* Header */}
-      <div className="mb-8">
-        <Link
-          href="/create"
-          className="inline-flex items-center gap-1 text-xs font-mono text-graphite/40 uppercase tracking-widest hover:text-rust transition-colors mb-3"
-        >
-          ← The Lab Bench
-        </Link>
-        <h1 className="text-3xl font-mono font-semibold text-graphite">Animate</h1>
-        <p className="text-sm font-mono text-graphite/40 mt-1">Turn a still image into a 5-second video with Grok.</p>
+      <div className="mb-4 flex-shrink-0">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-mono header-accent">Animate</h1>
+            <p className="font-mono text-xs text-gray-500 uppercase tracking-widest mt-1">
+              Pick an image · add a motion prompt · Grok Video turns it into a 5-second clip
+            </p>
+          </div>
+          <Link
+            href="/create"
+            className="text-xs font-mono text-graphite/40 uppercase tracking-widest hover:text-rust transition-colors mt-1"
+          >
+            ← The Lab Bench
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
