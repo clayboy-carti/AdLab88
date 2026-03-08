@@ -406,32 +406,7 @@ export default function AdPage() {
 
             <div className="h-px bg-forest/10" />
 
-            {/* Aspect ratio chips */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Aspect Ratio</label>
-              <div className="flex flex-wrap gap-1.5">
-                {aspectRatioOptions.map((r) => (
-                  <div key={r.value} className="relative group">
-                    <button
-                      onClick={() => setAspectRatio(r.value)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all border ${
-                        aspectRatio === r.value
-                          ? 'bg-sage border-forest/30 text-forest font-semibold'
-                          : 'border-forest/15 text-graphite/50 hover:border-forest/35 hover:text-graphite'
-                      }`}
-                    >
-                      {r.label}
-                    </button>
-                    <div className="pointer-events-none absolute bottom-full left-0 mb-2 px-2.5 py-1.5 bg-graphite text-paper text-[10px] font-mono whitespace-nowrap rounded opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
-                      {r.tooltip}
-                      <div className="absolute top-full left-3 border-4 border-transparent border-t-graphite" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Resolution + Model + Ads per Persona + Creativity row */}
+            {/* Resolution + Aspect Ratio + Model + Ads per Persona + Creativity row */}
             <div className="flex gap-6 items-start">
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Resolution</label>
@@ -449,6 +424,22 @@ export default function AdPage() {
                       {q}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Aspect Ratio</label>
+                <div className="relative">
+                  <select
+                    value={aspectRatio}
+                    onChange={(e) => setAspectRatio(e.target.value)}
+                    className="appearance-none rounded-xl bg-sage border border-forest/30 px-4 py-1.5 pr-8 text-sm font-mono text-forest font-semibold focus:outline-none focus:border-forest/50 cursor-pointer"
+                  >
+                    {aspectRatioOptions.map((r) => (
+                      <option key={r.value} value={r.value} title={r.tooltip}>{r.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-forest/50 pointer-events-none" />
                 </div>
               </div>
 
