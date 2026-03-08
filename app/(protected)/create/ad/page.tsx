@@ -431,7 +431,7 @@ export default function AdPage() {
               </div>
             </div>
 
-            {/* Resolution + Model + Creativity row */}
+            {/* Resolution + Model + Ads per Persona + Creativity row */}
             <div className="flex gap-6 items-start">
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Resolution</label>
@@ -467,6 +467,22 @@ export default function AdPage() {
                 </div>
               </div>
 
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Ads / Persona</label>
+                <div className="relative">
+                  <select
+                    value={adsPerPersona}
+                    onChange={(e) => setAdsPerPersona(Number(e.target.value))}
+                    className="appearance-none rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-1.5 pr-8 text-sm font-mono text-graphite focus:outline-none focus:border-forest/50 cursor-pointer"
+                  >
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-graphite/30 pointer-events-none" />
+                </div>
+              </div>
+
               <div className="flex flex-col gap-1.5 flex-1">
                 <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
                   Creativity — <span className="text-rust">{['', 'Strict', 'Balanced', 'Creative', 'Loose'][creativity]}</span>
@@ -484,25 +500,6 @@ export default function AdPage() {
                   <span className="text-[10px] font-mono text-graphite/30">Follows style closely</span>
                   <span className="text-[10px] font-mono text-graphite/30">Freely reimagined</span>
                 </div>
-              </div>
-            </div>
-
-            {/* Ads per Persona */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Ads per Persona</label>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setAdsPerPersona((n) => Math.max(1, n - 1))}
-                  disabled={adsPerPersona <= 1}
-                  className="w-8 h-8 rounded-lg border border-forest/20 text-graphite/50 hover:text-rust hover:border-rust/30 disabled:opacity-30 transition-colors font-mono text-lg leading-none flex items-center justify-center"
-                >−</button>
-                <span className="font-mono text-sm w-4 text-center text-graphite">{adsPerPersona}</span>
-                <button
-                  onClick={() => setAdsPerPersona((n) => Math.min(5, n + 1))}
-                  disabled={adsPerPersona >= 5}
-                  className="w-8 h-8 rounded-lg border border-forest/20 text-graphite/50 hover:text-rust hover:border-rust/30 disabled:opacity-30 transition-colors font-mono text-lg leading-none flex items-center justify-center"
-                >+</button>
-                <span className="text-[11px] font-mono text-graphite/35">unique ad{adsPerPersona !== 1 ? 's' : ''} per profile</span>
               </div>
             </div>
 
