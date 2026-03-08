@@ -64,6 +64,7 @@ export default function AdPage() {
   const [assets, setAssets] = useState<AssetWithUrl[]>([])
   const [loadingAssets, setLoadingAssets] = useState(true)
   const [productId, setProductId] = useState<string | null>(null)
+  const [assetModalOpen, setAssetModalOpen] = useState(false)
 
   // ── Ads per persona ──────────────────────────────────────────────────
   const [adsPerPersona, setAdsPerPersona] = useState(1)
@@ -225,106 +226,165 @@ export default function AdPage() {
               />
             </div>
 
-            {/* Style Reference */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
-                Style Reference <span className="text-rust">*</span>
-                <span className="ml-2 normal-case text-graphite/35 tracking-normal">— the ad to style after</span>
-              </label>
+            {/* Product Asset + Style Reference — side by side */}
+            <div className="grid grid-cols-2 gap-4">
 
-              {styleRef ? (
-                <div className="flex items-start gap-3 rounded-xl border border-forest/20 bg-paper p-3">
-                  {styleRef.previewUrl && (
+              {/* LEFT — Product Asset */}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
+                    Product Asset <span className="text-rust">*</span>
+                  </label>
+                  <Link href="/brand" className="text-[11px] font-mono text-forest/50 hover:text-forest transition-colors">
+                    + Add →
+                  </Link>
+                </div>
+
+                {/* Selected asset preview or trigger button */}
+                {productId ? (
+                  <div className="relative rounded-xl border border-forest/20 bg-paper overflow-hidden aspect-square">
+                    <img
+                      src={assets.find((a) => a.id === productId)?.signedUrl}
+                      alt={assets.find((a) => a.id === productId)?.file_name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-end justify-between p-2">
+                      <button
+                        onClick={() => setAssetModalOpen(true)}
+                        className="text-[10px] font-mono bg-white/90 text-graphite px-2 py-1 rounded-lg hover:bg-white transition-colors"
+                      >
+                        Change
+                      </button>
+                      <button
+                        onClick={() => setProductId(null)}
+                        className="text-[10px] font-mono bg-white/90 text-rust px-2 py-1 rounded-lg hover:bg-white transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setAssetModalOpen(true)}
+                    disabled={loadingAssets}
+                    className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-forest/20 bg-paper aspect-square cursor-pointer hover:border-forest/40 hover:bg-forest/5 transition-colors disabled:opacity-50"
+                  >
+                    <ImagePlus size={20} className="text-graphite/25" strokeWidth={1.5} />
+                    <span className="text-xs font-mono text-graphite/50">Select Asset</span>
+                  </button>
+                )}
+              </div>
+
+              {/* RIGHT — Style Reference upload */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
+                  Style Reference <span className="text-rust">*</span>
+                </label>
+
+                {styleRef ? (
+                  <div className="relative rounded-xl border border-forest/20 bg-paper overflow-hidden aspect-square">
                     <img
                       src={styleRef.previewUrl}
                       alt={styleRef.fileName}
-                      className="w-16 h-16 object-cover rounded-lg border border-forest/15 flex-shrink-0"
+                      className="w-full h-full object-cover"
                     />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-mono text-forest uppercase tracking-widest mb-0.5">✓ Uploaded</p>
-                    <p className="text-xs font-mono text-graphite/50 truncate">{styleRef.fileName}</p>
+                    <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-end justify-end p-2">
+                      <button
+                        onClick={() => setStyleRef(null)}
+                        className="text-[10px] font-mono bg-white/90 text-rust px-2 py-1 rounded-lg hover:bg-white transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => setStyleRef(null)}
-                    className="text-graphite/30 hover:text-rust transition-colors flex-shrink-0 mt-0.5"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              ) : (
-                <label className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-forest/20 bg-paper p-5 cursor-pointer hover:border-rust/40 hover:bg-rust/5 transition-colors ${uploadingStyle ? 'opacity-60 pointer-events-none' : ''}`}>
-                  <ImagePlus size={20} className="text-graphite/25" strokeWidth={1.5} />
-                  <span className="text-xs font-mono text-graphite/40 text-center">
-                    {uploadingStyle ? 'Uploading…' : 'Drop an ad image here or click to upload'}
-                  </span>
-                  <span className="text-[10px] font-mono text-graphite/25">JPEG or PNG</span>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png"
-                    className="hidden"
-                    onChange={handleStyleUpload}
-                    disabled={uploadingStyle}
-                  />
-                </label>
-              )}
+                ) : (
+                  <label className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-forest/20 bg-paper aspect-square cursor-pointer hover:border-rust/40 hover:bg-rust/5 transition-colors ${uploadingStyle ? 'opacity-60 pointer-events-none' : ''}`}>
+                    <ImagePlus size={20} className="text-graphite/25" strokeWidth={1.5} />
+                    <span className="text-xs font-mono text-graphite/40 text-center">
+                      {uploadingStyle ? 'Uploading…' : 'Drop or click to upload'}
+                    </span>
+                    <span className="text-[10px] font-mono text-graphite/25">JPEG or PNG</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png"
+                      className="hidden"
+                      onChange={handleStyleUpload}
+                      disabled={uploadingStyle}
+                    />
+                  </label>
+                )}
 
-              {uploadError && (
-                <p className="text-[11px] font-mono text-rust">{uploadError}</p>
-              )}
-            </div>
-
-            {/* Product Asset */}
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
-                  Product Asset <span className="text-rust">*</span>
-                  <span className="ml-2 normal-case text-graphite/35 tracking-normal">— from brand assets</span>
-                </label>
-                <Link href="/brand" className="text-[11px] font-mono text-forest/50 hover:text-forest transition-colors">
-                  + Add assets →
-                </Link>
+                {uploadError && (
+                  <p className="text-[11px] font-mono text-rust">{uploadError}</p>
+                )}
               </div>
-
-              {loadingAssets ? (
-                <div className="h-20 rounded-xl bg-paper animate-pulse" />
-              ) : assets.length === 0 ? (
-                <div className="rounded-xl border border-forest/15 bg-paper p-5 text-center">
-                  <p className="text-xs font-mono text-graphite/40 mb-2">No brand assets yet.</p>
-                  <Link href="/brand" className="text-xs font-mono text-forest hover:underline">
-                    Go to Brand → Assets to upload your products
-                  </Link>
-                </div>
-              ) : (
-                <div className="grid grid-cols-6 gap-1.5">
-                  {assets.map((asset) => (
-                    <button
-                      key={asset.id}
-                      onClick={() => setProductId(asset.id === productId ? null : asset.id)}
-                      title={asset.file_name}
-                      className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                        productId === asset.id
-                          ? 'border-forest ring-2 ring-forest/20 scale-[0.97]'
-                          : 'border-transparent hover:border-forest/30'
-                      }`}
-                    >
-                      <img src={asset.signedUrl} alt={asset.file_name} className="w-full h-full object-cover" />
-                      {productId === asset.id && (
-                        <div className="absolute inset-0 bg-forest/15 flex items-center justify-center">
-                          <CheckCircle size={14} className="text-white" strokeWidth={2.5} />
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {productId && (
-                <p className="text-[11px] font-mono text-forest uppercase tracking-widest">
-                  ✓ {assets.find((a) => a.id === productId)?.file_name}
-                </p>
-              )}
             </div>
+
+            {/* Asset picker modal */}
+            {assetModalOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setAssetModalOpen(false)} />
+                <div className="relative bg-white rounded-2xl border border-forest/20 shadow-xl w-full max-w-lg max-h-[70vh] flex flex-col">
+                  {/* Modal header */}
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-forest/10">
+                    <span className="text-[11px] font-mono uppercase tracking-widest text-graphite/60">Select Product Asset</span>
+                    <button onClick={() => setAssetModalOpen(false)} className="text-graphite/30 hover:text-rust transition-colors">
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  {/* Modal body */}
+                  <div className="overflow-y-auto flex-1 p-4">
+                    {loadingAssets ? (
+                      <div className="grid grid-cols-4 gap-2">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                          <div key={i} className="aspect-square rounded-xl bg-paper animate-pulse" />
+                        ))}
+                      </div>
+                    ) : assets.length === 0 ? (
+                      <div className="text-center py-10">
+                        <p className="text-xs font-mono text-graphite/40 mb-3">No brand assets yet.</p>
+                        <Link href="/brand" className="text-xs font-mono text-forest hover:underline" onClick={() => setAssetModalOpen(false)}>
+                          Go to Brand → Assets to upload your products
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-4 gap-2">
+                        {assets.map((asset) => (
+                          <button
+                            key={asset.id}
+                            onClick={() => { setProductId(asset.id); setAssetModalOpen(false) }}
+                            title={asset.file_name}
+                            className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
+                              productId === asset.id
+                                ? 'border-forest ring-2 ring-forest/20'
+                                : 'border-transparent hover:border-forest/30'
+                            }`}
+                          >
+                            <img src={asset.signedUrl} alt={asset.file_name} className="w-full h-full object-cover" />
+                            {productId === asset.id && (
+                              <div className="absolute inset-0 bg-forest/20 flex items-center justify-center">
+                                <CheckCircle size={16} className="text-white" strokeWidth={2.5} />
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Modal footer */}
+                  <div className="px-5 py-3 border-t border-forest/10 flex justify-end">
+                    <button
+                      onClick={() => setAssetModalOpen(false)}
+                      className="text-xs font-mono text-graphite/50 hover:text-graphite transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="h-px bg-forest/10" />
 
