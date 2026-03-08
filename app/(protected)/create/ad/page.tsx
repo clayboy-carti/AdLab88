@@ -473,10 +473,10 @@ export default function AdPage() {
                   <select
                     value={adsPerPersona}
                     onChange={(e) => setAdsPerPersona(Number(e.target.value))}
-                    className="appearance-none rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-1.5 pr-8 text-sm font-mono text-graphite focus:outline-none focus:border-forest/50 cursor-pointer"
+                    className="appearance-none w-28 rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-1.5 pr-8 text-sm font-mono text-graphite focus:outline-none focus:border-forest/50 cursor-pointer"
                   >
                     {[1, 2, 3, 4, 5].map((n) => (
-                      <option key={n} value={n}>{n}</option>
+                      <option key={n} value={n}>{n} ad{n !== 1 ? 's' : ''}</option>
                     ))}
                   </select>
                   <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-graphite/30 pointer-events-none" />
