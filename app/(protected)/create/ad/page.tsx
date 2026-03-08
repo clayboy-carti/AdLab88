@@ -403,24 +403,20 @@ export default function AdPage() {
               />
             </div>
 
-            {/* Resolution + Aspect Ratio + Model + Ads per Persona + Creativity row */}
+            {/* Model + Aspect Ratio + Resolution + Ads per Persona + Creativity row */}
             <div className="flex gap-6 items-start">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Resolution</label>
-                <div className="flex gap-1.5">
-                  {(['1K', '2K'] as const).map((q) => (
-                    <button
-                      key={q}
-                      onClick={() => setImageQuality(q)}
-                      className={`px-5 py-1.5 rounded-lg text-xs font-mono transition-all border ${
-                        imageQuality === q
-                          ? 'bg-sage border-forest/30 text-forest font-semibold'
-                          : 'border-forest/15 text-graphite/50 hover:border-forest/35'
-                      }`}
-                    >
-                      {q}
-                    </button>
-                  ))}
+                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Model</label>
+                <div className="relative w-36">
+                  <select
+                    value={geminiModel}
+                    onChange={(e) => setGeminiModel(e.target.value as 'gemini-pro' | 'gemini-flash')}
+                    className="appearance-none w-full rounded-xl bg-sage border border-forest/30 pl-3 pr-7 py-1.5 text-sm font-mono text-forest font-semibold focus:outline-none cursor-pointer [&>option]:bg-white [&>option]:text-graphite [&>option]:font-normal"
+                  >
+                    <option value="gemini-pro">Gemini Pro</option>
+                    <option value="gemini-flash">Gemini Flash</option>
+                  </select>
+                  <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-forest/50 pointer-events-none" />
                 </div>
               </div>
 
@@ -441,17 +437,21 @@ export default function AdPage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Model</label>
-                <div className="relative w-36">
-                  <select
-                    value={geminiModel}
-                    onChange={(e) => setGeminiModel(e.target.value as 'gemini-pro' | 'gemini-flash')}
-                    className="appearance-none w-full rounded-xl bg-sage border border-forest/30 pl-3 pr-7 py-1.5 text-sm font-mono text-forest font-semibold focus:outline-none cursor-pointer [&>option]:bg-white [&>option]:text-graphite [&>option]:font-normal"
-                  >
-                    <option value="gemini-pro">Gemini Pro</option>
-                    <option value="gemini-flash">Gemini Flash</option>
-                  </select>
-                  <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-forest/50 pointer-events-none" />
+                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Resolution</label>
+                <div className="flex gap-1.5">
+                  {(['1K', '2K'] as const).map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => setImageQuality(q)}
+                      className={`px-5 py-1.5 rounded-lg text-xs font-mono transition-all border ${
+                        imageQuality === q
+                          ? 'bg-sage border-forest/30 text-forest font-semibold'
+                          : 'border-forest/15 text-graphite/50 hover:border-forest/35'
+                      }`}
+                    >
+                      {q}
+                    </button>
+                  ))}
                 </div>
               </div>
 
