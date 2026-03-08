@@ -23,7 +23,8 @@ interface StyleRef {
   previewUrl: string
 }
 
-const GEMINI_ASPECT_RATIOS = [
+// Gemini 3 Pro — 10 supported aspect ratios
+const GEMINI_PRO_ASPECT_RATIOS = [
   { value: '1:1',  label: '1:1',  tooltip: 'Instagram Feed · Facebook · LinkedIn' },
   { value: '4:5',  label: '4:5',  tooltip: 'Instagram Feed Portrait · Facebook' },
   { value: '4:3',  label: '4:3',  tooltip: 'Facebook · LinkedIn · Pinterest' },
@@ -34,6 +35,15 @@ const GEMINI_ASPECT_RATIOS = [
   { value: '2:3',  label: '2:3',  tooltip: 'Pinterest · Print' },
   { value: '5:4',  label: '5:4',  tooltip: 'Facebook · Print' },
   { value: '21:9', label: '21:9', tooltip: 'YouTube banners · Desktop headers' },
+]
+
+// Gemini 3.1 Flash — 14 supported aspect ratios (superset of Pro)
+const GEMINI_FLASH_ASPECT_RATIOS = [
+  ...GEMINI_PRO_ASPECT_RATIOS,
+  { value: '1:4',  label: '1:4',  tooltip: 'Stories · Vertical ads' },
+  { value: '4:1',  label: '4:1',  tooltip: 'Leaderboard ads · Headers' },
+  { value: '1:8',  label: '1:8',  tooltip: 'Vertical display ads' },
+  { value: '8:1',  label: '8:1',  tooltip: 'Billboard · Panoramic headers' },
 ]
 
 export default function AdPage() {
@@ -152,6 +162,16 @@ export default function AdPage() {
   }
 
   const canGenerate = !generating && !!styleRef && !!productId && !!title.trim()
+
+  const aspectRatioOptions = geminiModel === 'gemini-flash' ? GEMINI_FLASH_ASPECT_RATIOS : GEMINI_PRO_ASPECT_RATIOS
+
+  // Reset aspect ratio if switching to Pro and current AR is Flash-only
+  useEffect(() => {
+    const flashOnlyValues = ['1:4', '4:1', '1:8', '8:1']
+    if (geminiModel === 'gemini-pro' && flashOnlyValues.includes(aspectRatio)) {
+      setAspectRatio('1:1')
+    }
+  }, [geminiModel, aspectRatio])
 
   const dotGrid = {
     backgroundImage: 'radial-gradient(circle, rgba(31,58,50,0.07) 1px, transparent 1px)',
@@ -330,7 +350,7 @@ export default function AdPage() {
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Aspect Ratio</label>
               <div className="flex flex-wrap gap-1.5">
-                {GEMINI_ASPECT_RATIOS.map((r) => (
+                {aspectRatioOptions.map((r) => (
                   <div key={r.value} className="relative group">
                     <button
                       onClick={() => setAspectRatio(r.value)}

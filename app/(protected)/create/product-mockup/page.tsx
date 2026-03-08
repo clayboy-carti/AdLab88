@@ -115,8 +115,8 @@ const PHOTO_SHOOT_SHOTS = [
   },
 ]
 
-// Gemini Pro + Flash — identical 14 supported aspect ratios
-const GEMINI_ASPECT_RATIOS = [
+// Gemini 3 Pro — 10 supported aspect ratios
+const GEMINI_PRO_ASPECT_RATIOS = [
   { value: '1:1',  label: '1:1 — Square',          tooltip: 'Instagram Feed · Facebook · LinkedIn' },
   { value: '4:5',  label: '4:5 — Feed Portrait',   tooltip: 'Instagram Feed Portrait · Facebook' },
   { value: '4:3',  label: '4:3 — Standard',        tooltip: 'Facebook · LinkedIn · Pinterest' },
@@ -127,6 +127,11 @@ const GEMINI_ASPECT_RATIOS = [
   { value: '2:3',  label: '2:3 — Narrow',          tooltip: 'Pinterest · Print' },
   { value: '5:4',  label: '5:4',                   tooltip: 'Facebook · Print' },
   { value: '21:9', label: '21:9 — Cinematic',      tooltip: 'YouTube banners · Desktop headers' },
+]
+
+// Gemini 3.1 Flash — 14 supported aspect ratios (superset of Pro)
+const GEMINI_FLASH_ASPECT_RATIOS = [
+  ...GEMINI_PRO_ASPECT_RATIOS,
   { value: '1:4',  label: '1:4 — Tall Banner',     tooltip: 'Stories · Vertical ads' },
   { value: '4:1',  label: '4:1 — Wide Banner',     tooltip: 'Leaderboard ads · Headers' },
   { value: '1:8',  label: '1:8 — Skyscraper',      tooltip: 'Vertical display ads' },
@@ -214,10 +219,18 @@ export default function ProductMockupPage() {
   const [imageQuality, setImageQuality] = useState<'1K' | '2K'>('1K')
   const [aspectRatio, setAspectRatio] = useState('1:1')
 
-  const aspectRatioOptions = imageModel === 'seedream' ? SEEDREAM_ASPECT_RATIOS : GEMINI_ASPECT_RATIOS
+  const aspectRatioOptions = imageModel === 'seedream'
+    ? SEEDREAM_ASPECT_RATIOS
+    : imageModel === 'gemini-flash'
+      ? GEMINI_FLASH_ASPECT_RATIOS
+      : GEMINI_PRO_ASPECT_RATIOS
 
   useEffect(() => {
-    const valid = imageModel === 'seedream' ? SEEDREAM_ASPECT_RATIOS : GEMINI_ASPECT_RATIOS
+    const valid = imageModel === 'seedream'
+      ? SEEDREAM_ASPECT_RATIOS
+      : imageModel === 'gemini-flash'
+        ? GEMINI_FLASH_ASPECT_RATIOS
+        : GEMINI_PRO_ASPECT_RATIOS
     if (!valid.find((r) => r.value === aspectRatio)) {
       setAspectRatio('1:1')
     }
