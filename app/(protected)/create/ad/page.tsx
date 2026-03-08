@@ -209,7 +209,7 @@ export default function AdPage() {
             </div>
           </div>
 
-          <div className="px-6 py-5 flex flex-col gap-5 overflow-y-auto flex-1">
+          <div className="px-6 py-4 flex flex-col gap-3 overflow-y-auto flex-1">
 
             {/* Title */}
             <div className="flex flex-col gap-1.5">
@@ -386,8 +386,6 @@ export default function AdPage() {
               </div>
             )}
 
-            <div className="h-px bg-forest/10" />
-
             {/* Context brief */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Context Brief</label>
@@ -397,14 +395,9 @@ export default function AdPage() {
                 placeholder="e.g. 10% off first order · Free shipping · Summer sale"
                 rows={2}
                 maxLength={300}
-                className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-3 text-sm font-mono resize-none focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
+                className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2 text-sm font-mono resize-none focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
               />
-              <div className="text-right">
-                <span className="text-[11px] font-mono text-graphite/25">{contextText.length} / 300</span>
-              </div>
             </div>
-
-            <div className="h-px bg-forest/10" />
 
             {/* Resolution + Aspect Ratio + Model + Ads per Persona + Creativity row */}
             <div className="flex gap-6 items-start">
