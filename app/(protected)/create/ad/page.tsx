@@ -422,7 +422,7 @@ export default function AdPage() {
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Aspect Ratio</label>
-                <div className="relative w-24">
+                <div className="relative w-28">
                   <select
                     value={aspectRatio}
                     onChange={(e) => setAspectRatio(e.target.value)}
@@ -438,7 +438,7 @@ export default function AdPage() {
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Model</label>
-                <div className="relative w-32">
+                <div className="relative w-36">
                   <select
                     value={geminiModel}
                     onChange={(e) => setGeminiModel(e.target.value as 'gemini-pro' | 'gemini-flash')}
