@@ -10,7 +10,12 @@ function getGemini(): GoogleGenAI {
   return _gemini
 }
 
-const IMAGE_MODEL = 'gemini-3-pro-image-preview'
+export const GEMINI_MODELS = {
+  pro:   'gemini-3-pro-image-preview',
+  flash: 'gemini-3.1-flash-image-preview',
+} as const
+
+export type GeminiModel = keyof typeof GEMINI_MODELS
 
 /**
  * Upload image buffer to Supabase Storage
@@ -66,7 +71,8 @@ export async function generateImageWithGemini(
   retries = 1,
   imageSize: '1K' | '2K' = '1K',
   aspectRatio = '1:1',
-  temperature = 0.6
+  temperature = 0.6,
+  geminiModel: GeminiModel = 'pro'
 ): Promise<GeminiGenerationResult> {
   // Normalise to a flat array so the rest of the function is uniform
   const refUrls: string[] = Array.isArray(referenceImageUrls)
@@ -83,7 +89,8 @@ export async function generateImageWithGemini(
       console.log(
         `[Gemini] Generating image (attempt ${attempt + 1}/${retries + 1})...`
       )
-      console.log(`[Gemini] Model: ${IMAGE_MODEL}`)
+      const modelId = GEMINI_MODELS[geminiModel]
+      console.log(`[Gemini] Model: ${modelId}`)
       console.log(
         `[Gemini] Mode: ${hasReference ? `image-to-image (${refUrls.length} reference${refUrls.length > 1 ? 's' : ''})` : 'text-to-image (original)'}`
       )
@@ -128,7 +135,7 @@ export async function generateImageWithGemini(
       }
 
       const result = await getGemini().models.generateContent({
-        model: IMAGE_MODEL,
+        model: modelId,
         contents,
         config: {
           temperature,

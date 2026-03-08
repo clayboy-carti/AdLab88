@@ -17,8 +17,8 @@ export { generateImageWithDalle, type DalleGenerationResult } from './dalle'
 // Image generation (Seedream 4 via Replicate)
 export { generateImageWithSeedream } from './replicate'
 
-// Image generation (Gemini 2.0 Flash - text-to-image and image-to-image)
-export { generateImageWithGemini, type GeminiGenerationResult } from './gemini-image'
+// Image generation (Gemini Pro / Flash — text-to-image and image-to-image)
+export { generateImageWithGemini, type GeminiGenerationResult, type GeminiModel, GEMINI_MODELS } from './gemini-image'
 
 // Brand intelligence profile generation
 export { generateBrandIntelligence, type IntelligenceProfile } from './intelligence'

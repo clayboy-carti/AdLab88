@@ -4,6 +4,7 @@ import {
   generateImageWithGemini,
   buildReplicatePrompt,
   reverseEngineerAd,
+  type GeminiModel,
 } from '@/lib/ai'
 import type { Brand } from '@/types/database'
 import type { GeneratedAd } from '@/lib/validations/generation'
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
 
     // 2. Parse request body
     const body = await request.json()
-    const { style_reference_image_id, product_asset_id, user_context, image_quality, aspect_ratio, creativity, title, ads_per_persona } = body
+    const { style_reference_image_id, product_asset_id, user_context, image_quality, aspect_ratio, creativity, title, ads_per_persona, gemini_model } = body
 
     if (!style_reference_image_id) {
       return NextResponse.json({ error: 'style_reference_image_id is required' }, { status: 400 })
@@ -54,8 +55,9 @@ export async function POST(request: Request) {
     const creativityNotch = Number(creativity) || 2
     const imageTemperature = CREATIVITY_TEMPERATURES[creativityNotch] ?? 0.6
     const adsPerPersona = Math.min(Math.max(Number(ads_per_persona) || 1, 1), 5)
+    const geminiModelKey: 'pro' | 'flash' = gemini_model === 'gemini-flash' ? 'flash' : 'pro'
 
-    console.log(`[PersonaBatch] Quality: ${imageQuality}, Aspect: ${imageAspectRatio}, Creativity: ${creativityNotch}`)
+    console.log(`[PersonaBatch] Quality: ${imageQuality}, Aspect: ${imageAspectRatio}, Creativity: ${creativityNotch}, Model: gemini-${geminiModelKey}`)
 
     // 3. Fetch brand
     const { data: brand, error: brandError } = await supabase
@@ -215,7 +217,8 @@ export async function POST(request: Request) {
           0, // no retries in batch
           imageQuality,
           imageAspectRatio,
-          imageTemperature
+          imageTemperature,
+          geminiModelKey
         )
       )
     )

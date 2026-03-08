@@ -115,20 +115,22 @@ const PHOTO_SHOOT_SHOTS = [
   },
 ]
 
-// Gemini 3 Pro Image Preview — full supported set (from API docs)
-// 3:4 outputs 896×1200 (0.747) which is fractionally below Instagram's 0.75 floor.
-// Use 4:5 (928×1152 = 0.806) for Instagram feed portrait with Gemini.
+// Gemini Pro + Flash — identical 14 supported aspect ratios
 const GEMINI_ASPECT_RATIOS = [
-  { value: '1:1',  label: '1:1 — Square (Instagram)',          tooltip: 'Instagram Feed · Facebook · LinkedIn' },
-  { value: '4:5',  label: '4:5 — Feed Portrait (Instagram)',   tooltip: 'Instagram Feed Portrait · Facebook' },
-  { value: '4:3',  label: '4:3 — Standard',                   tooltip: 'Facebook · LinkedIn · Pinterest' },
-  { value: '3:4',  label: '3:4 — Portrait',                   tooltip: 'Pinterest · Facebook · Print' },
-  { value: '16:9', label: '16:9 — Landscape (Instagram)',      tooltip: 'YouTube · Twitter/X · LinkedIn · Facebook' },
-  { value: '9:16', label: '9:16 — Story / Reel (Instagram)',   tooltip: 'Instagram Stories & Reels · TikTok · YouTube Shorts' },
-  { value: '3:2',  label: '3:2 — Wide',                       tooltip: 'Twitter/X · Blog headers' },
-  { value: '2:3',  label: '2:3 — Narrow',                     tooltip: 'Pinterest · Print' },
-  { value: '5:4',  label: '5:4',                              tooltip: 'Facebook · Print' },
-  { value: '21:9', label: '21:9 — Cinematic',                  tooltip: 'YouTube banners · Desktop headers' },
+  { value: '1:1',  label: '1:1 — Square',          tooltip: 'Instagram Feed · Facebook · LinkedIn' },
+  { value: '4:5',  label: '4:5 — Feed Portrait',   tooltip: 'Instagram Feed Portrait · Facebook' },
+  { value: '4:3',  label: '4:3 — Standard',        tooltip: 'Facebook · LinkedIn · Pinterest' },
+  { value: '3:4',  label: '3:4 — Portrait',        tooltip: 'Pinterest · Facebook · Print' },
+  { value: '16:9', label: '16:9 — Landscape',      tooltip: 'YouTube · Twitter/X · LinkedIn · Facebook' },
+  { value: '9:16', label: '9:16 — Story / Reel',   tooltip: 'Instagram Stories & Reels · TikTok · YouTube Shorts' },
+  { value: '3:2',  label: '3:2 — Wide',            tooltip: 'Twitter/X · Blog headers' },
+  { value: '2:3',  label: '2:3 — Narrow',          tooltip: 'Pinterest · Print' },
+  { value: '5:4',  label: '5:4',                   tooltip: 'Facebook · Print' },
+  { value: '21:9', label: '21:9 — Cinematic',      tooltip: 'YouTube banners · Desktop headers' },
+  { value: '1:4',  label: '1:4 — Tall Banner',     tooltip: 'Stories · Vertical ads' },
+  { value: '4:1',  label: '4:1 — Wide Banner',     tooltip: 'Leaderboard ads · Headers' },
+  { value: '1:8',  label: '1:8 — Skyscraper',      tooltip: 'Vertical display ads' },
+  { value: '8:1',  label: '8:1 — Super Wide',      tooltip: 'Billboard · Panoramic headers' },
 ]
 
 // Seedream 4 — valid enum values from Replicate API (no 4:5 or 5:4 support)
@@ -208,14 +210,14 @@ function StudioIllustration() {
 export default function ProductMockupPage() {
   const [sceneText, setSceneText] = useState('')
   const [selectedPreset, setSelectedPreset] = useState('')
-  const [imageModel, setImageModel] = useState<'gemini' | 'seedream'>('gemini')
+  const [imageModel, setImageModel] = useState<'gemini-pro' | 'gemini-flash' | 'seedream'>('gemini-pro')
   const [imageQuality, setImageQuality] = useState<'1K' | '2K'>('1K')
   const [aspectRatio, setAspectRatio] = useState('1:1')
 
   const aspectRatioOptions = imageModel === 'seedream' ? SEEDREAM_ASPECT_RATIOS : GEMINI_ASPECT_RATIOS
 
   useEffect(() => {
-    const valid = (imageModel === 'seedream' ? SEEDREAM_ASPECT_RATIOS : GEMINI_ASPECT_RATIOS)
+    const valid = imageModel === 'seedream' ? SEEDREAM_ASPECT_RATIOS : GEMINI_ASPECT_RATIOS
     if (!valid.find((r) => r.value === aspectRatio)) {
       setAspectRatio('1:1')
     }
@@ -552,10 +554,11 @@ export default function ProductMockupPage() {
                 <div className="relative">
                   <select
                     value={imageModel}
-                    onChange={(e) => setImageModel(e.target.value as 'gemini' | 'seedream')}
+                    onChange={(e) => setImageModel(e.target.value as 'gemini-pro' | 'gemini-flash' | 'seedream')}
                     className="appearance-none rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-1.5 pr-8 text-sm font-mono text-graphite focus:outline-none focus:border-forest/50 cursor-pointer"
                   >
-                    <option value="gemini">Gemini</option>
+                    <option value="gemini-pro">Gemini Pro</option>
+                    <option value="gemini-flash">Gemini Flash</option>
                     <option value="seedream">Seedream 4</option>
                   </select>
                   <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-graphite/30 pointer-events-none" />
@@ -596,7 +599,7 @@ export default function ProductMockupPage() {
               </span>
             </div>
             <span className="text-[11px] font-mono bg-sage/20 text-forest/60 px-3 py-1 rounded-full border border-sage/30">
-              {imageModel === 'seedream' ? 'Seedream 4' : 'Gemini'} · Ready
+              {imageModel === 'seedream' ? 'Seedream 4' : imageModel === 'gemini-flash' ? 'Gemini Flash' : 'Gemini Pro'} · Ready
             </span>
           </div>
 
@@ -851,7 +854,7 @@ export default function ProductMockupPage() {
           {/* Status bar */}
           <div className="px-6 py-3 border-t border-forest/10 flex-shrink-0">
             <span className="text-[11px] font-mono text-graphite/25 uppercase tracking-widest">
-              {aspectRatio} · {imageQuality} · {imageModel === 'seedream' ? 'Seedream 4' : 'Gemini'} · {photoShootMode ? 'Photo Shoot' : 'Single'}
+              {aspectRatio} · {imageQuality} · {imageModel === 'seedream' ? 'Seedream 4' : imageModel === 'gemini-flash' ? 'Gemini Flash' : 'Gemini Pro'} · {photoShootMode ? 'Photo Shoot' : 'Single'}
             </span>
           </div>
         </div>

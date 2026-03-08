@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { BatchAdResult } from '@/components/create/BatchResultsGrid'
 import type { BrandAsset } from '@/types/database'
 import {
-  FlaskConical, ImagePlus, CheckCircle, X, Maximize2, Monitor,
+  FlaskConical, ImagePlus, CheckCircle, X, Maximize2, Monitor, ChevronDown,
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -43,6 +43,7 @@ export default function AdPage() {
   const [aspectRatio, setAspectRatio] = useState('1:1')
   const [creativity, setCreativity] = useState(2)
   const [title, setTitle] = useState('')
+  const [geminiModel, setGeminiModel] = useState<'gemini-pro' | 'gemini-flash'>('gemini-pro')
 
   // ── Style reference (upload-only) ────────────────────────────────────
   const [styleRef, setStyleRef] = useState<StyleRef | null>(null)
@@ -134,6 +135,7 @@ export default function AdPage() {
           creativity,
           title: title.trim() || undefined,
           ads_per_persona: adsPerPersona,
+          gemini_model: geminiModel,
         }),
       })
 
@@ -349,7 +351,7 @@ export default function AdPage() {
               </div>
             </div>
 
-            {/* Resolution + Creativity row */}
+            {/* Resolution + Model + Creativity row */}
             <div className="flex gap-6 items-start">
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Resolution</label>
@@ -367,6 +369,21 @@ export default function AdPage() {
                       {q}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Model</label>
+                <div className="relative">
+                  <select
+                    value={geminiModel}
+                    onChange={(e) => setGeminiModel(e.target.value as 'gemini-pro' | 'gemini-flash')}
+                    className="appearance-none rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-1.5 pr-8 text-sm font-mono text-graphite focus:outline-none focus:border-forest/50 cursor-pointer"
+                  >
+                    <option value="gemini-pro">Gemini Pro</option>
+                    <option value="gemini-flash">Gemini Flash</option>
+                  </select>
+                  <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-graphite/30 pointer-events-none" />
                 </div>
               </div>
 
@@ -437,7 +454,7 @@ export default function AdPage() {
               <span className="text-[11px] font-mono uppercase tracking-widest text-graphite/40">Ad Preview</span>
             </div>
             <span className="text-[11px] font-mono bg-sage/20 text-forest/60 px-3 py-1 rounded-full border border-sage/30">
-              Gemini · Ready
+              {geminiModel === 'gemini-flash' ? 'Gemini Flash' : 'Gemini Pro'} · Ready
             </span>
           </div>
 
@@ -550,7 +567,7 @@ export default function AdPage() {
           {/* Status bar */}
           <div className="px-6 py-3 border-t border-forest/10 flex-shrink-0">
             <span className="text-[11px] font-mono text-graphite/25 uppercase tracking-widest">
-              {aspectRatio} · {imageQuality} · Gemini · Persona Batch
+              {aspectRatio} · {imageQuality} · {geminiModel === 'gemini-flash' ? 'Gemini Flash' : 'Gemini Pro'} · Persona Batch
             </span>
           </div>
         </div>
