@@ -458,7 +458,7 @@ export default function AdPage() {
                   <select
                     value={geminiModel}
                     onChange={(e) => setGeminiModel(e.target.value as 'gemini-pro' | 'gemini-flash')}
-                    className="appearance-none rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-1.5 pr-8 text-sm font-mono text-graphite focus:outline-none focus:border-forest/50 cursor-pointer"
+                    className="appearance-none rounded-xl bg-sage border border-forest/30 px-4 py-1.5 pr-8 text-sm font-mono text-forest font-semibold focus:outline-none focus:border-forest/50 cursor-pointer"
                   >
                     <option value="gemini-pro">Gemini Pro</option>
                     <option value="gemini-flash">Gemini Flash</option>
@@ -473,7 +473,7 @@ export default function AdPage() {
                   <select
                     value={adsPerPersona}
                     onChange={(e) => setAdsPerPersona(Number(e.target.value))}
-                    className="appearance-none w-28 rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-1.5 pr-8 text-sm font-mono text-graphite focus:outline-none focus:border-forest/50 cursor-pointer"
+                    className="appearance-none w-28 rounded-xl bg-sage border border-forest/30 px-4 py-1.5 pr-8 text-sm font-mono text-forest font-semibold focus:outline-none focus:border-forest/50 cursor-pointer"
                   >
                     {[1, 2, 3, 4, 5].map((n) => (
                       <option key={n} value={n}>{n} ad{n !== 1 ? 's' : ''}</option>
