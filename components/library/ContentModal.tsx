@@ -468,7 +468,7 @@ export default function ContentModal({ ad, onClose, onCaptionUpdate, onTitleUpda
       onClick={handleOverlayClick}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
     >
-      <div className="bg-white border border-outline w-full max-w-5xl max-h-[90vh] overflow-y-auto flex flex-col">
+      <div className="bg-white border border-outline w-full max-w-5xl max-h-[90dvh] overflow-y-auto flex flex-col">
 
         {/* Modal header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-outline flex-shrink-0">
@@ -542,7 +542,7 @@ export default function ContentModal({ ad, onClose, onCaptionUpdate, onTitleUpda
           <div className="flex-1 border-r border-outline flex items-center justify-center bg-gray-50 relative group">
             {(ad.previewUrl ?? ad.signedUrl) ? (
               <>
-                <img src={(ad.previewUrl ?? ad.signedUrl)!} alt={ad.hook} className="max-h-[45vh] w-auto max-w-full object-contain" />
+                <img src={(ad.previewUrl ?? ad.signedUrl)!} alt={ad.hook} className="max-h-[45dvh] w-auto max-w-full object-contain" />
                 <button
                   onClick={() => setShowFullPreview(true)}
                   className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 border border-outline p-1.5 hover:border-graphite hover:bg-white"

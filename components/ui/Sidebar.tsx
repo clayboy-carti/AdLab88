@@ -106,7 +106,7 @@ export default function Sidebar() {
         <button
           onClick={() => setMobileOpen(true)}
           aria-label="Open navigation"
-          className="p-2 rounded-xl text-paper/70 hover:text-paper hover:bg-paper/10 transition-colors"
+          className="p-2.5 rounded-xl text-paper/70 hover:text-paper hover:bg-paper/10 transition-colors"
         >
           <Menu size={22} />
         </button>
@@ -129,7 +129,7 @@ export default function Sidebar() {
               <button
                 onClick={() => setMobileOpen(false)}
                 aria-label="Close navigation"
-                className="p-2 rounded-xl text-paper/60 hover:text-paper hover:bg-paper/10 transition-colors"
+                className="p-2.5 rounded-xl text-paper/60 hover:text-paper hover:bg-paper/10 transition-colors"
               >
                 <X size={20} />
               </button>

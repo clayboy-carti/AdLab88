@@ -185,7 +185,7 @@ export default function ReferenceImageUpload() {
             <img
               src={previewImage.signedUrl}
               alt={previewImage.file_name}
-              className="max-w-full max-h-[70vh] object-contain"
+              className="max-w-full max-h-[70dvh] object-contain"
             />
 
             <div className="px-6 py-4 border-t border-forest/15 bg-paper flex items-center justify-between gap-4">

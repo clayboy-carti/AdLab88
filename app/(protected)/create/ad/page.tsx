@@ -180,7 +180,7 @@ export default function AdPage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col p-6 lg:p-8">
+    <div className="flex flex-col p-4 lg:p-8 lg:h-screen lg:overflow-hidden">
 
       {/* Header */}
       <div className="mb-4 flex-shrink-0">
@@ -200,10 +200,10 @@ export default function AdPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0 items-start overflow-y-auto lg:overflow-hidden pb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 lg:flex-1 lg:min-h-0 items-start pb-6">
 
         {/* ── LEFT — Controls ─────────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col overflow-hidden h-full">
+        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col overflow-hidden lg:h-full">
 
           {/* Card header */}
           <div className="px-6 pt-5 pb-4 border-b border-forest/10">
@@ -328,11 +328,11 @@ export default function AdPage() {
             {assetModalOpen && (
               <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                 <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setAssetModalOpen(false)} />
-                <div className="relative bg-white rounded-2xl border border-forest/20 shadow-xl w-full max-w-lg max-h-[70vh] flex flex-col">
+                <div className="relative bg-white rounded-2xl border border-forest/20 shadow-xl w-full max-w-lg max-h-[70dvh] flex flex-col">
                   {/* Modal header */}
                   <div className="flex items-center justify-between px-5 py-4 border-b border-forest/10">
                     <span className="text-[11px] font-mono uppercase tracking-widest text-graphite/60">Select Product Asset</span>
-                    <button onClick={() => setAssetModalOpen(false)} className="text-graphite/30 hover:text-rust transition-colors">
+                    <button onClick={() => setAssetModalOpen(false)} className="w-9 h-9 flex items-center justify-center rounded-xl text-graphite/30 hover:text-rust hover:bg-forest/5 transition-colors">
                       <X size={16} />
                     </button>
                   </div>
@@ -340,7 +340,7 @@ export default function AdPage() {
                   {/* Modal body */}
                   <div className="overflow-y-auto flex-1 p-4">
                     {loadingAssets ? (
-                      <div className="grid grid-cols-4 gap-2">
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {Array.from({ length: 8 }).map((_, i) => (
                           <div key={i} className="aspect-square rounded-xl bg-paper animate-pulse" />
                         ))}
@@ -353,7 +353,7 @@ export default function AdPage() {
                         </Link>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-4 gap-2">
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {assets.map((asset) => (
                           <button
                             key={asset.id}
@@ -443,7 +443,7 @@ export default function AdPage() {
                     <button
                       key={q}
                       onClick={() => setImageQuality(q)}
-                      className={`px-5 py-1.5 rounded-lg text-xs font-mono transition-all border ${
+                      className={`px-5 py-2.5 rounded-lg text-xs font-mono transition-all border ${
                         imageQuality === q
                           ? 'bg-sage border-forest/30 text-forest font-semibold'
                           : 'border-forest/15 text-graphite/50 hover:border-forest/35'
@@ -510,7 +510,7 @@ export default function AdPage() {
         </div>
 
         {/* ── RIGHT — Preview Canvas ───────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col overflow-hidden h-full">
+        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col overflow-hidden lg:h-full">
 
           {/* Canvas header */}
           <div className="px-6 py-4 border-b border-forest/10 flex items-center justify-between flex-shrink-0">
@@ -524,7 +524,7 @@ export default function AdPage() {
           </div>
 
           {/* Canvas body */}
-          <div className="flex-1 relative overflow-auto min-h-0">
+          <div className="flex-1 relative overflow-auto min-h-[60vw] lg:min-h-0">
 
             {/* Empty state */}
             {!generating && !generatedBatch && !error && (
@@ -646,7 +646,7 @@ export default function AdPage() {
           onClick={() => setPreviewUrl(null)}
         >
           <div
-            className="relative max-w-4xl w-full max-h-[90vh] flex flex-col rounded-2xl overflow-hidden bg-white"
+            className="relative max-w-4xl w-full max-h-[90dvh] flex flex-col rounded-2xl overflow-hidden bg-white"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-5 py-3.5 bg-paper border-b border-forest/10 flex items-center justify-between">
@@ -656,7 +656,7 @@ export default function AdPage() {
               </button>
             </div>
             <div className="overflow-auto flex items-center justify-center">
-              <img src={previewUrl} alt="Preview" className="max-w-full max-h-[80vh] object-contain" />
+              <img src={previewUrl} alt="Preview" className="max-w-full max-h-[80dvh] object-contain" />
             </div>
           </div>
         </div>

@@ -228,7 +228,7 @@ export default function CarouselModal({ items, onItemsChange, onClose, onSchedul
       onClick={handleOverlayClick}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
     >
-      <div className="bg-white border border-outline w-full max-w-5xl max-h-[90vh] overflow-y-auto flex flex-col">
+      <div className="bg-white border border-outline w-full max-w-5xl max-h-[90dvh] overflow-y-auto flex flex-col">
 
         {/* ── Header ── */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-outline flex-shrink-0">

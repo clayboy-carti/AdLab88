@@ -388,7 +388,7 @@ export default function ProductMockupPage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col p-6 lg:p-8">
+    <div className="flex flex-col p-4 lg:p-8 lg:h-screen lg:overflow-hidden">
 
       {/* Header */}
       <div className="mb-4 flex-shrink-0">
@@ -408,10 +408,10 @@ export default function ProductMockupPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0 items-start overflow-y-auto lg:overflow-hidden pb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 lg:flex-1 lg:min-h-0 items-start pb-6">
 
         {/* ── LEFT COLUMN — Controls Card ─────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col overflow-hidden h-full">
+        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col overflow-hidden lg:h-full">
 
           {/* Card header */}
           <div className="px-6 pt-5 pb-4 border-b border-forest/10">
@@ -541,7 +541,7 @@ export default function ProductMockupPage() {
                     <img src={ref.url} alt="Reference" className="w-12 h-12 object-cover rounded-lg border border-forest/15" />
                     <button
                       onClick={() => setSelectedRefs((prev) => prev.filter((r) => r.id !== ref.id))}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rust text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity leading-none"
+                      className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-rust text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity leading-none"
                     >
                       ×
                     </button>
@@ -560,7 +560,7 @@ export default function ProductMockupPage() {
                   <div key={r.value} className="relative group">
                     <button
                       onClick={() => setAspectRatio(r.value)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all border ${
+                      className={`px-3 py-2.5 rounded-lg text-xs font-mono transition-all border ${
                         aspectRatio === r.value
                           ? 'bg-sage border-forest/30 text-forest font-semibold'
                           : 'border-forest/15 text-graphite/50 hover:border-forest/35 hover:text-graphite'
@@ -588,7 +588,7 @@ export default function ProductMockupPage() {
                     <button
                       key={q}
                       onClick={() => setImageQuality(q)}
-                      className={`px-5 py-1.5 rounded-lg text-xs font-mono transition-all border ${
+                      className={`px-5 py-2.5 rounded-lg text-xs font-mono transition-all border ${
                         imageQuality === q
                           ? 'bg-sage border-forest/30 text-forest font-semibold'
                           : 'border-forest/15 text-graphite/50 hover:border-forest/35'
@@ -638,7 +638,7 @@ export default function ProductMockupPage() {
         </div>
 
         {/* ── RIGHT COLUMN — Preview Canvas ────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col overflow-hidden h-full">
+        <div className="bg-white rounded-2xl border border-forest/20 shadow-sm flex flex-col overflow-hidden lg:h-full">
 
           {/* Canvas header */}
           <div className="px-6 py-4 border-b border-forest/10 flex items-center justify-between flex-shrink-0">
@@ -654,7 +654,7 @@ export default function ProductMockupPage() {
           </div>
 
           {/* Canvas body */}
-          <div className="flex-1 relative overflow-auto min-h-0">
+          <div className="flex-1 relative overflow-auto min-h-[60vw] lg:min-h-0">
 
             {/* ── SINGLE MOCKUP ─────────────────────────────────────────────── */}
             {!photoShootMode && (
@@ -711,7 +711,7 @@ export default function ProductMockupPage() {
                   <div className="p-5 space-y-4">
                     {generatedAd.generatedImageUrl && (
                       <div className="relative group rounded-xl overflow-hidden border border-forest/15">
-                        <img src={generatedAd.generatedImageUrl} alt="Product mockup" className="w-full object-contain max-h-[55vh]" />
+                        <img src={generatedAd.generatedImageUrl} alt="Product mockup" className="w-full object-contain max-h-[55dvh]" />
                         <button
                           onClick={() => setPreviewUrl(generatedAd.generatedImageUrl)}
                           className="absolute top-3 right-3 flex items-center gap-1.5 bg-white/90 backdrop-blur-sm border border-forest/20 rounded-lg px-3 py-1.5 text-xs font-mono text-graphite opacity-0 group-hover:opacity-100 transition-opacity"
@@ -918,7 +918,7 @@ export default function ProductMockupPage() {
           onClick={() => setPreviewUrl(null)}
         >
           <div
-            className="relative max-w-4xl w-full max-h-[90vh] flex flex-col rounded-2xl overflow-hidden bg-white"
+            className="relative max-w-4xl w-full max-h-[90dvh] flex flex-col rounded-2xl overflow-hidden bg-white"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-5 py-3.5 bg-paper border-b border-forest/10 flex items-center justify-between">
@@ -928,7 +928,7 @@ export default function ProductMockupPage() {
               </button>
             </div>
             <div className="overflow-auto flex items-center justify-center">
-              <img src={previewUrl} alt="Preview" className="max-w-full max-h-[80vh] object-contain" />
+              <img src={previewUrl} alt="Preview" className="max-w-full max-h-[80dvh] object-contain" />
             </div>
           </div>
         </div>

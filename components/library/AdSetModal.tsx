@@ -31,7 +31,7 @@ export default function AdSetModal({ ads, onClose, onVariantClick }: AdSetModalP
       onClick={onClose}
     >
       <div
-        className="bg-white border border-outline w-full max-w-4xl max-h-[90vh] flex flex-col"
+        className="bg-white border border-outline w-full max-w-4xl max-h-[90dvh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

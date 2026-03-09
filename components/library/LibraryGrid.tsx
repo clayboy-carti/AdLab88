@@ -316,7 +316,7 @@ export default function LibraryGrid({
     <div className="flex gap-6 items-start">
 
       {/* ── Campaigns sidebar ── */}
-      <aside className="hidden md:flex flex-col w-52 flex-shrink-0 sticky top-8 max-h-[calc(100vh-5rem)] overflow-y-auto">
+      <aside className="hidden md:flex flex-col w-52 flex-shrink-0 sticky top-8 max-h-[calc(100dvh-5rem)] overflow-y-auto">
         <div className="flex flex-col gap-1.5">
           {/* Section header */}
           <div className="flex items-center justify-between px-1 mb-1">
@@ -440,6 +440,35 @@ export default function LibraryGrid({
 
       {/* ── Main content ── */}
       <div className="flex-1 min-w-0">
+
+        {/* Mobile campaign chips — visible below md, hidden on desktop where sidebar shows */}
+        {folders.length > 0 && (
+          <div className="md:hidden flex gap-1.5 overflow-x-auto pb-1 mb-3 -mx-0.5 px-0.5" style={{ scrollbarWidth: 'none' }}>
+            <button
+              onClick={() => setActiveFolderId(null)}
+              className={`flex-shrink-0 text-xs font-mono px-3 py-2 rounded-xl border shadow-sm transition-all ${
+                activeFolderId === null
+                  ? 'bg-white border-l-2 border-l-rust border-forest/15 text-graphite'
+                  : 'bg-white border-forest/10 text-graphite/55'
+              }`}
+            >
+              All <span className="text-graphite/30">({totalCount})</span>
+            </button>
+            {folders.map((folder) => (
+              <button
+                key={folder.id}
+                onClick={() => setActiveFolderId(folder.id)}
+                className={`flex-shrink-0 text-xs font-mono px-3 py-2 rounded-xl border shadow-sm transition-all ${
+                  activeFolderId === folder.id
+                    ? 'bg-white border-l-2 border-l-rust border-forest/15 text-graphite'
+                    : 'bg-white border-forest/10 text-graphite/55'
+                }`}
+              >
+                {folder.name} <span className="text-graphite/30">({folderCounts.get(folder.id) ?? 0})</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Toolbar row */}
         <div className="flex items-center gap-2 mb-6 flex-wrap">

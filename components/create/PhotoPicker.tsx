@@ -105,7 +105,7 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: Props) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="bg-white rounded-2xl border border-forest/50 shadow-lg w-full max-w-lg flex flex-col max-h-[80vh]">
+      <div className="bg-white rounded-2xl border border-forest/50 shadow-lg w-full max-w-lg flex flex-col max-h-[80dvh]">
 
         {/* Modal header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-forest/15 shrink-0">
@@ -114,7 +114,7 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: Props) {
           </h2>
           <button
             onClick={onClose}
-            className="text-graphite/40 hover:text-graphite transition-colors text-lg leading-none"
+            className="w-9 h-9 flex items-center justify-center rounded-xl text-graphite/40 hover:text-graphite hover:bg-forest/5 transition-colors"
             title="Close"
           >
             ✕
@@ -169,7 +169,7 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: Props) {
               <p className="font-mono text-[10px] uppercase tracking-widest text-graphite/40">
                 Click an asset to use it as your product reference
               </p>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                 {assets.map((asset) => (
                   <div
                     key={asset.id}

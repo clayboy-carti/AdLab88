@@ -443,7 +443,7 @@ export default function VideoModal({ video, onClose, onDelete, onTitleUpdate, in
       onClick={handleOverlayClick}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
     >
-      <div className="bg-white border border-outline w-full max-w-5xl max-h-[90vh] overflow-y-auto flex flex-col">
+      <div className="bg-white border border-outline w-full max-w-5xl max-h-[90dvh] overflow-y-auto flex flex-col">
 
         {/* Modal header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-outline flex-shrink-0">
@@ -508,7 +508,7 @@ export default function VideoModal({ video, onClose, onDelete, onTitleUpdate, in
                 controls
                 autoPlay
                 loop
-                className="max-h-[45vh] w-auto max-w-full object-contain"
+                className="max-h-[45dvh] w-auto max-w-full object-contain"
               />
             ) : (
               <span className="text-xs font-mono text-gray-400 uppercase">No video</span>

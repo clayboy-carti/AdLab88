@@ -339,7 +339,7 @@ export default function CampaignBuilder() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
           onClick={(e) => { if (e.target === e.currentTarget) setShowAssetPicker(false) }}
         >
-          <div className="bg-white rounded-2xl border border-forest/50 shadow-lg w-full max-w-lg flex flex-col max-h-[80vh]">
+          <div className="bg-white rounded-2xl border border-forest/50 shadow-lg w-full max-w-lg flex flex-col max-h-[80dvh]">
             <div className="flex items-center justify-between px-6 py-4 border-b border-forest/15 shrink-0">
               <h2 className="font-mono text-xs uppercase tracking-widest text-forest/70">
                 Brand Asset Library
