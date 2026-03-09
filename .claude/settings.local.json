@@ -30,7 +30,12 @@
       "mcp__Vercel__get_access_to_vercel_url",
       "mcp__Supabase__list_projects",
       "mcp__Supabase__apply_migration",
-      "mcp__Supabase__restore_project"
+      "mcp__Supabase__restore_project",
+      "WebFetch(domain:ai.google.dev)",
+      "WebFetch(domain:docs.cloud.google.com)",
+      "Bash(git pull --ff-only)",
+      "Bash(git stash)",
+      "Bash(git stash pop)"
     ]
   },
   "enableAllProjectMcpServers": true,

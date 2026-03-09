@@ -47,7 +47,9 @@ export async function POST(request: Request) {
     const imageQuality: '1K' | '2K' = image_quality === '2K' ? '2K' : '1K'
     const imageAspectRatio: string = aspect_ratio || '1:1'
     const postType: 'ad' | 'product_mockup' = post_type === 'product_mockup' ? 'product_mockup' : 'ad'
-    const imageModelChoice: 'gemini' | 'seedream' = image_model === 'seedream' ? 'seedream' : 'gemini'
+    const imageModelChoice: 'gemini-pro' | 'gemini-flash' | 'seedream' =
+      image_model === 'seedream' ? 'seedream' :
+      image_model === 'gemini-flash' ? 'gemini-flash' : 'gemini-pro'
 
     // Map 4-notch creativity slider (1–4) to Gemini temperature
     const CREATIVITY_TEMPERATURES: Record<number, number> = {
@@ -243,7 +245,8 @@ export async function POST(request: Request) {
         1 // 1 retry
       )
     } else {
-      console.log('[Generate] === PHASE 3: Generating image with Gemini 2.0 Flash ===')
+      const geminiModel = imageModelChoice === 'gemini-flash' ? 'flash' : 'pro'
+      console.log(`[Generate] === PHASE 3: Generating image with Gemini ${geminiModel === 'flash' ? 'Flash' : 'Pro'} ===`)
       generatedImage = await generateImageWithGemini(
         referenceImageUrls.length > 0 ? referenceImageUrls : null,
         imagePrompt,
@@ -252,7 +255,8 @@ export async function POST(request: Request) {
         1, // 1 retry
         imageQuality,
         imageAspectRatio,
-        imageTemperature
+        imageTemperature,
+        geminiModel
       )
     }
 

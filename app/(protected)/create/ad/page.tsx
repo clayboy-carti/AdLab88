@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { BatchAdResult } from '@/components/create/BatchResultsGrid'
 import type { BrandAsset } from '@/types/database'
 import {
-  FlaskConical, ImagePlus, CheckCircle, X, Maximize2, Monitor,
+  FlaskConical, ImagePlus, CheckCircle, X, Maximize2, Monitor, ChevronDown,
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -23,7 +23,8 @@ interface StyleRef {
   previewUrl: string
 }
 
-const GEMINI_ASPECT_RATIOS = [
+// Gemini 3 Pro — 10 supported aspect ratios
+const GEMINI_PRO_ASPECT_RATIOS = [
   { value: '1:1',  label: '1:1',  tooltip: 'Instagram Feed · Facebook · LinkedIn' },
   { value: '4:5',  label: '4:5',  tooltip: 'Instagram Feed Portrait · Facebook' },
   { value: '4:3',  label: '4:3',  tooltip: 'Facebook · LinkedIn · Pinterest' },
@@ -36,6 +37,15 @@ const GEMINI_ASPECT_RATIOS = [
   { value: '21:9', label: '21:9', tooltip: 'YouTube banners · Desktop headers' },
 ]
 
+// Gemini 3.1 Flash — 14 supported aspect ratios (superset of Pro)
+const GEMINI_FLASH_ASPECT_RATIOS = [
+  ...GEMINI_PRO_ASPECT_RATIOS,
+  { value: '1:4',  label: '1:4',  tooltip: 'Stories · Vertical ads' },
+  { value: '4:1',  label: '4:1',  tooltip: 'Leaderboard ads · Headers' },
+  { value: '1:8',  label: '1:8',  tooltip: 'Vertical display ads' },
+  { value: '8:1',  label: '8:1',  tooltip: 'Billboard · Panoramic headers' },
+]
+
 export default function AdPage() {
   // ── Inputs ───────────────────────────────────────────────────────────
   const [contextText, setContextText] = useState('')
@@ -43,6 +53,7 @@ export default function AdPage() {
   const [aspectRatio, setAspectRatio] = useState('1:1')
   const [creativity, setCreativity] = useState(2)
   const [title, setTitle] = useState('')
+  const [geminiModel, setGeminiModel] = useState<'gemini-pro' | 'gemini-flash'>('gemini-pro')
 
   // ── Style reference (upload-only) ────────────────────────────────────
   const [styleRef, setStyleRef] = useState<StyleRef | null>(null)
@@ -53,6 +64,7 @@ export default function AdPage() {
   const [assets, setAssets] = useState<AssetWithUrl[]>([])
   const [loadingAssets, setLoadingAssets] = useState(true)
   const [productId, setProductId] = useState<string | null>(null)
+  const [assetModalOpen, setAssetModalOpen] = useState(false)
 
   // ── Ads per persona ──────────────────────────────────────────────────
   const [adsPerPersona, setAdsPerPersona] = useState(1)
@@ -134,6 +146,7 @@ export default function AdPage() {
           creativity,
           title: title.trim() || undefined,
           ads_per_persona: adsPerPersona,
+          gemini_model: geminiModel,
         }),
       })
 
@@ -151,6 +164,16 @@ export default function AdPage() {
 
   const canGenerate = !generating && !!styleRef && !!productId && !!title.trim()
 
+  const aspectRatioOptions = geminiModel === 'gemini-flash' ? GEMINI_FLASH_ASPECT_RATIOS : GEMINI_PRO_ASPECT_RATIOS
+
+  // Reset aspect ratio if switching to Pro and current AR is Flash-only
+  useEffect(() => {
+    const flashOnlyValues = ['1:4', '4:1', '1:8', '8:1']
+    if (geminiModel === 'gemini-pro' && flashOnlyValues.includes(aspectRatio)) {
+      setAspectRatio('1:1')
+    }
+  }, [geminiModel, aspectRatio])
+
   const dotGrid = {
     backgroundImage: 'radial-gradient(circle, rgba(31,58,50,0.07) 1px, transparent 1px)',
     backgroundSize: '24px 24px',
@@ -160,17 +183,21 @@ export default function AdPage() {
     <div className="h-screen overflow-hidden flex flex-col p-6 lg:p-8">
 
       {/* Header */}
-      <div className="mb-6 flex-shrink-0">
-        <Link
-          href="/create"
-          className="inline-flex items-center gap-1 text-xs font-mono text-graphite/40 uppercase tracking-widest hover:text-rust transition-colors mb-3"
-        >
-          ← The Lab Bench
-        </Link>
-        <h1 className="text-3xl font-mono font-semibold text-graphite">Ad Generation</h1>
-        <p className="text-xs font-mono text-graphite/40 mt-1">
-          Upload a reference ad · select your product · generates one variation per persona.
-        </p>
+      <div className="mb-4 flex-shrink-0">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-mono header-accent">Ad Generation</h1>
+            <p className="font-mono text-xs text-gray-500 uppercase tracking-widest mt-1">
+              Upload a reference ad · select your product · generates one variation per persona
+            </p>
+          </div>
+          <Link
+            href="/create"
+            className="text-xs font-mono text-graphite/40 uppercase tracking-widest hover:text-rust transition-colors mt-1"
+          >
+            ← The Lab Bench
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0 items-start overflow-y-auto lg:overflow-hidden pb-6">
@@ -186,7 +213,7 @@ export default function AdPage() {
             </div>
           </div>
 
-          <div className="px-6 py-5 flex flex-col gap-5 overflow-y-auto flex-1">
+          <div className="px-6 py-4 flex flex-col gap-3 overflow-y-auto flex-1">
 
             {/* Title */}
             <div className="flex flex-col gap-1.5">
@@ -203,108 +230,165 @@ export default function AdPage() {
               />
             </div>
 
-            {/* Style Reference */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
-                Style Reference <span className="text-rust">*</span>
-                <span className="ml-2 normal-case text-graphite/35 tracking-normal">— the ad to style after</span>
-              </label>
+            {/* Product Asset + Style Reference — side by side */}
+            <div className="grid grid-cols-2 gap-4">
 
-              {styleRef ? (
-                <div className="flex items-start gap-3 rounded-xl border border-forest/20 bg-paper p-3">
-                  {styleRef.previewUrl && (
+              {/* LEFT — Product Asset */}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
+                    Product Asset <span className="text-rust">*</span>
+                  </label>
+                  <Link href="/brand" className="text-[11px] font-mono text-forest/50 hover:text-forest transition-colors">
+                    + Add →
+                  </Link>
+                </div>
+
+                {/* Selected asset preview or trigger button */}
+                {productId ? (
+                  <div className="relative rounded-xl border border-forest/20 bg-paper overflow-hidden aspect-square">
+                    <img
+                      src={assets.find((a) => a.id === productId)?.signedUrl}
+                      alt={assets.find((a) => a.id === productId)?.file_name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-end justify-between p-2">
+                      <button
+                        onClick={() => setAssetModalOpen(true)}
+                        className="text-[10px] font-mono bg-white/90 text-graphite px-2 py-1 rounded-lg hover:bg-white transition-colors"
+                      >
+                        Change
+                      </button>
+                      <button
+                        onClick={() => setProductId(null)}
+                        className="text-[10px] font-mono bg-white/90 text-rust px-2 py-1 rounded-lg hover:bg-white transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setAssetModalOpen(true)}
+                    disabled={loadingAssets}
+                    className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-forest/20 bg-paper aspect-square cursor-pointer hover:border-forest/40 hover:bg-forest/5 transition-colors disabled:opacity-50"
+                  >
+                    <ImagePlus size={20} className="text-graphite/25" strokeWidth={1.5} />
+                    <span className="text-xs font-mono text-graphite/50">Select Asset</span>
+                  </button>
+                )}
+              </div>
+
+              {/* RIGHT — Style Reference upload */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
+                  Style Reference <span className="text-rust">*</span>
+                </label>
+
+                {styleRef ? (
+                  <div className="relative rounded-xl border border-forest/20 bg-paper overflow-hidden aspect-square">
                     <img
                       src={styleRef.previewUrl}
                       alt={styleRef.fileName}
-                      className="w-16 h-16 object-cover rounded-lg border border-forest/15 flex-shrink-0"
+                      className="w-full h-full object-cover"
                     />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-mono text-forest uppercase tracking-widest mb-0.5">✓ Uploaded</p>
-                    <p className="text-xs font-mono text-graphite/50 truncate">{styleRef.fileName}</p>
+                    <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-end justify-end p-2">
+                      <button
+                        onClick={() => setStyleRef(null)}
+                        className="text-[10px] font-mono bg-white/90 text-rust px-2 py-1 rounded-lg hover:bg-white transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => setStyleRef(null)}
-                    className="text-graphite/30 hover:text-rust transition-colors flex-shrink-0 mt-0.5"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              ) : (
-                <label className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-forest/20 bg-paper p-5 cursor-pointer hover:border-rust/40 hover:bg-rust/5 transition-colors ${uploadingStyle ? 'opacity-60 pointer-events-none' : ''}`}>
-                  <ImagePlus size={20} className="text-graphite/25" strokeWidth={1.5} />
-                  <span className="text-xs font-mono text-graphite/40 text-center">
-                    {uploadingStyle ? 'Uploading…' : 'Drop an ad image here or click to upload'}
-                  </span>
-                  <span className="text-[10px] font-mono text-graphite/25">JPEG or PNG</span>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png"
-                    className="hidden"
-                    onChange={handleStyleUpload}
-                    disabled={uploadingStyle}
-                  />
-                </label>
-              )}
+                ) : (
+                  <label className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-forest/20 bg-paper aspect-square cursor-pointer hover:border-rust/40 hover:bg-rust/5 transition-colors ${uploadingStyle ? 'opacity-60 pointer-events-none' : ''}`}>
+                    <ImagePlus size={20} className="text-graphite/25" strokeWidth={1.5} />
+                    <span className="text-xs font-mono text-graphite/40 text-center">
+                      {uploadingStyle ? 'Uploading…' : 'Drop or click to upload'}
+                    </span>
+                    <span className="text-[10px] font-mono text-graphite/25">JPEG or PNG</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png"
+                      className="hidden"
+                      onChange={handleStyleUpload}
+                      disabled={uploadingStyle}
+                    />
+                  </label>
+                )}
 
-              {uploadError && (
-                <p className="text-[11px] font-mono text-rust">{uploadError}</p>
-              )}
-            </div>
-
-            {/* Product Asset */}
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">
-                  Product Asset <span className="text-rust">*</span>
-                  <span className="ml-2 normal-case text-graphite/35 tracking-normal">— from brand assets</span>
-                </label>
-                <Link href="/brand" className="text-[11px] font-mono text-forest/50 hover:text-forest transition-colors">
-                  + Add assets →
-                </Link>
+                {uploadError && (
+                  <p className="text-[11px] font-mono text-rust">{uploadError}</p>
+                )}
               </div>
-
-              {loadingAssets ? (
-                <div className="h-20 rounded-xl bg-paper animate-pulse" />
-              ) : assets.length === 0 ? (
-                <div className="rounded-xl border border-forest/15 bg-paper p-5 text-center">
-                  <p className="text-xs font-mono text-graphite/40 mb-2">No brand assets yet.</p>
-                  <Link href="/brand" className="text-xs font-mono text-forest hover:underline">
-                    Go to Brand → Assets to upload your products
-                  </Link>
-                </div>
-              ) : (
-                <div className="grid grid-cols-6 gap-1.5">
-                  {assets.map((asset) => (
-                    <button
-                      key={asset.id}
-                      onClick={() => setProductId(asset.id === productId ? null : asset.id)}
-                      title={asset.file_name}
-                      className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                        productId === asset.id
-                          ? 'border-forest ring-2 ring-forest/20 scale-[0.97]'
-                          : 'border-transparent hover:border-forest/30'
-                      }`}
-                    >
-                      <img src={asset.signedUrl} alt={asset.file_name} className="w-full h-full object-cover" />
-                      {productId === asset.id && (
-                        <div className="absolute inset-0 bg-forest/15 flex items-center justify-center">
-                          <CheckCircle size={14} className="text-white" strokeWidth={2.5} />
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {productId && (
-                <p className="text-[11px] font-mono text-forest uppercase tracking-widest">
-                  ✓ {assets.find((a) => a.id === productId)?.file_name}
-                </p>
-              )}
             </div>
 
-            <div className="h-px bg-forest/10" />
+            {/* Asset picker modal */}
+            {assetModalOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setAssetModalOpen(false)} />
+                <div className="relative bg-white rounded-2xl border border-forest/20 shadow-xl w-full max-w-lg max-h-[70vh] flex flex-col">
+                  {/* Modal header */}
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-forest/10">
+                    <span className="text-[11px] font-mono uppercase tracking-widest text-graphite/60">Select Product Asset</span>
+                    <button onClick={() => setAssetModalOpen(false)} className="text-graphite/30 hover:text-rust transition-colors">
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  {/* Modal body */}
+                  <div className="overflow-y-auto flex-1 p-4">
+                    {loadingAssets ? (
+                      <div className="grid grid-cols-4 gap-2">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                          <div key={i} className="aspect-square rounded-xl bg-paper animate-pulse" />
+                        ))}
+                      </div>
+                    ) : assets.length === 0 ? (
+                      <div className="text-center py-10">
+                        <p className="text-xs font-mono text-graphite/40 mb-3">No brand assets yet.</p>
+                        <Link href="/brand" className="text-xs font-mono text-forest hover:underline" onClick={() => setAssetModalOpen(false)}>
+                          Go to Brand → Assets to upload your products
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-4 gap-2">
+                        {assets.map((asset) => (
+                          <button
+                            key={asset.id}
+                            onClick={() => { setProductId(asset.id); setAssetModalOpen(false) }}
+                            title={asset.file_name}
+                            className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
+                              productId === asset.id
+                                ? 'border-forest ring-2 ring-forest/20'
+                                : 'border-transparent hover:border-forest/30'
+                            }`}
+                          >
+                            <img src={asset.signedUrl} alt={asset.file_name} className="w-full h-full object-cover" />
+                            {productId === asset.id && (
+                              <div className="absolute inset-0 bg-forest/20 flex items-center justify-center">
+                                <CheckCircle size={16} className="text-white" strokeWidth={2.5} />
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Modal footer */}
+                  <div className="px-5 py-3 border-t border-forest/10 flex justify-end">
+                    <button
+                      onClick={() => setAssetModalOpen(false)}
+                      className="text-xs font-mono text-graphite/50 hover:text-graphite transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Context brief */}
             <div className="flex flex-col gap-1.5">
@@ -315,42 +399,43 @@ export default function AdPage() {
                 placeholder="e.g. 10% off first order · Free shipping · Summer sale"
                 rows={2}
                 maxLength={300}
-                className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-3 text-sm font-mono resize-none focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
+                className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2 text-sm font-mono resize-none focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
               />
-              <div className="text-right">
-                <span className="text-[11px] font-mono text-graphite/25">{contextText.length} / 300</span>
-              </div>
             </div>
 
-            <div className="h-px bg-forest/10" />
-
-            {/* Aspect ratio chips */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Aspect Ratio</label>
-              <div className="flex flex-wrap gap-1.5">
-                {GEMINI_ASPECT_RATIOS.map((r) => (
-                  <div key={r.value} className="relative group">
-                    <button
-                      onClick={() => setAspectRatio(r.value)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all border ${
-                        aspectRatio === r.value
-                          ? 'bg-sage border-forest/30 text-forest font-semibold'
-                          : 'border-forest/15 text-graphite/50 hover:border-forest/35 hover:text-graphite'
-                      }`}
-                    >
-                      {r.label}
-                    </button>
-                    <div className="pointer-events-none absolute bottom-full left-0 mb-2 px-2.5 py-1.5 bg-graphite text-paper text-[10px] font-mono whitespace-nowrap rounded opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
-                      {r.tooltip}
-                      <div className="absolute top-full left-3 border-4 border-transparent border-t-graphite" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Resolution + Creativity row */}
+            {/* Model + Aspect Ratio + Resolution + Ads per Persona + Creativity row */}
             <div className="flex gap-6 items-start">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Model</label>
+                <div className="relative w-36">
+                  <select
+                    value={geminiModel}
+                    onChange={(e) => setGeminiModel(e.target.value as 'gemini-pro' | 'gemini-flash')}
+                    className="appearance-none w-full rounded-xl bg-sage border border-forest/30 pl-3 pr-7 py-1.5 text-sm font-mono text-forest font-semibold focus:outline-none cursor-pointer [&>option]:bg-white [&>option]:text-graphite [&>option]:font-normal"
+                  >
+                    <option value="gemini-pro">Gemini Pro</option>
+                    <option value="gemini-flash">Gemini Flash</option>
+                  </select>
+                  <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-forest/50 pointer-events-none" />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Aspect Ratio</label>
+                <div className="relative w-28">
+                  <select
+                    value={aspectRatio}
+                    onChange={(e) => setAspectRatio(e.target.value)}
+                    className="appearance-none w-full rounded-xl bg-sage border border-forest/30 pl-3 pr-7 py-1.5 text-sm font-mono text-forest font-semibold focus:outline-none cursor-pointer [&>option]:bg-white [&>option]:text-graphite [&>option]:font-normal"
+                  >
+                    {aspectRatioOptions.map((r) => (
+                      <option key={r.value} value={r.value} title={r.tooltip}>{r.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-forest/50 pointer-events-none" />
+                </div>
+              </div>
+
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Resolution</label>
                 <div className="flex gap-1.5">
@@ -367,6 +452,22 @@ export default function AdPage() {
                       {q}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Ads / Persona</label>
+                <div className="relative w-28">
+                  <select
+                    value={adsPerPersona}
+                    onChange={(e) => setAdsPerPersona(Number(e.target.value))}
+                    className="appearance-none w-full rounded-xl bg-sage border border-forest/30 pl-3 pr-7 py-1.5 text-sm font-mono text-forest font-semibold focus:outline-none cursor-pointer [&>option]:bg-white [&>option]:text-graphite [&>option]:font-normal"
+                  >
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>{n} ad{n !== 1 ? 's' : ''}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-forest/50 pointer-events-none" />
                 </div>
               </div>
 
@@ -387,25 +488,6 @@ export default function AdPage() {
                   <span className="text-[10px] font-mono text-graphite/30">Follows style closely</span>
                   <span className="text-[10px] font-mono text-graphite/30">Freely reimagined</span>
                 </div>
-              </div>
-            </div>
-
-            {/* Ads per Persona */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Ads per Persona</label>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setAdsPerPersona((n) => Math.max(1, n - 1))}
-                  disabled={adsPerPersona <= 1}
-                  className="w-8 h-8 rounded-lg border border-forest/20 text-graphite/50 hover:text-rust hover:border-rust/30 disabled:opacity-30 transition-colors font-mono text-lg leading-none flex items-center justify-center"
-                >−</button>
-                <span className="font-mono text-sm w-4 text-center text-graphite">{adsPerPersona}</span>
-                <button
-                  onClick={() => setAdsPerPersona((n) => Math.min(5, n + 1))}
-                  disabled={adsPerPersona >= 5}
-                  className="w-8 h-8 rounded-lg border border-forest/20 text-graphite/50 hover:text-rust hover:border-rust/30 disabled:opacity-30 transition-colors font-mono text-lg leading-none flex items-center justify-center"
-                >+</button>
-                <span className="text-[11px] font-mono text-graphite/35">unique ad{adsPerPersona !== 1 ? 's' : ''} per profile</span>
               </div>
             </div>
 
@@ -437,7 +519,7 @@ export default function AdPage() {
               <span className="text-[11px] font-mono uppercase tracking-widest text-graphite/40">Ad Preview</span>
             </div>
             <span className="text-[11px] font-mono bg-sage/20 text-forest/60 px-3 py-1 rounded-full border border-sage/30">
-              Gemini · Ready
+              {geminiModel === 'gemini-flash' ? 'Gemini Flash' : 'Gemini Pro'} · Ready
             </span>
           </div>
 
@@ -550,7 +632,7 @@ export default function AdPage() {
           {/* Status bar */}
           <div className="px-6 py-3 border-t border-forest/10 flex-shrink-0">
             <span className="text-[11px] font-mono text-graphite/25 uppercase tracking-widest">
-              {aspectRatio} · {imageQuality} · Gemini · Persona Batch
+              {aspectRatio} · {imageQuality} · {geminiModel === 'gemini-flash' ? 'Gemini Flash' : 'Gemini Pro'} · Persona Batch
             </span>
           </div>
         </div>

@@ -146,8 +146,8 @@ Quality benchmark: editorial lifestyle photography — authentic, aspirational, 
   }
 
   // MODE 2: ORIGINAL (Framework-driven or style-prompted creative generation)
-  const offerLine = userContext
-    ? `• Offer / promotional context (feature prominently): "${userContext}"\n`
+  const offerHint = userContext
+    ? `• Promotional context / offer to weave into the copy: "${userContext}"\n`
     : ''
 
   // If a reverse-engineered style prompt is provided, it drives the visual direction
@@ -157,35 +157,31 @@ ${stylePrompt}`
     : `VISUAL REQUIREMENTS:
 • Professional, modern design suitable for ${copy.target_platform}
 • Use brand colors (${brandColors}) as primary color scheme
-• Include relevant ${industry} imagery or icons
-• Clean, uncluttered layout with good whitespace
-• Typography should be bold and readable
-• Ensure text hierarchy (headline > CTA)
-• High-quality, polished aesthetic
-
-STYLE INSPIRATION:
-• Modern, professional ${industry} advertising
-• Clean, benefit-driven messaging
-• Visual appeal that resonates with ${brand.target_audience}
-• Framework applied: ${copy.framework_applied}`
+• Clean, uncluttered layout with strong text hierarchy
+• Typography: bold headline, clear CTA — minimal copy, punchy and direct
+• High-quality, polished aesthetic that matches the reference ad's tone`
 
   const prompt = `
-Create a professional, high-quality advertisement for ${brand.company_name}, a ${industry} company.
+Create a high-quality advertisement image for ${brand.company_name}.
 
-BRAND DETAILS:
+BRAND CONTEXT (for your creative direction — do NOT display these as-is):
 • Company: ${brand.company_name}
-• Industry: ${industry}
+• What they sell: ${industry}
 • Target audience: ${brand.target_audience}
 • Brand colors: ${brandColors}
-• Strategic angle: ${copy.positioning_angle}
+• Creative angle (inspiration only): ${copy.positioning_angle}
+• Hook idea (inspiration only — rewrite into punchy ad copy): ${copy.hook}
+${offerHint}
+COPY INSTRUCTIONS:
+• Write SHORT, punchy, original ad copy inspired by the creative angle and hook idea above
+• Do NOT copy the angle or hook word-for-word — use them as creative direction only
+• Match the copy length and style of the reference ad (if short and bold, keep it short and bold)
+• Include a clear CTA (e.g. "${copy.cta}")
+• Tone: ${copy.brand_voice_match}
 
-AD COPY (Display prominently):
-• Main headline (large, bold): "${copy.hook}"
-• Call-to-action (prominent button/text): "${copy.cta}"
-${offerLine}
 ${visualSection}
 
-Create an eye-catching, conversion-focused advertisement that clearly communicates the value proposition.
+Generate a visually compelling, on-brand advertisement. Let the creative angle inform the energy and message — but write fresh, natural copy that feels like a real ad.
 `.trim()
 
   console.log('[ReplicatePrompt] Mode: ORIGINAL (framework-driven)')

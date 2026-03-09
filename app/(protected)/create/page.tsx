@@ -76,9 +76,6 @@ export default function CreatePage() {
             href={ct.href}
             className="group block bg-white rounded-2xl border border-forest/50 shadow-sm hover:shadow-md hover:border-forest/70 transition-all p-6"
           >
-            <div className="inline-flex items-center bg-paper border border-forest/25 rounded-full px-3 py-1 mb-5">
-              <span className="font-mono text-[10px] uppercase tracking-widest text-forest/60">{ct.tag}</span>
-            </div>
             <h2 className="font-mono text-xl font-semibold text-graphite mb-2 group-hover:text-rust transition-colors">
               {ct.title}
             </h2>
