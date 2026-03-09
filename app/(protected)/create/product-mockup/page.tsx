@@ -485,24 +485,6 @@ export default function ProductMockupPage() {
               </div>
             </div>
 
-            {/* Photo Style dropdown */}
-            <div className="flex flex-col gap-1">
-              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Photo Style</label>
-              <div className="relative">
-                <select
-                  value={selectedPhotoStyle}
-                  onChange={(e) => setSelectedPhotoStyle(e.target.value)}
-                  className="appearance-none w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 pr-8 text-xs font-mono text-graphite/70 focus:outline-none focus:border-forest/50 cursor-pointer"
-                >
-                  <option value="">None</option>
-                  {PHOTO_STYLES.map((s) => (
-                    <option key={s.name} value={s.name}>{s.name}</option>
-                  ))}
-                </select>
-                <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-graphite/30 pointer-events-none" />
-              </div>
-            </div>
-
             {/* Photo & Preset row */}
             <div className="flex gap-2">
               <button
@@ -532,6 +514,19 @@ export default function ProductMockupPage() {
                   <option value="">Select Preset…</option>
                   {SCENE_PRESETS.map((p) => (
                     <option key={p.name} value={p.name}>{p.name}</option>
+                  ))}
+                </select>
+                <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-graphite/30 pointer-events-none" />
+              </div>
+              <div className="relative">
+                <select
+                  value={selectedPhotoStyle}
+                  onChange={(e) => setSelectedPhotoStyle(e.target.value)}
+                  className="appearance-none rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 pr-8 text-xs font-mono text-graphite/50 focus:outline-none focus:border-forest/50 cursor-pointer"
+                >
+                  <option value="">Photo Style…</option>
+                  {PHOTO_STYLES.map((s) => (
+                    <option key={s.name} value={s.name}>{s.name}</option>
                   ))}
                 </select>
                 <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-graphite/30 pointer-events-none" />
