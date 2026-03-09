@@ -13,6 +13,13 @@ import {
 
 export const dynamic = 'force-dynamic'
 
+const PHOTO_STYLES = [
+  {
+    name: 'iPhone',
+    prompt: 'natural handheld iPhone photo, casual candid framing, smartphone wide-angle lens (~24mm equivalent), deep smartphone depth of field with most of the scene in focus, balanced HDR (High Dynamic Range) lighting, protected highlights and lifted shadows, realistic color science with slightly cool white balance, subtle computational sharpening, clean digital noise reduction, slight edge distortion, natural uneven lighting',
+  },
+]
+
 const SCENE_PRESETS = [
   {
     name: 'Studio Product Shoot',
@@ -215,6 +222,7 @@ function StudioIllustration() {
 export default function ProductMockupPage() {
   const [sceneText, setSceneText] = useState('')
   const [selectedPreset, setSelectedPreset] = useState('')
+  const [selectedPhotoStyle, setSelectedPhotoStyle] = useState('')
   const [imageModel, setImageModel] = useState<'gemini-pro' | 'gemini-flash' | 'seedream'>('gemini-pro')
   const [imageQuality, setImageQuality] = useState<'1K' | '2K'>('1K')
   const [aspectRatio, setAspectRatio] = useState('1:1')
@@ -255,6 +263,17 @@ export default function ProductMockupPage() {
   const [selectedShootAdId, setSelectedShootAdId] = useState<string | null>(null)
   const [selectedShootLabel, setSelectedShootLabel] = useState<string | null>(null)
 
+  const buildContext = (cameraAngle?: string) => {
+    const parts: string[] = []
+    if (sceneText.trim()) parts.push(sceneText.trim())
+    if (selectedPhotoStyle) {
+      const style = PHOTO_STYLES.find((s) => s.name === selectedPhotoStyle)
+      if (style) parts.push(`PHOTO STYLE: ${style.prompt}`)
+    }
+    if (cameraAngle) parts.push(`CAMERA ANGLE: ${cameraAngle}`)
+    return parts.length > 0 ? parts.join('\n\n') : undefined
+  }
+
   const handleGenerate = async () => {
     setGenerating(true)
     setError(null)
@@ -265,7 +284,7 @@ export default function ProductMockupPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_context: sceneText.trim() || undefined,
+          user_context: buildContext(),
           image_quality: imageQuality,
           aspect_ratio: aspectRatio,
           creativity: 2,
@@ -326,9 +345,7 @@ export default function ProductMockupPage() {
 
     const promises = PHOTO_SHOOT_SHOTS.map(async (shot, idx) => {
       try {
-        const context = sceneText.trim()
-          ? `${sceneText.trim()}\n\nCAMERA ANGLE: ${shot.directive}`
-          : `CAMERA ANGLE: ${shot.directive}`
+        const context = buildContext(shot.directive)
 
         const res = await fetch('/api/generate-ad', {
           method: 'POST',
@@ -465,6 +482,24 @@ export default function ProductMockupPage() {
               />
               <div className="text-right">
                 <span className="text-[11px] font-mono text-graphite/25">{sceneText.length} / 1000</span>
+              </div>
+            </div>
+
+            {/* Photo Style dropdown */}
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] font-mono uppercase tracking-widest text-graphite/65">Photo Style</label>
+              <div className="relative">
+                <select
+                  value={selectedPhotoStyle}
+                  onChange={(e) => setSelectedPhotoStyle(e.target.value)}
+                  className="appearance-none w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-2.5 pr-8 text-xs font-mono text-graphite/70 focus:outline-none focus:border-forest/50 cursor-pointer"
+                >
+                  <option value="">None</option>
+                  {PHOTO_STYLES.map((s) => (
+                    <option key={s.name} value={s.name}>{s.name}</option>
+                  ))}
+                </select>
+                <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-graphite/30 pointer-events-none" />
               </div>
             </div>
 
