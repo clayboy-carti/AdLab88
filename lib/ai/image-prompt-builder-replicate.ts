@@ -66,18 +66,26 @@ Keep everything else (character images, panel borders, background, font style) i
     }
 
     // 1b. Standard reference: preserve format, swap copy
-    const offerLine = userContext ? ` The ad is promoting: "${userContext}".` : ''
+    const offerLine = userContext ? `\n• Offer / context: "${userContext}"` : ''
 
     const prompt = `Recreate this exact visual format and style as an advertisement for ${brand.company_name}.
 
-CRITICAL: Preserve the EXACT same layout, composition, and visual format from the reference image. If the reference is a meme, keep the meme format. If it is a two-panel image, keep the two panels. If it is a product shot, keep that structure. Do NOT replace the format with a generic infographic or marketing template.
+WHAT TO TAKE FROM THE REFERENCE (visual style only):
+• Layout, composition, and structural format (panels, grid, proportions)
+• Design language: color palette, typography style, spacing, graphic elements
+• Mood, tone, and aesthetic quality
 
-Use this copy:
+WHAT TO IGNORE FROM THE REFERENCE (never reproduce):
+• Any text, headlines, taglines, or body copy visible in the reference image
+• Any prices, discounts, or promotional offers (e.g. "15% Off", "Starting at $9.99", "Sale", "Free Shipping")
+• Any brand names, logos, or product details belonging to the reference brand
+• Any CTAs from the reference
+
+USE ONLY THIS COPY (place no other text on the ad):
 • Headline (bold, prominent): "${copy.hook}"
-• CTA: "${copy.cta}"
-${offerLine}${colorLine}
+• CTA: "${copy.cta}"${offerLine}${colorLine}
 
-Keep the visual format identical to the reference. Only swap in the new brand copy.`
+Treat the reference as a visual template only — all text and promotional details must come from the instructions above, never from the reference image.`
 
     console.log('[ReplicatePrompt] Mode: REFERENCE (format-preserving)')
     console.log(`  Brand: ${brand.company_name}`)
