@@ -460,11 +460,11 @@ export default function ProductMockupPage() {
                 }}
                 placeholder="Describe the scene… marble countertop · golden hour · white studio void"
                 rows={2}
-                maxLength={300}
+                maxLength={1000}
                 className="w-full rounded-xl bg-[#EFE6D8] border border-forest/25 px-4 py-3 text-sm font-mono resize-none focus:outline-none focus:border-forest/50 placeholder:text-graphite/25"
               />
               <div className="text-right">
-                <span className="text-[11px] font-mono text-graphite/25">{sceneText.length} / 300</span>
+                <span className="text-[11px] font-mono text-graphite/25">{sceneText.length} / 1000</span>
               </div>
             </div>
 
