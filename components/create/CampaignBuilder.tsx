@@ -34,6 +34,7 @@ export default function CampaignBuilder() {
   const [assets, setAssets] = useState<AssetWithUrl[]>([])
   const [selectedAssetIds, setSelectedAssetIds] = useState<string[]>([])
   const [loadingAssets, setLoadingAssets] = useState(false)
+  const [showAssetPicker, setShowAssetPicker] = useState(false)
 
   // Step 4 — Goal
   const [campaignGoal, setCampaignGoal] = useState('')
@@ -277,38 +278,50 @@ export default function CampaignBuilder() {
           <p className="font-mono text-[10px] text-graphite/50">
             Selected assets will be distributed across your campaign ads.
           </p>
+
+          {/* Select button */}
           {loadingAssets ? (
-            <div className="h-16 bg-forest/5 rounded-xl animate-pulse" />
-          ) : assets.length === 0 ? (
-            <p className="font-mono text-xs text-graphite/40 italic">
-              No assets uploaded yet.{' '}
-              <a href="/brand" className="text-rust hover:underline">Upload in Brand → Assets →</a>
-            </p>
+            <div className="h-10 bg-forest/5 rounded-xl animate-pulse" />
           ) : (
-            <div className="flex flex-wrap gap-2">
-              {assets.map((asset) => (
-                <button
-                  key={asset.id}
-                  type="button"
-                  onClick={() => toggleAsset(asset.id)}
-                  className={`relative w-16 h-16 rounded-xl border-2 overflow-hidden transition-all ${
-                    selectedAssetIds.includes(asset.id)
-                      ? 'border-forest shadow-md'
-                      : 'border-transparent hover:border-forest/40'
-                  }`}
-                >
-                  {asset.url && (
-                    <img src={asset.url} alt={asset.file_name} className="w-full h-full object-cover" />
-                  )}
-                  {selectedAssetIds.includes(asset.id) && (
-                    <div className="absolute inset-0 bg-forest/20 flex items-center justify-center">
-                      <span className="text-white text-lg">✓</span>
-                    </div>
-                  )}
-                </button>
-              ))}
+            <button
+              type="button"
+              onClick={() => setShowAssetPicker(true)}
+              className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest px-4 py-2 rounded-lg border border-forest/30 text-forest/70 hover:border-forest hover:text-forest transition-colors"
+            >
+              <span>+ Select Assets</span>
+              {selectedAssetIds.length > 0 && (
+                <span className="bg-forest text-white rounded-full px-1.5 py-0.5 text-[9px]">
+                  {selectedAssetIds.length}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* Selected asset thumbnails */}
+          {selectedAssetIds.length > 0 && (
+            <div className="flex flex-wrap gap-3">
+              {selectedAssetIds.map((id) => {
+                const asset = assets.find((a) => a.id === id)
+                if (!asset) return null
+                return (
+                  <div key={id} className="relative w-20 h-20 rounded-xl overflow-hidden border border-forest/30 shadow-sm group">
+                    {asset.url && (
+                      <img src={asset.url} alt={asset.file_name} className="w-full h-full object-cover" />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => toggleAsset(id)}
+                      className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center"
+                      title="Remove"
+                    >
+                      <span className="text-white text-base opacity-0 group-hover:opacity-100 transition-opacity">✕</span>
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           )}
+
           <div className="flex gap-2">
             <button type="button" onClick={() => setStep(2)} className="btn-secondary">
               ← Back
@@ -316,6 +329,94 @@ export default function CampaignBuilder() {
             <button type="button" onClick={() => setStep(4)} className="btn-primary">
               Next: Campaign Goal →
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Asset picker modal */}
+      {showAssetPicker && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowAssetPicker(false) }}
+        >
+          <div className="bg-white rounded-2xl border border-forest/50 shadow-lg w-full max-w-lg flex flex-col max-h-[80vh]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-forest/15 shrink-0">
+              <h2 className="font-mono text-xs uppercase tracking-widest text-forest/70">
+                Brand Asset Library
+              </h2>
+              <button
+                onClick={() => setShowAssetPicker(false)}
+                className="text-graphite/40 hover:text-graphite transition-colors text-lg leading-none"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="overflow-y-auto p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-graphite/40">
+                  {assets.length === 0 ? 'No assets saved' : `${assets.length} asset${assets.length !== 1 ? 's' : ''} · ${selectedAssetIds.length} selected`}
+                </span>
+                {selectedAssetIds.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAssetIds([])}
+                    className="font-mono text-[10px] uppercase tracking-widest text-graphite/40 hover:text-rust transition-colors"
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
+              {assets.length === 0 ? (
+                <div className="border border-dashed border-forest/20 rounded-xl py-10 text-center">
+                  <p className="font-mono text-xs text-graphite/40">
+                    No brand assets yet.{' '}
+                    <a href="/brand" className="text-rust hover:underline">Upload in Brand → Assets</a>
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-graphite/40">
+                    Click assets to select · click again to deselect
+                  </p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {assets.map((asset) => {
+                      const selected = selectedAssetIds.includes(asset.id)
+                      return (
+                        <button
+                          key={asset.id}
+                          type="button"
+                          onClick={() => toggleAsset(asset.id)}
+                          className={`relative aspect-square rounded-xl border-2 overflow-hidden transition-all ${
+                            selected
+                              ? 'border-forest shadow-md'
+                              : 'border-forest/15 hover:border-forest/50'
+                          }`}
+                          title={asset.file_name}
+                        >
+                          {asset.url && (
+                            <img src={asset.url} alt={asset.file_name} className="w-full h-full object-cover" />
+                          )}
+                          {selected && (
+                            <div className="absolute inset-0 bg-forest/25 flex items-center justify-center">
+                              <span className="text-white text-xl font-bold drop-shadow">✓</span>
+                            </div>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="px-6 py-4 border-t border-forest/10 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowAssetPicker(false)}
+                className="btn-primary w-full"
+              >
+                Done · {selectedAssetIds.length} selected
+              </button>
+            </div>
           </div>
         </div>
       )}
