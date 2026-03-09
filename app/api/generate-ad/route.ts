@@ -99,7 +99,7 @@ export async function POST(request: Request) {
 
       if (selectedIds.length > 0) {
         const { data: refImgs } = await supabase
-          .from('reference_images')
+          .from('brand_assets')
           .select('id, file_name, storage_path')
           .eq('user_id', user.id)
           .in('id', selectedIds)
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
         if (refImgs && refImgs.length > 0) {
           const paths = refImgs.map((img) => img.storage_path)
           const { data: signedUrlData, error: urlError } = await supabase.storage
-            .from('reference-images')
+            .from('brand-assets')
             .createSignedUrls(paths, 604800)
 
           if (urlError || !signedUrlData) {

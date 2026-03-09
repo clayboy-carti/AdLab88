@@ -2,60 +2,60 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { ReferenceImage } from '@/types/database'
+import type { BrandAsset } from '@/types/database'
 
-interface ImageWithUrl extends ReferenceImage {
+interface AssetWithUrl extends BrandAsset {
   signedUrl: string
 }
 
 interface Props {
   isOpen: boolean
   onClose: () => void
-  /** Called when the user picks an image to use as reference */
+  /** Called when the user picks an asset to use as reference */
   onSelect: (id: string, signedUrl: string) => void
 }
 
 export default function PhotoPicker({ isOpen, onClose, onSelect }: Props) {
   const [uploading, setUploading] = useState(false)
-  const [images, setImages] = useState<ImageWithUrl[]>([])
+  const [assets, setAssets] = useState<AssetWithUrl[]>([])
   const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
-    if (isOpen) loadImages()
+    if (isOpen) loadAssets()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
-  const loadImages = async () => {
+  const loadAssets = async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser()
     if (!user) return
 
     const { data } = await supabase
-      .from('reference_images')
-      .select('id, user_id, storage_path, file_name, file_size, mime_type, created_at')
+      .from('brand_assets')
+      .select('id, user_id, storage_path, file_name, file_size, mime_type, category, created_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
     if (data && data.length > 0) {
-      const paths = data.map((img) => img.storage_path)
+      const paths = data.map((a) => a.storage_path)
       const { data: urlData } = await supabase.storage
-        .from('reference-images')
+        .from('brand-assets')
         .createSignedUrls(paths, 604800)
 
       const urlMap = new Map(
         (urlData ?? []).map((item) => [item.path, item.signedUrl])
       )
 
-      setImages(
-        data.map((img) => ({
-          ...img,
-          signedUrl: urlMap.get(img.storage_path) ?? '',
+      setAssets(
+        data.map((a) => ({
+          ...a,
+          signedUrl: urlMap.get(a.storage_path) ?? '',
         }))
       )
     } else {
-      setImages([])
+      setAssets([])
     }
   }
 
@@ -69,8 +69,9 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: Props) {
     try {
       const formData = new FormData()
       formData.append('file', file)
+      formData.append('category', 'product')
 
-      const response = await fetch('/api/upload-image', {
+      const response = await fetch('/api/brand/assets', {
         method: 'POST',
         body: formData,
       })
@@ -78,15 +79,11 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: Props) {
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'Upload failed')
 
-      const { data: signedUrlData } = await supabase.storage
-        .from('reference-images')
-        .createSignedUrl(result.image.storage_path, 604800)
-
       e.target.value = ''
-      await loadImages()
+      await loadAssets()
 
-      if (result.image?.id && signedUrlData?.signedUrl) {
-        onSelect(result.image.id, signedUrlData.signedUrl)
+      if (result.asset?.id && result.asset?.url) {
+        onSelect(result.asset.id, result.asset.url)
         onClose()
       }
     } catch (err: any) {
@@ -113,7 +110,7 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: Props) {
         {/* Modal header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-forest/15 shrink-0">
           <h2 className="font-mono text-xs uppercase tracking-widest text-forest/70">
-            Reference Image Library
+            Brand Asset Library
           </h2>
           <button
             onClick={onClose}
@@ -130,12 +127,12 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: Props) {
           {/* Upload row */}
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] uppercase tracking-widest text-graphite/40">
-              {images.length === 0 ? 'No photos saved' : `${images.length} in library`}
+              {assets.length === 0 ? 'No assets saved' : `${assets.length} in library`}
             </span>
 
             <input
               type="file"
-              accept="image/jpeg,image/png"
+              accept="image/jpeg,image/png,image/webp"
               onChange={handleUpload}
               disabled={uploading}
               className="hidden"
@@ -149,7 +146,7 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: Props) {
                   : 'text-forest/70 border-forest/30 hover:border-forest hover:text-forest cursor-pointer'
               }`}
             >
-              {uploading ? 'Uploading…' : '+ Upload from Device'}
+              {uploading ? 'Uploading…' : '+ Upload Asset'}
             </label>
           </div>
 
@@ -158,33 +155,38 @@ export default function PhotoPicker({ isOpen, onClose, onSelect }: Props) {
           )}
 
           {/* Empty state */}
-          {images.length === 0 && !uploading && (
+          {assets.length === 0 && !uploading && (
             <div className="border border-dashed border-forest/20 rounded-xl py-10 text-center">
               <p className="font-mono text-xs text-graphite/40">
-                No saved photos yet — upload one above to get started.
+                No brand assets yet — upload one above or add assets from your Brand page.
               </p>
             </div>
           )}
 
-          {/* Library grid */}
-          {images.length > 0 && (
+          {/* Asset grid */}
+          {assets.length > 0 && (
             <>
               <p className="font-mono text-[10px] uppercase tracking-widest text-graphite/40">
-                Click a photo to use it as your reference
+                Click an asset to use it as your product reference
               </p>
               <div className="grid grid-cols-4 gap-2">
-                {images.map((img) => (
+                {assets.map((asset) => (
                   <div
-                    key={img.id}
-                    onClick={() => handleSelect(img.id, img.signedUrl)}
+                    key={asset.id}
+                    onClick={() => handleSelect(asset.id, asset.signedUrl)}
                     className="relative aspect-square border border-forest/20 rounded-xl cursor-pointer hover:border-rust/60 hover:shadow-md transition-all duration-200 overflow-hidden"
-                    title={img.file_name}
+                    title={asset.file_name}
                   >
                     <img
-                      src={img.signedUrl}
-                      alt={img.file_name}
+                      src={asset.signedUrl}
+                      alt={asset.file_name}
                       className="w-full h-full object-cover"
                     />
+                    {asset.category && asset.category !== 'other' && (
+                      <span className="absolute bottom-1 left-1 font-mono text-[8px] uppercase tracking-widest bg-black/50 text-white px-1 py-0.5 rounded">
+                        {asset.category}
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
