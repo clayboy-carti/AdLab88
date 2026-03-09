@@ -120,7 +120,8 @@ export async function POST(request: Request) {
 
           const urlMap = new Map(signedUrlData.map((item) => [item.path, item.signedUrl]))
           referenceImageUrls = refImgs.map((img) => urlMap.get(img.storage_path) ?? '').filter(Boolean)
-          usedReferenceImageId = refImgs[0].id // store first as primary for DB record
+          // Note: brand_assets IDs cannot be stored in reference_image_id (FK → reference_images)
+          // usedReferenceImageId stays null for product mockups
           console.log(`[Generate] Product mockup: using ${referenceImageUrls.length} reference image(s) (${refImgs.map(i => i.file_name).join(', ')})`)
         }
       } else {
